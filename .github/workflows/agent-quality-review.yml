@@ -38,57 +38,15 @@ jobs:
           echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
           echo "Changed reports: $CHANGED"
 
-      - name: Required sections present
+      - name: Run the SAME gate developers run locally
         if: steps.detect.outputs.files != ''
         run: |
-          set -e
-          REQUIRED=("Objectives" "Constraints" "Functional" "Quality" "ASR" \
-                    "Utility Tree" "Decisions" "Trade-off" "Cost of Change" \
-                    "Open Questions" "Governance")
-          FAIL=0
-          for f in ${{ steps.detect.outputs.files }}; do
-            for term in "${REQUIRED[@]}"; do
-              grep -qi "$term" "$f" || { echo "::error file=$f::Missing section: '$term'"; FAIL=1; }
-            done
-          done
-          [ "$FAIL" -eq 0 ] || exit 1
-
-      - name: Fabricated-precision heuristic
-        if: steps.detect.outputs.files != ''
-        run: |
-          # Suspiciously precise values are the most common way an agent invents
-          # requirements. This flags them for the reviewer; it does not fail the build,
-          # because a value is only fabricated if it is absent from the source scenario.
-          for f in ${{ steps.detect.outputs.files }}; do
-            echo "--- Precision values found in $f (reviewer must confirm each is sourced) ---"
-            grep -oE '[0-9]+(\.[0-9]+)?%|p9[059]|zero (downtime|disruption|data loss)|99\.[0-9]+' "$f" \
-              | sort -u || echo "  (none)"
-          done
-
-      - name: Vendor balance audit
-        if: steps.detect.outputs.files != ''
-        run: |
-          # Fails if any single cloud vendor dominates recommendations, which is the
-          # measurable signature of tooling bias.
-          for f in ${{ steps.detect.outputs.files }}; do
-            AWS=$(grep -oiE 'aws|amazon|kinesis' "$f" | wc -l)
-            AZ=$(grep -oiE 'azure' "$f" | wc -l)
-            GCP=$(grep -oiE 'google cloud|gcp|bigquery' "$f" | wc -l)
-            OSS=$(grep -oiE 'kafka|flink|spark|airflow|dagster|iceberg|delta lake|opa|airbyte|dbt' "$f" | wc -l)
-            echo "$f -> AWS:$AWS Azure:$AZ GCP:$GCP OSS:$OSS"
-            TOTAL=$((AWS+AZ+GCP))
-            if [ "$TOTAL" -gt 6 ]; then
-              # No single hyperscaler may exceed 60% of hyperscaler mentions.
-              if [ $((AWS*100/TOTAL)) -gt 60 ] || [ $((AZ*100/TOTAL)) -gt 60 ] || [ $((GCP*100/TOTAL)) -gt 60 ]; then
-                echo "::error file=$f::Vendor bias detected — one hyperscaler exceeds 60% of mentions (AWS:$AWS Azure:$AZ GCP:$GCP)"
-                exit 1
-              fi
-            fi
-            if [ "$OSS" -eq 0 ]; then
-              echo "::error file=$f::No open-source/portable option offered anywhere in this report"
-              exit 1
-            fi
-          done
+          # CI must not diverge from scripts/preflight.sh. A red-team test found
+          # reports that passed locally but failed CI (and vice versa) because the
+          # two implementations drifted apart. There is now one implementation.
+          set -o pipefail
+          git diff --name-only -z origin/${{ github.base_ref }}...HEAD -- 'docs/*.html' \
+            | xargs -0 -r ./scripts/preflight.sh
 
   agent-review:
     name: "Agent quality review (improved? -> PR | not improved? -> iterate)"

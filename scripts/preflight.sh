@@ -78,12 +78,16 @@ for f in "${FILES[@]}"; do
   echo; echo "═══ $f ═══"
   FILEFAIL_START=$FAIL
 
+  # Visible text only. Keyword-stuffed HTML comments and display:none blocks
+  # previously satisfied every check while the prose contained no analysis.
+  PROSE=$(python3 "$(dirname "$0")/visible_text.py" "$f")
+
   # -------------------------------------------------------------------------
   head_ "1. Required reasoning-chain sections"
   for term in "Objectives" "Constraints" "Functional" "Quality" "ASR" \
               "Utility Tree" "Decision" "Trade-off" "Cost of Change" \
               "Open Questions" "Governance"; do
-    if grep -qi "$term" "$f"; then pass "section present: $term"
+    if printf '%s' "$PROSE" | grep -qi "$term"; then pass "section present: $term"
     else fail "missing required section: $term"; fi
   done
 
@@ -95,14 +99,7 @@ for f in "${FILES[@]}"; do
   # a fabricated "99%" survived a previous cleanup precisely because an earlier
   # version of this script excluded diagrams as "noise". Diagrams state requirements,
   # so they must be scanned. CSS percentages are excluded via the style strip.
-  PROSE=$(python3 - "$f" <<'PY'
-import sys,re
-s=open(sys.argv[1],encoding='utf-8').read()
-s=re.sub(r'(?is)<style.*?</style>','',s)
-s=re.sub(r'(?is)<script.*?</script>','',s)
-sys.stdout.write(s)
-PY
-)
+
   HITS=$(printf '%s' "$PROSE" | grep -oiE '[0-9]+(\.[0-9]+)?%|p9[059]\b|zero (downtime|disruption|data loss)|99\.[0-9]+' | sort -u || true)
   if [ -z "$HITS" ]; then
     pass "no high-risk precision values in prose"
@@ -131,10 +128,10 @@ PY
 
   # -------------------------------------------------------------------------
   head_ "3. Vendor balance (guards against single-cloud bias)"
-  AWS=$(grep -oiE 'aws|amazon|kinesis|redshift' "$f" | wc -l | tr -d ' ')
-  AZ=$(grep -oiE 'azure|synapse|fabric' "$f" | wc -l | tr -d ' ')
-  GCP=$(grep -oiE 'google cloud|gcp|bigquery|dataflow' "$f" | wc -l | tr -d ' ')
-  OSS=$(grep -oiE 'kafka|flink|spark|airflow|dagster|iceberg|delta lake|hudi|opa|airbyte|dbt|openlineage|openmetadata' "$f" | wc -l | tr -d ' ')
+  AWS=$(printf '%s' "$PROSE" | grep -oiE 'aws|amazon|kinesis|redshift' | wc -l | tr -d ' ')
+  AZ=$(printf '%s' "$PROSE" | grep -oiE 'azure|synapse|fabric' | wc -l | tr -d ' ')
+  GCP=$(printf '%s' "$PROSE" | grep -oiE 'google cloud|gcp|bigquery|dataflow' | wc -l | tr -d ' ')
+  OSS=$(printf '%s' "$PROSE" | grep -oiE 'kafka|flink|spark|airflow|dagster|iceberg|delta lake|hudi|opa|airbyte|dbt|openlineage|openmetadata' | wc -l | tr -d ' ')
   echo "        AWS:$AWS  Azure:$AZ  GCP:$GCP  OSS:$OSS"
 
   TOTAL=$((AWS+AZ+GCP))
@@ -159,16 +156,25 @@ PY
 
   # -------------------------------------------------------------------------
   head_ "4. Structural depth"
-  SCEN=$(grep -oic "Response Measure" "$f" | tr -d ' ')
+  SCEN=$(printf '%s' "$PROSE" | grep -oi "Response Measure" | wc -l | tr -d ' ')
   [ "${SCEN:-0}" -ge 2 ] && pass "$SCEN quality-attribute scenarios (min 2)" \
                          || fail "only ${SCEN:-0} quality-attribute scenario(s); minimum is 2"
 
-  grep -qi "Para qu" "$f" && pass "'¿Para qué?' purpose mapping present" \
+  printf '%s' "$PROSE" | grep -qi "Para qu" && pass "'¿Para qué?' purpose mapping present" \
                           || fail "no '¿Para qué?' mapping — every decision must name its purpose"
 
   grep -qi "mermaid" "$f" && pass "diagrams present" || warn "no Mermaid diagrams found"
 
   # -------------------------------------------------------------------------
+  head_ "5. Source citations (every value must trace to the fact manifest)"
+  if python3 "$(dirname "$0")/check_citations.py" "$f" >/tmp/_cit.$$ 2>&1; then
+    pass "$(grep -o 'cited: [0-9]*' /tmp/_cit.$$ | head -1) — all values traced"
+  else
+    grep -E '^  ✗|^      (values|text):' /tmp/_cit.$$ || true
+    fail "uncited requirement values — see above"
+  fi
+  rm -f /tmp/_cit.$$
+
   head_ "5. HTML well-formedness"
   python3 - "$f" <<'PY'
 import sys

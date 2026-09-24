@@ -83,8 +83,12 @@ The requester wants analysis, not artifacts.
 The requester wants the report committed. **Validation happens BEFORE the PR exists.**
 
 ```
-1. Write the report to docs/<slug>_Solution.html
+0. FIRST: add the scenario's facts to knowledge-base/scenario-facts.yml,
+   each with a verbatim source quote. Facts before analysis - never the reverse.
+1. Write the report to docs/<slug>_Solution.html, citing a fact ID next to
+   every number, e.g. "within 15 minutes [C360-F03]"
 2. RUN:  ./scripts/preflight.sh docs/<slug>_Solution.html
+         (this runs the citation check too)
          │
          ├─ EXIT 1 → DO NOT open a PR.
          │           Report the failures to the requester,
@@ -209,6 +213,49 @@ exactly one of four categories, and the category must be visible to the reader:*
 source scenario. If you cannot point to it, it is an assumption or an open question —
 never a requirement.** If the self-audit table would claim "none invented", it must
 only do so after this pass has actually been performed.
+
+## Source Traceability (Required — prevents fabricated requirements)
+
+**Every number, threshold, and absolute claim must cite a fact ID from
+`knowledge-base/scenario-facts.yml`.** Write the ID inline, next to the value:
+
+```html
+Customer Service data within 15 minutes [C360-F03]
+```
+
+A bare `(given)` label is **not** acceptable and is no longer accepted by the gate.
+A red-team test proved you could append "(given)" to a completely invented
+requirement and pass, because the marker was checked by the same untrusted document
+that made the claim. A value is sourced only when it matches the external manifest.
+
+**Three kinds of manifest entry — the distinction is load-bearing:**
+
+| Prefix | Meaning | May you state it as a requirement? |
+|---|---|---|
+| `-F##` | **Fact** — in the scenario, with a verbatim quote | Yes |
+| `-U##` | **Unknown** — not specified | Only inside Open Questions |
+| `-X##` | **Teaching example** — the course illustrating *how to write* a measure | **No.** Citing it as a scenario fact is a fabrication |
+
+The `-X` category exists because it actually happened: the course uses "zero event
+loss" to demonstrate a well-formed measure, and it was written into the Retail IoT
+report labelled "(given)" as though Scenario A required it. It does not. Durability
+and latency are different requirements, and inventing one changes the replication
+design and its cost.
+
+**If a scenario has no manifest entry yet, create one first** — extract the facts
+with verbatim quotes before writing any analysis. Do not write the report and
+back-fill citations to match it; that reverses the dependency and defeats the point.
+
+**Hard prohibitions (all previously observed in this repo):**
+- Never attach an attainment percentile (99%, p95, p99) to an SLA unless one is a
+  cited fact. A latency bound and a reliability target are two different requirements.
+- Never write "zero downtime", "zero disruption", or "zero data loss" without a
+  citation. These are among the most expensive requirements in architecture.
+- Never convert "costs must remain observable" into a cost-efficiency target.
+- Never present an unresolved option as settled in a diagram. **Diagrams are scanned**
+  — a fabricated "99%" once survived a cleanup by hiding in a Utility Tree node.
+
+Run `python3 scripts/check_citations.py docs/<file>.html` before proposing changes.
 
 ## Handling Incomplete Input (Required Behavior)
 If the Definition of Done cannot be met because information is missing, respond with

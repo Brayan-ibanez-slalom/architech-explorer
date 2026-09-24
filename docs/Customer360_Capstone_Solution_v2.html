@@ -232,11 +232,11 @@ graph LR
       <div>
         <h3>Current Scale</h3>
         <ul class="tick">
-          <li>20M customers</li>
-          <li>5M interactions/day</li>
+          <li>20M [C360-F11] customers</li>
+          <li>5M interactions [C360-F12]/day</li>
           <li>4 initial source systems</li>
-          <li>3 years of historical data</li>
-          <li>3× interaction growth expected within 2 years</li>
+          <li>3 years [C360-F14] of historical data</li>
+          <li>3× interaction growth expected within 2 years [C360-F05]</li>
         </ul>
       </div>
     </div>
@@ -256,11 +256,11 @@ graph LR
     <h3>Constraints</h3>
     <table>
       <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
-      <tr><td>C1</td><td>First production release within 4 months</td><td>Timeline</td></tr>
+      <tr><td>C1</td><td>First production release within 4 months [C360-F09]</td><td>Timeline</td></tr>
       <tr><td>C2</td><td>Infra/processing cost must stay observable as usage grows</td><td>Budget</td></tr>
-      <tr><td>C3</td><td>Standard new source onboarded within 2 weeks</td><td>Delivery capacity</td></tr>
+      <tr><td>C3</td><td>Standard new source onboarded within 2 weeks [C360-F07]</td><td>Delivery capacity</td></tr>
       <tr><td>C4</td><td>Data contains PII — controlled, auditable access required</td><td>Regulatory / Security</td></tr>
-      <tr><td>C5</td><td>3× growth in interactions within 2 years</td><td>Scale</td></tr>
+      <tr><td>C5</td><td>3× growth in interactions within 2 years [C360-F05]</td><td>Scale</td></tr>
     </table>
   </section>
 
@@ -284,10 +284,10 @@ graph LR
       <div>
         <h3>Quality Attributes (how well)</h3>
         <ul class="tick">
-          <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM</li>
-          <li><strong>Latency (tiered):</strong> Marketing = "several hours" tolerance <em>(no precise bound given — see Open Questions)</em>; Service ≤ 15 min</li>
-          <li><strong>Scalability:</strong> absorb 3× growth in 2 years</li>
-          <li><strong>Modifiability:</strong> 2–4 new sources/yr, standard onboarding ≤ 2 weeks</li>
+          <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM [C360-F01]</li>
+          <li><strong>Latency (tiered):</strong> Marketing = "several hours" tolerance <em>(no precise bound given — see Open Questions)</em>; Service ≤ 15 min [C360-F03]</li>
+          <li><strong>Scalability:</strong> absorb 3× growth in 2 years [C360-F05]</li>
+          <li><strong>Modifiability:</strong> 2–4 new sources/yr, standard onboarding ≤ 2 weeks [C360-F07]</li>
           <li><strong>Security:</strong> auditable, controlled PII access</li>
           <li><strong>Cost observability:</strong> infrastructure and processing costs must remain <em>observable</em> as usage grows <em>(no budget ceiling or unit-cost target given — see Open Questions)</em></li>
         </ul>
@@ -307,7 +307,7 @@ graph LR
       <tr><th>Environment</th><td>Normal business operations, peak hours</td></tr>
       <tr><th>Artifact</th><td>Customer 360 pipeline / serving layer</td></tr>
       <tr><th>Response</th><td>Interaction ingested, resolved to customer identity, made available</td></tr>
-      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes</strong>. <em>Attainment percentile (e.g. p95/p99) and measurement window were not specified — see Open Questions.</em></td></tr>
+      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes [C360-F03]</strong>. <em>Attainment percentile (e.g. p95/p99) and measurement window were not specified — see Open Questions.</em></td></tr>
     </table>
 
     <h3>Scenario 2 — New Source Onboarding</h3>
@@ -317,7 +317,7 @@ graph LR
       <tr><th>Environment</th><td>Ongoing production operation <em>(permitted disruption during onboarding was not specified — see Open Questions)</em></td></tr>
       <tr><th>Artifact</th><td>Ingestion / schema layer</td></tr>
       <tr><th>Response</th><td>New source integrated using standard connector pattern</td></tr>
-      <tr><th>Response Measure</th><td>Onboarded and flowing into Customer 360 within <strong>≤ 2 weeks</strong> <em>(given). Acceptable impact on existing pipelines was not specified — see Open Questions.</em></td></tr>
+      <tr><th>Response Measure</th><td>Onboarded and flowing into Customer 360 within <strong>≤ 2 weeks [C360-F07]</strong> <em>(given). Acceptable impact on existing pipelines was not specified — see Open Questions.</em></td></tr>
     </table>
   </section>
 
@@ -330,8 +330,8 @@ graph TD
   R["Customer 360 Platform"] --> A1["ASR 1<br/>Identity Resolution at Scale"]
   R --> A2["ASR 2<br/>Tiered Freshness Requirements"]
   R --> A3["ASR 3<br/>Auditable PII Access Under Extensibility"]
-  A1 --> A1d["20M+ customers, 4+ sources,<br/>3x growth — trust depends on match accuracy"]
-  A2 --> A2d["Hours vs 15min vs 7AM daily —<br/>forces layered ingestion/serving design"]
+  A1 --> A1d["20M [C360-F11]+ customers, 4+ sources,<br/>3x growth — trust depends on match accuracy"]
+  A2 --> A2d["Hours vs 15min [C360-F03] vs 7AM [C360-F01] daily —<br/>forces layered ingestion/serving design"]
   A3 --> A3d["Security must scale as 2-4 new sources<br/>are added per year, each within a 2-week SLA"]
   style R fill:#0b1f3a,color:#fff
   style A1 fill:#e0762b,color:#fff
@@ -341,8 +341,8 @@ graph TD
     <h3>Why Each ASR Is Architecturally Significant (explicit justification)</h3>
     <table>
       <tr><th>ASR</th><th>Justification</th></tr>
-      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 12).</td></tr>
-      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours / 15 min / 7 AM) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
+      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M [C360-F11]+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 12).</td></tr>
+      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours / 15 min / 7 AM [C360-F01]) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
       <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
     </table>
   </section>
@@ -359,11 +359,11 @@ graph LR
   U --> QA3["Security"]
   U --> QA4["Modifiability"]
 
-  QA1 --> S1["Absorb 3x interaction growth<br/>in 2 years without re-arch<br/><b>(High, High)</b>"]
-  QA2 --> S2["CS data available ≤15min<br/><b>(High, Medium)</b>"]
-  QA2 --> S3["Dashboards ready by 7:00 AM daily<br/><b>(Medium, Low)</b>"]
+  QA1 --> S1["Absorb 3x interaction growth<br/>in 2 years [C360-F05] without re-arch<br/><b>(High, High)</b>"]
+  QA2 --> S2["CS data available ≤15min [C360-F03]<br/><b>(High, Medium)</b>"]
+  QA2 --> S3["Dashboards ready by 7:00 AM [C360-F01] daily<br/><b>(Medium, Low)</b>"]
   QA3 --> S4["PII access controlled & auditable<br/>across all sources<br/><b>(High, Medium)</b>"]
-  QA4 --> S5["New standard source onboarded<br/>in ≤2 weeks<br/><b>(Medium, Medium)</b>"]
+  QA4 --> S5["New standard source onboarded<br/>in ≤2 weeks [C360-F07]<br/><b>(Medium, Medium)</b>"]
 
   style U fill:#0b1f3a,color:#fff
   style QA1 fill:#1f5fa8,color:#fff
@@ -391,15 +391,15 @@ graph LR
     </div>
     <table>
       <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
-      <tr><td><strong>1 — Hybrid ingestion</strong></td><td>Customer Service sees interactions fast enough to act on them, without paying real-time cost for marketing data</td><td>O2 (fast-turnaround insight for Customer Service)</td><td>ASR 2 — tiered freshness (15 min vs. hours vs. 7 AM)</td></tr>
-      <tr><td><strong>2 — Identity resolution service</strong></td><td>One customer appears as one customer, so every downstream number can be trusted</td><td>O1 (trusted unified view, eliminating manual reconciliation)</td><td>ASR 1 — identity resolution at scale across 20M+ customers</td></tr>
+      <tr><td><strong>1 — Hybrid ingestion</strong></td><td>Customer Service sees interactions fast enough to act on them, without paying real-time cost for marketing data</td><td>O2 (fast-turnaround insight for Customer Service)</td><td>ASR 2 — tiered freshness (15 min [C360-F03] vs. hours vs. 7 AM [C360-F01])</td></tr>
+      <tr><td><strong>2 — Identity resolution service</strong></td><td>One customer appears as one customer, so every downstream number can be trusted</td><td>O1 (trusted unified view, eliminating manual reconciliation)</td><td>ASR 1 — identity resolution at scale across 20M [C360-F11]+ customers</td></tr>
       <tr><td><strong>3 — Connector framework + central access control</strong></td><td>New sources onboard fast <em>without</em> re-opening compliance risk each time</td><td>O3 (onboard new sources quickly for analytics/DS)</td><td>ASR 3 — auditable PII access under continuous extensibility</td></tr>
     </table>
 
     <div class="decision">
       <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
-      <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min SLA) and standard batch for marketing/dashboard data (7 AM SLA).</p>
-      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is a streaming/micro-batch ingestion path sustaining the ≤15 min SLA alongside a batch path for the 7 AM SLA.<br/>
+      <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min [C360-F03] SLA) and standard batch for marketing/dashboard data (7 AM [C360-F01] SLA).</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is a streaming/micro-batch ingestion path sustaining the ≤15 min [C360-F03] SLA alongside a batch path for the 7 AM [C360-F01] SLA.<br/>
       • <em>Open-source / portable:</em> Apache Kafka or Apache Pulsar + Apache Flink (streaming-native) or Spark Structured Streaming; Airflow or Dagster for batch orchestration.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Auto Loader + Structured Streaming + Workflows), Snowflake (Snowpipe Streaming + Dynamic Tables + Tasks), Confluent Cloud.<br/>
       • <em>Hyperscaler-managed:</em> Azure Event Hubs + Data Factory, Google Cloud Pub/Sub + Dataflow, or Amazon MSK/Kinesis + Glue.<br/>
@@ -410,7 +410,7 @@ graph LR
     <div class="decision">
       <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
       <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
-      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M+ customers and 4+ systems, with the ability to reprocess history when rules change.<br/>
+      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M [C360-F11]+ customers and 4+ systems, with the ability to reprocess history when rules change.<br/>
       • <em>Open-source / portable:</em> Zingg (ML-based entity resolution) or Splink (probabilistic record linkage) running on Spark.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Spark ML matching pipelines + Delta time travel for reprocessing), Snowflake (Snowpark-based matching).<br/>
       • <em>Commercial specialist:</em> Senzing, Informatica MDM, Reltio, Tamr.<br/>
@@ -436,7 +436,7 @@ graph LR
       <tr><th>Checklist item</th><th>Status</th></tr>
       <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass</td></tr>
       <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass <em>(after two rounds of correction)</em> — a first independent review found fabricated values ("99% of the time", "zero downtime", "zero disruption", "non-linear cost growth") in the prose. A <strong>second</strong> review then found that "99%" had survived <em>inside the Utility Tree diagram</em>, while this very row claimed it had been removed. Both the value and the tooling blind spot that hid it are now fixed. <em>The lesson is recorded rather than hidden: a self-audit is evidence of intent, not of correctness.</em></td></tr>
-      <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM, ≤15 min, 3× within 2 years, ≤2 weeks, 4 months, 2–4 sources/year. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
+      <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM [C360-F01], ≤15 min [C360-F03], 3× within 2 years [C360-F05], ≤2 weeks [C360-F07], 4 months [C360-F09], 2–4 sources/year. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
       <tr><td>2+ full quality-attribute scenarios (6 fields each)</td><td>✅ Pass</td></tr>
       <tr><td>3 ASRs with explicit justification</td><td>✅ Pass — added in this v2 report</td></tr>
       <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
@@ -474,11 +474,11 @@ flowchart TB
   end
 
   subgraph SPEED["Speed Layer (streaming/micro-batch)"]
-    ST["Real-time events<br/>≤15 min SLA"]
+    ST["Real-time events<br/>≤15 min [C360-F03] SLA"]
   end
 
   subgraph BATCH["Batch Layer"]
-    BT["Nightly/Hourly batch<br/>7:00 AM dashboard SLA"]
+    BT["Nightly/Hourly batch<br/>7:00 AM [C360-F01] dashboard SLA"]
   end
 
   subgraph IDR["Identity Resolution Service"]
@@ -545,8 +545,8 @@ flowchart TB
       <tr><td>Ownership &amp; stewardship</td><td>Assign a data owner per source domain (e-commerce, loyalty, support, marketing). Unowned sources become untrusted — which directly undermines objective O1 ("trusted view").</td></tr>
       <tr><td>Catalog &amp; discoverability</td><td>Register every dataset with business definitions, owner, freshness, and sensitivity tags. Without this, the "trusted customer view" fails at adoption even if the pipeline is technically correct.</td></tr>
       <tr><td>Lineage &amp; traceability</td><td>Capture column-level lineage source → transformation → consumption; prefer the open <strong>OpenLineage</strong> standard to preserve engine optionality. Required to answer "where did this number come from?" for leadership's daily metrics.</td></tr>
-      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems can change independently without breaking the 7 AM dashboard SLA.</td></tr>
-      <tr><td>Data quality</td><td>Express expectations as measurable checks (completeness, uniqueness of customer keys, freshness). Decide explicitly whether a failed check <em>blocks</em> or <em>alerts</em> — a real trade-off between trust and availability against the 7 AM deadline.</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems can change independently without breaking the 7 AM [C360-F01] dashboard SLA.</td></tr>
+      <tr><td>Data quality</td><td>Express expectations as measurable checks (completeness, uniqueness of customer keys, freshness). Decide explicitly whether a failed check <em>blocks</em> or <em>alerts</em> — a real trade-off between trust and availability against the 7 AM [C360-F01] deadline.</td></tr>
       <tr><td>Quarantine path</td><td>Route rejected/unresolvable records to a dead-letter store rather than dropping them silently — essential when identity resolution cannot confidently match a customer.</td></tr>
       <tr><td>Master data rules</td><td>Make survivorship rules (which source wins per attribute) explainable and auditable, and retain the ability to <strong>reprocess history</strong> when rules change — otherwise the matching logic becomes permanently frozen.</td></tr>
       <tr><td>Cost governance (FinOps)</td><td>Tag resources by domain and make cost per pipeline/consumer observable — directly satisfies constraint C2 ("costs must remain observable as usage grows").</td></tr>
@@ -605,7 +605,7 @@ flowchart TB
     <h2>13. Open Questions for the Stakeholder</h2>
     <div class="gap-box">
       <ul>
-        <li>What is the required <strong>data retention</strong> policy beyond the existing 3 years of history?</li>
+        <li>What is the required <strong>data retention</strong> policy beyond the existing 3 years [C360-F14] of history?</li>
         <li>Is there a specific <strong>compliance regime</strong> (GDPR, CCPA, etc.) governing PII beyond "controlled and auditable"?</li>
         <li>What is the acceptable <strong>identity-match accuracy / false-merge tolerance</strong> for customer resolution?</li>
         <li>Is there a target/cap on <strong>infrastructure cost</strong> (e.g., $/customer/month), or is "observability" the only requirement?</li>
@@ -614,8 +614,8 @@ flowchart TB
         <li>Are there <strong>data residency or sovereignty</strong> requirements constraining where customer data may be stored or processed?</li>
         <li>Is <strong>right-to-erasure</strong> (customer data deletion) required? This must be answered before finalizing an append-only/immutable storage design, since it materially changes the storage architecture.</li>
         <li>Are <strong>customer-managed encryption keys (CMK/BYOK)</strong> required, or is provider-managed encryption acceptable?</li>
-        <li>Should failed data-quality checks <strong>block</strong> the pipeline or <strong>alert only</strong>? This trades trust against hitting the 7:00 AM dashboard deadline.</li>
-        <li>What <strong>attainment percentile and measurement window</strong> apply to the 15-minute Customer Service SLA (e.g. p95 over a rolling day)? Only the bound was given, not the reliability target.</li>
+        <li>Should failed data-quality checks <strong>block</strong> the pipeline or <strong>alert only</strong>? This trades trust against hitting the 7:00 AM [C360-F01] dashboard deadline.</li>
+        <li>What <strong>attainment percentile and measurement window</strong> apply to the 15-minute Customer Service SLA (e.g. p95 over a rolling day) [C360-U01]? Only the bound was given, not the reliability target.</li>
         <li>What is the precise <strong>latency tolerance for Marketing</strong> data? "Several hours" was given, which is not yet a measurable bound.</li>
         <li>What level of <strong>disruption to existing pipelines is acceptable</strong> while onboarding a new source? The 2-week SLA was given; the permitted impact was not.</li>
         <li>Is there a <strong>budget ceiling or unit-cost target</strong> (e.g. $/customer/month)? "Costs must remain observable" specifies visibility, not a threshold.</li>

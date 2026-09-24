@@ -1,0 +1,144 @@
+# Scenario Fact Manifests
+#
+# PURPOSE
+# Every number, threshold, and absolute claim in a report must cite a fact ID from
+# this file. This replaces self-attestation — an earlier version let a report write
+# "(given)" next to an invented requirement and pass, because the marker was checked
+# by the same untrusted document that made the claim.
+#
+# A claim is only "given" if it appears HERE, with a verbatim source quote.
+#
+# CRITICAL DISTINCTION
+# `facts` are scenario constraints. `teaching_examples` are illustrations the course
+# uses to show HOW to write a measure — they are NOT requirements of any scenario.
+# Promoting a teaching example into a scenario fact is a fabrication. This actually
+# happened: "zero event loss" is a course example of a well-formed measure, and it
+# was written into the Retail IoT report labelled "(given)".
+#
+# `unknowns` are things a reader might expect to be specified but which are NOT.
+# Citing an unknown is only valid inside an Open Questions section.
+
+scenarios:
+
+  # =========================================================================
+  - id: customer-360
+    name: "Customer 360 Capstone"
+    source: "TF1 deck, slide 23 (knowledge-base/TF1_*.pdf); see tf1-course-notes.md"
+    facts:
+      - id: C360-F01
+        value: "dashboards ready by 07:00"
+        quote: "Daily dashboards must be ready by 7:00 AM"
+      - id: C360-F02
+        value: "Marketing tolerates several hours of latency"
+        quote: "Marketing data can tolerate several hours of latency"
+        note: "Deliberately imprecise in the source. Do NOT convert to a number."
+      - id: C360-F03
+        value: "Customer Service data within 15 minutes"
+        quote: "Customer Service interactions available within 15 minutes"
+        note: "A latency bound ONLY. No attainment percentile is given."
+      - id: C360-F04
+        value: "data contains PII and sensitive information"
+        quote: "Customer data contains PII and sensitive information"
+      - id: C360-F05
+        value: "3x interaction growth within 2 years"
+        quote: "Customer interactions expected to grow 3x within 2 years"
+      - id: C360-F06
+        value: "2-4 new sources per year"
+        quote: "2-4 new sources/year expected"
+      - id: C360-F07
+        value: "a standard source onboarded within 2 weeks"
+        quote: "a standard source should be onboarded within 2 weeks"
+      - id: C360-F08
+        value: "controlled and auditable access required"
+        quote: "requiring controlled and auditable access"
+      - id: C360-F09
+        value: "first production release within 4 months"
+        quote: "First production release required within 4 months"
+      - id: C360-F10
+        value: "costs must remain observable as usage grows"
+        quote: "Infrastructure and processing costs must remain observable as usage grows"
+        note: "Observability, NOT an efficiency target and NOT a budget ceiling."
+      - id: C360-F11
+        value: "20M customers"
+        quote: "20M customers"
+      - id: C360-F12
+        value: "5M interactions/day"
+        quote: "5M interactions/day"
+      - id: C360-F13
+        value: "4 initial source systems"
+        quote: "4 initial source systems"
+      - id: C360-F14
+        value: "3 years of historical data"
+        quote: "3 years of historical data"
+      - id: C360-F15
+        value: "4 fragmented sources: e-commerce, loyalty, support tickets, marketing"
+        quote: "Customer information is fragmented across: E-commerce orders, Loyalty program activity, Customer support tickets, Marketing interactions"
+      - id: C360-F16
+        value: "teams spend significant time reconciling inconsistent customer information"
+        quote: "Business teams currently spend significant time reconciling inconsistent customer information across systems."
+      - id: C360-F17
+        value: "Data Science needs reliable historical data for churn and propensity models"
+        quote: "Data Science: reliable historical data for churn and propensity models"
+    unknowns:
+      - id: C360-U01
+        topic: "attainment percentile / measurement window for the 15-minute SLA"
+      - id: C360-U02
+        topic: "precise latency bound for Marketing"
+      - id: C360-U03
+        topic: "acceptable disruption to existing pipelines during onboarding"
+      - id: C360-U04
+        topic: "budget ceiling or unit-cost target"
+      - id: C360-U05
+        topic: "applicable compliance regime (GDPR/CCPA/other) and data residency"
+      - id: C360-U06
+        topic: "whether failed quality checks block the pipeline or alert only"
+      - id: C360-U07
+        topic: "existing platform commitment, if any"
+
+  # =========================================================================
+  - id: retail-iot
+    name: "Scenario A - Retail IoT Monitoring Platform"
+    source: "TF1 deck; see tf1-course-notes.md lines ~126-144"
+    facts:
+      - id: RIOT-F01
+        value: "500 stores with IoT devices"
+        quote: "A retail company operates 500 stores with IoT devices generating continuous telemetry"
+      - id: RIOT-F02
+        value: "50K events/sec peak"
+        quote: "50K events/sec peak ingestion bursts during business hours"
+      - id: RIOT-F03
+        value: "p95 ingestion latency < 200ms"
+        quote: "p95 ingestion latency < 200ms during peak load"
+      - id: RIOT-F04
+        value: "recovery from single-AZ failure in < 30 sec"
+        quote: "Recovery from a single availability-zone failure in <30 sec"
+        note: "A RECOVERY TIME only. No durability/data-loss target is given."
+      - id: RIOT-F05
+        value: "deploy a new event schema without pipeline downtime, < 1 day"
+        quote: "Deploy a new event schema without pipeline downtime, <1 day"
+        note: "'without pipeline downtime' IS given here and may be stated."
+      - id: RIOT-F06
+        value: "identifiers require controlled access"
+        quote: "Events may contain device/store/customer/loyalty identifiers requiring controlled access"
+      - id: RIOT-F07
+        value: "device count grows with expansion to new regions"
+        quote: "Device count is expected to grow as the platform expands to new regions"
+    teaching_examples:
+      - id: RIOT-X01
+        value: "zero event loss"
+        quote: "Example measure: p95 ingestion latency < 200ms with zero event loss."
+        warning: >
+          This is the course illustrating how to WRITE a measure. It is not listed in
+          Scenario A's operating conditions. Citing it as a scenario requirement is a
+          fabrication. If durability matters, raise it as an open question.
+    unknowns:
+      - id: RIOT-U01
+        topic: "tolerable data loss during AZ failover"
+      - id: RIOT-U02
+        topic: "retention period for raw telemetry"
+      - id: RIOT-U03
+        topic: "budget ceiling for regional expansion"
+      - id: RIOT-U04
+        topic: "specific access-control policy for identifiers"
+      - id: RIOT-U05
+        topic: "data residency / regulatory constraints per region"
