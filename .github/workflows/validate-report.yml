@@ -39,6 +39,7 @@ jobs:
             "Trade-off"
             "Cost of Change"
             "Open Questions"
+            "Governance"
           )
 
           FAIL=0
