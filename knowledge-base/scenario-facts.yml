@@ -183,7 +183,7 @@ scenarios:
   # =========================================================================
   - id: verdant-grocers
     name: "Verdant Grocers - Near-Real-Time Inventory Visibility"
-    source: "GitHub issue #8 + PR comment 5818993306 source artifact: knowledge-base/VerdantGrocers_Issue8_Source.pdf"
+    source: "GitHub issue #8 + PR comments 5818993306 and 5820970476 source artifact: knowledge-base/VerdantGrocers_Issue8_Source.pdf"
     facts:
       - id: VGI-F01
         value: "140 stores"
@@ -240,14 +240,17 @@ scenarios:
         subject: "out-of-stock|next morning|sell|sells|inventory|stock"
         quote: "Store managers currently reorder from a report that is refreshed overnight, so a product that sells out at 10 AM is not visible as out-of-stock to the replenishment team until the next morning."
       - id: VGI-F16
-        value: "zero basket-event loss is required"
-        quote: "Zero basket-event loss is required."
+        value: "each POS terminal keeps a local journal of every basket it rings, retained for 72 hours"
+        matches: '72\s*hours?'
+        quote: "Each POS terminal keeps a local journal of every basket it rings, retained for 72 hours."
       - id: VGI-F17
-        value: "a missing basket is a missing sale on the books and any gap must be recoverable"
-        quote: "Finance reconciles store sales against this event stream, and a missing basket is a missing sale on the books."
+        value: "if the streaming path drops events during an outage, the journal is re-sent in the overnight batch and finance reconciles from that"
+        quote: "If the streaming path drops events during an outage, the journal is re-sent in the overnight batch and finance reconciles from that."
       - id: VGI-F18
-        value: "a gap must be recoverable, not merely detected"
-        quote: "A gap must be recoverable, not merely detected."
+        value: "the business tolerates loss of up to roughly 15 minutes of basket events from the near-real-time inventory view during an outage, provided the loss is visible to merchandising and is corrected by the next morning"
+        matches: '15\s*minutes?|next\s*morning'
+        subject: "minutes|outage|near-real-time|inventory view|visible|merchandising|next morning|loss"
+        quote: "The business therefore tolerates loss of up to roughly 15 minutes of basket events from the near-real-time inventory view during an outage, provided the loss is visible to merchandising and is corrected by the next morning."
       - id: VGI-F19
         value: "cloud run-rate ceiling of USD 8,000 per month for the new platform, excluding the existing overnight warehouse"
         matches: '8,000'

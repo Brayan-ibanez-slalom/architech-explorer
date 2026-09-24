@@ -3,11 +3,11 @@
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
 3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
 4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
-5 0 obj << /Length 2247 >> stream
+5 0 obj << /Length 2873 >> stream
 BT
 /F1 11 Tf
 54 770 Td
-(Verdant Grocers ? Near-Real-Time Inventory Visibility \(Controlled Test Source\)) Tj
+(Verdant Grocers - Near-Real-Time Inventory Visibility \(Controlled Test Source\)) Tj
 0 -14 Td
 () Tj
 0 -14 Td
@@ -76,6 +76,24 @@ BT
 (- Cardholder data must never land in the analytics platform; it has to be removed or) Tj
 0 -14 Td
 (tokenised before the events leave the store network.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Phase 3 correction from PR comment 5820970476) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Each POS terminal keeps a local journal of every basket it rings, retained for 72 hours.) Tj
+0 -14 Td
+(- If the streaming path drops events during an outage, the journal is re-sent in the) Tj
+0 -14 Td
+(overnight batch and finance reconciles from that.) Tj
+0 -14 Td
+(- The business therefore tolerates loss of up to roughly 15 minutes of basket events from) Tj
+0 -14 Td
+(the near-real-time inventory view during an outage, provided the loss is visible to) Tj
+0 -14 Td
+(merchandising and is corrected by the next morning.) Tj
 ET
 endstream
 endobj
@@ -89,5 +107,5 @@ xref
 0000000311 00000 n 
 trailer << /Size 6 /Root 1 0 R >>
 startxref
-2610
+3236
 %%EOF
