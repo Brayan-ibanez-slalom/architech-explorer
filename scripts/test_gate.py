@@ -41,6 +41,18 @@ MUST_BLOCK = [
      "<p>Must sustain ninety-nine percent availability.</p>", "customer-360"),
     ("CSS ::before content injection",
      '<style>.f::before{content:"99% availability"}</style><div class="f"></div>', "customer-360"),
+    # --- found by the LIVE agent test, not by a reviewer ---
+    # A generated report stated "900,000 basket events per day" five times and the
+    # detector never saw it. Comma grouping is the commonest way to write a
+    # capacity figure and was the one shape with no rule.
+    ("comma-grouped magnitude uncited",
+     "<p>The platform must sustain 4,200,000 basket events per day.</p>",
+     "customer-360"),
+    ("comma-grouped count uncited",
+     "<p>We expect 18,000 concurrent store sessions at peak.</p>",
+     "customer-360"),
+    ("bare five-digit magnitude uncited",
+     "<p>Retain 250000 SKU records per region.</p>", "customer-360"),
     ("semantic laundering (right number, wrong subject)",
      "<p>The data retention period for the archive tier is set to 15 minutes "
      "[C360-F03] before deletion.</p>", "customer-360"),
@@ -52,6 +64,11 @@ MUST_ALLOW = [
     ("copyright footer", "<p>Copyright 2026 Slalom. All rights reserved.</p>", "customer-360"),
     ("changelog quarter reference",
      "<p>Changelog entry from the Q3 2026 revision of this document.</p>", "customer-360"),
+    # Guards the new rules above. Bare integers fire at FIVE digits, not four,
+    # precisely so that years stay silent.
+    ("four-digit year in prose",
+     "<p>The programme was approved in 2024 and revisited in 2026.</p>",
+     "customer-360"),
 ]
 
 
