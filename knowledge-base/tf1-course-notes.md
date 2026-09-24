@@ -17,10 +17,34 @@ The job is to make trade-offs that are traceable back to business objectives, no
 
 ## What is Architecture?
 - Architecture translates business objectives, constraints, and requirements into a coherent system.
-- Architectural decisions are **long-term strategies**, not implementation details.
-- Architecture describes what the system can do, how well, and how it can evolve.
+- Architectural decisions are **long-term strategies**, not implementation details. They must be
+  projected long-term so the solution **endures — rather than answering only the immediate need**.
+  Solving only today's problem is the most common way architecture decisions age badly.
+- Architecture describes four things: **what** the system will do, **how** it will do it,
+  **how well** it will perform, and **how it will evolve**.
 - Even granular decisions (e.g., "the right table granularity") are architectural — they affect performance, cost, scalability, and future flexibility.
 - Tools don't replace judgment: know what a tool solves, and what it doesn't.
+
+## The "¿Para qué?" Test (Always Ask "What For?")
+> There are general-purpose approaches and generalized tools whose real purpose is to
+> **understand the problem and determine how to solve it**. The choice of each tool
+> depends on what you are trying to achieve and on the objective of implementing it —
+> ultimately everything depends on the results we are seeking.
+> **Always look for the "¿Para qué?" — the "what for?".**
+
+This is the single fastest test for whether a decision is justified. Before naming any
+tool, pattern, or technology, you must be able to answer:
+
+1. **¿Para qué?** — What outcome is this serving?
+2. Which **business objective** does that outcome trace back to?
+3. Which **quality attribute or ASR** makes this necessary rather than optional?
+
+If you cannot answer all three, the decision is not yet justified — it is a preference.
+
+**Why this matters:** it is the antidote to tool-driven design. A recommendation that
+survives "¿Para qué?" is grounded in results; one that does not is grounded in
+familiarity, habit, or fashion. Apply this test alongside the Anti-Bias Checklist in
+`technology-reference.md`.
 
 ## Inputs to Architectural Design
 | Input | Description |
@@ -56,6 +80,13 @@ Example measure: p95 ingestion latency < 200ms with zero event loss.
 
 ## Architecturally Significant Requirements (ASRs)
 An ASR is a requirement that **materially influences the structure, behavior, or major design decisions** of the system. Not every requirement is architecturally significant.
+
+The underlying discipline: **define your requirements, then understand how each one
+impacts your architecture differently.** Two requirements that look equally important to
+the business can have completely unequal architectural consequences — one may be a
+configuration change, the other may dictate the entire ingestion topology. Sorting
+requirements by *architectural impact* (not by business urgency) is what produces the
+ASR list.
 
 Common pressure categories:
 - **Scale pressure** — e.g., support 10M concurrent users or 50K events/sec.
@@ -153,5 +184,8 @@ Great architects do not start with solutions. They start by understanding the pr
 - Designing for quality attributes
 - Making deliberate trade-offs
 - Controlling long-term cost of change
+- **Always asking "¿Para qué?"** — every tool, pattern, and decision must serve a result
+  that traces back to an objective
 
 > Architecture is justified decision-making under constraint.
+> And the shortest test of justification is: **¿Para qué?**

@@ -383,6 +383,18 @@ graph LR
   <section id="decisions">
     <span class="badge">Step 5</span>
     <h2>9. Architecture Decisions & Trade-offs</h2>
+    <div style="background:#eaf2fb;border-left:4px solid #1f5fa8;padding:14px 18px;border-radius:6px;margin-bottom:18px;">
+      <strong>The "¿Para qué?" test applied to each decision below.</strong> Before naming any tool,
+      each decision must answer: <em>What outcome does this serve? Which business objective does it
+      trace back to? Which quality attribute or ASR makes it necessary rather than optional?</em>
+      A recommendation that cannot answer all three is a preference, not a justified decision.
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Hybrid ingestion</strong></td><td>Customer Service sees interactions fast enough to act on them, without paying real-time cost for marketing data</td><td>O2 (fast-turnaround insight for Customer Service)</td><td>ASR 2 — tiered freshness (15 min vs. hours vs. 7 AM)</td></tr>
+      <tr><td><strong>2 — Identity resolution service</strong></td><td>One customer appears as one customer, so every downstream number can be trusted</td><td>O1 (trusted unified view, eliminating manual reconciliation)</td><td>ASR 1 — identity resolution at scale across 20M+ customers</td></tr>
+      <tr><td><strong>3 — Connector framework + central access control</strong></td><td>New sources onboard fast <em>without</em> re-opening compliance risk each time</td><td>O3 (onboard new sources quickly for analytics/DS)</td><td>ASR 3 — auditable PII access under continuous extensibility</td></tr>
+    </table>
 
     <div class="decision">
       <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
@@ -430,6 +442,7 @@ graph LR
       <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
       <tr><td>3 decisions with named trade-offs</td><td>✅ Pass</td></tr>
       <tr><td>Each decision names a concrete tool option</td><td>✅ Pass — added in this v2 report</td></tr>
+      <tr><td>Every decision passes the "¿Para qué?" test</td><td>✅ Pass — outcome / objective / ASR mapped for all 3 decisions (table above)</td></tr>
       <tr><td>Tooling options span 2–3 ecosystems (no single-cloud default)</td><td>✅ Pass — open-source, lakehouse, and hyperscaler options per decision</td></tr>
       <tr><td>At least one open-source / portable option offered</td><td>✅ Pass (Kafka, Flink, Spark, Airflow/Dagster, Zingg/Splink, Airbyte, OPA, OpenMetadata)</td></tr>
       <tr><td>Lock-in / reversibility flagged via Cost of Change</td><td>✅ Pass — open table format recommended for the golden-record store</td></tr>
