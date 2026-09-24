@@ -211,6 +211,8 @@ def main():
                 sid = "customer-360"
             elif "retail" in base or "iot" in base:
                 sid = "retail-iot"
+            elif "verdant" in base or "grocers" in base:
+                sid = "verdant-grocers"
         if sid not in scenarios:
             print(f"ERROR: cannot determine scenario for {path}. "
                   f"Pass --scenario <{'|'.join(scenarios)}>", file=sys.stderr)

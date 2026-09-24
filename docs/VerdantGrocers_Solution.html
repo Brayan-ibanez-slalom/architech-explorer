@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdant Grocers — Near-Real-Time Inventory Visibility (Phase 3)</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a;
+    --blue:#1f5fa8;
+    --lightblue:#eaf2fb;
+    --accent:#e0762b;
+    --green:#2f9e5b;
+    --red:#c0392b;
+    --gray:#5b6470;
+    --bg:#f7f9fc;
+    --card:#ffffff;
+    --border:#dbe3ee;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:#1a2233;line-height:1.55;}
+  header{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:46px 32px 34px;text-align:center;}
+  header h1{margin:0 0 8px;font-size:2rem;}
+  header p{margin:4px 0;opacity:.92;}
+  nav{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+  nav a{color:var(--navy);text-decoration:none;font-size:.84rem;font-weight:600;padding:8px 12px;border-radius:6px;}
+  nav a:hover{background:var(--lightblue);}
+  main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:28px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  h2{color:var(--navy);border-left:5px solid var(--accent);padding-left:14px;margin-top:0;font-size:1.4rem;}
+  h3{color:var(--blue);font-size:1.08rem;margin-top:28px;}
+  table{width:100%;border-collapse:collapse;margin:14px 0 6px;font-size:.92rem;}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--navy);color:#fff;font-size:.85rem;}
+  tr:nth-child(even){background:#f9fbfd;}
+  .badge{display:inline-block;background:var(--lightblue);color:var(--blue);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.03em;text-transform:uppercase;}
+  .mermaid{background:#fff;border:1px dashed var(--border);border-radius:8px;padding:16px;margin:18px 0;display:flex;justify-content:center;}
+  .decision{border-left:4px solid var(--blue);background:#fff;padding:14px 18px;margin:14px 0;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .decision h4{margin:0 0 6px;color:var(--navy);}
+  .tradeoff{color:var(--accent);font-weight:600;}
+  .tick li{margin-bottom:6px;}
+  .change-note{background:#fff6ec;border:1px solid #f0d3ad;border-radius:8px;padding:14px 18px;}
+  .gap-box{background:#fff6ec;border:1px solid #f0d3ad;border-radius:8px;padding:14px 18px;margin-top:10px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .cost-spectrum{width:100%;margin:24px 0;}
+  .cost-bar{height:46px;border-radius:8px;background:linear-gradient(90deg,#2f9e5b 0%, #e0c02b 50%, #c0392b 100%);position:relative;}
+  .cost-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--gray);}
+  .cost-points{position:relative;height:60px;margin-top:6px;}
+  .cost-point{position:absolute;top:0;transform:translateX(-50%);text-align:center;font-size:.78rem;width:175px;}
+  .cost-point .dot{width:12px;height:12px;border-radius:50%;background:var(--navy);margin:0 auto 4px;border:2px solid #fff;box-shadow:0 0 0 2px var(--navy);}
+  footer{text-align:center;color:var(--gray);font-size:.8rem;padding:24px;}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Verdant Grocers — Near-Real-Time Inventory Visibility</h1>
+  <p>Phase 3 of the controlled test</p>
+  <p><strong>This revision changes one fact only:</strong> the near-real-time inventory view may lose up to roughly <strong>15 minutes [VGI-F18]</strong> of basket events during an outage if the loss is visible to merchandising [VGI-F18] and corrected by the next morning [VGI-F18]. The <strong>USD 8,000/month [VGI-F19]</strong> ceiling and the PCI boundary [VGI-F20] [VGI-F21] still stand.</p>
+</header>
+
+<nav>
+  <a href="#changes">Phase 3 Changes</a>
+  <a href="#context">Context</a>
+  <a href="#objectives">Objectives &amp; Constraints</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#scenarios">QA Scenarios</a>
+  <a href="#asrs">ASRs</a>
+  <a href="#utility">Utility Tree</a>
+  <a href="#decisions">Decisions &amp; Trade-offs</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#governance">Governance</a>
+  <a href="#cost">Cost of Change</a>
+  <a href="#gaps">Open Questions</a>
+</nav>
+
+<main>
+
+  <section id="changes">
+    <span class="badge">Phase 3 Update</span>
+    <h2>0. What Changed From Phase 2</h2>
+    <table>
+      <tr><th>Phase 3 input</th><th>What changed in the reasoning</th></tr>
+      <tr><td><strong>Each POS terminal keeps a local journal retained for 72 hours [VGI-F16]</strong>, and if streaming drops events the journal is re-sent in the overnight batch [VGI-F17]. The business tolerates loss of up to roughly <strong>15 minutes [VGI-F18]</strong> from the near-real-time inventory view during an outage if that loss is visible to merchandising and corrected by the next morning [VGI-F18].</td><td><strong>Decision 2 changes.</strong> It changes in the direction pre-committed in Phase 1: the report now rejects the Phase 2 lossless streaming ledger and chooses a simpler best-effort near-real-time projector with visible outage gaps and overnight correction. The Phase 2 conclusion was wrong because it assumed finance reconciled from the streaming ledger itself; the corrected fact moves reconciliation to the POS journal plus the overnight path [VGI-F16] [VGI-F17].</td></tr>
+      <tr><td><strong>Budget constraint re-evaluated under the corrected outage fact [VGI-F19]</strong></td><td>Yes, the ceiling becomes easier to meet. <em>Architectural inference:</em> the near-real-time path no longer needs the strongest streaming durability semantics, so the design can justify a lighter real-time footprint than Phase 2. The budget still constrains duplicate managed control planes, but the bounded-loss correction pushes the design toward a cheaper footprint.</td></tr>
+      <tr><td><strong>PCI boundary re-checked under the corrected outage fact [VGI-F20] [VGI-F21]</strong></td><td>The corrected loss-tolerance fact does <strong>not</strong> weaken the store-egress sanitization decision. Cardholder data still must never land in the analytics platform [VGI-F21], so the PCI boundary stays in place.</td></tr>
+    </table>
+  </section>
+
+  <section id="context">
+    <span class="badge">Controlled Test</span>
+    <h2>1. Business Context</h2>
+    <p>Verdant Grocers operates <strong>140 stores [VGI-F01]</strong> across <strong>three states [VGI-F02]</strong>. Today, store managers reorder from an overnight report, so a sell-out at <strong>10 AM [VGI-F15]</strong> is not visible to replenishment until the <strong>next morning [VGI-F15]</strong>.</p>
+    <p>The event path already exists: each store's point-of-sale terminals emit a transaction event per basket [VGI-F03], and those events reach an on-premises message broker today [VGI-F04]. The chain sees roughly <strong>900,000 basket events per day [VGI-F05]</strong> with a pronounced weekday-evening peak [VGI-F05].</p>
+    <p>The corrected Phase 3 fact changes only the outage-loss assumption for the near-real-time inventory view. Each POS terminal keeps a local journal retained for <strong>72 hours [VGI-F16]</strong>, dropped streaming events are re-sent in the overnight batch [VGI-F17], and the business tolerates loss of up to roughly <strong>15 minutes [VGI-F18]</strong> from the near-real-time view during an outage if the loss is visible to merchandising and corrected by the next morning [VGI-F18].</p>
+  </section>
+
+  <section id="objectives">
+    <span class="badge">Step 1 &amp; 2</span>
+    <h2>2. Business Objectives &amp; Constraints</h2>
+    <h3>Objectives</h3>
+    <table>
+      <tr><th>#</th><th>Objective</th></tr>
+      <tr><td>O1</td><td>Reduce inventory-visibility lag so replenishment can act during the trading day instead of waiting for the next-morning report.</td></tr>
+      <tr><td>O2</td><td>Introduce near-real-time visibility without breaking finance reconciliation, which is now satisfied by the POS journal plus the overnight path rather than by a lossless real-time stream.</td></tr>
+      <tr><td>O3</td><td>Deliver a Phase 3 design that fits a small team and the cloud budget ceiling while preserving future platform optionality where it is still justified.</td></tr>
+    </table>
+
+    <h3>Constraints</h3>
+    <table>
+      <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
+      <tr><td>C1</td><td>Scale starts at <strong>140 stores [VGI-F01]</strong> across <strong>three states [VGI-F02]</strong>.</td><td>Scope</td></tr>
+      <tr><td>C2</td><td>Input already lands on an on-premises message broker [VGI-F04].</td><td>Existing architecture</td></tr>
+      <tr><td>C3</td><td>The existing overnight batch warehouse is finance-critical [VGI-F08], cannot be switched off [VGI-F09], and finance's monthly close must not regress [VGI-F10].</td><td>Business continuity</td></tr>
+      <tr><td>C4</td><td>Each POS terminal keeps a local journal retained for <strong>72 hours [VGI-F16]</strong>, and dropped streaming events are re-sent in the overnight batch [VGI-F17].</td><td>Recovery mechanism</td></tr>
+      <tr><td>C5</td><td>The business tolerates loss of up to roughly <strong>15 minutes [VGI-F18]</strong> from the near-real-time inventory view during an outage, provided the loss is visible to merchandising and corrected by the next morning [VGI-F18].</td><td>Outage tolerance</td></tr>
+      <tr><td>C6</td><td>The new platform has a cloud run-rate ceiling of <strong>USD 8,000 per month [VGI-F19]</strong>; the existing overnight warehouse is budgeted separately [VGI-F19].</td><td>Budget</td></tr>
+      <tr><td>C7</td><td>PCI DSS applies to the POS transaction stream [VGI-F20], and cardholder data must never land in the analytics platform [VGI-F21].</td><td>Compliance / security</td></tr>
+      <tr><td>C8</td><td>The delivery team is only <strong>two full-time data engineers [VGI-F11]</strong>, and there is no platform team [VGI-F12].</td><td>Operating model</td></tr>
+      <tr><td>C9</td><td>Leadership does not want to be locked into one vendor [VGI-F13], but that phrase is still not defined in practice [VGI-F14].</td><td>Strategic constraint</td></tr>
+    </table>
+  </section>
+
+  <section id="requirements">
+    <span class="badge">Step 3</span>
+    <h2>3. Functional &amp; Quality Requirements</h2>
+    <div class="two-col">
+      <div>
+        <h3>Functional Requirements</h3>
+        <ul class="tick">
+          <li>The system must consume basket-sale events from the existing flow.</li>
+          <li>The system must update store-level stock positions from those sales.</li>
+          <li>The system must expose an operational inventory view for merchandising and replenishment.</li>
+          <li>The system must continue feeding the overnight finance warehouse.</li>
+          <li>The system must make any near-real-time outage loss visible to merchandising [VGI-F18].</li>
+          <li>The system must rely on the POS journal plus overnight resend for financial recovery [VGI-F16] [VGI-F17].</li>
+          <li>The system must remove or tokenise cardholder data before events leave the store network [VGI-F21].</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quality Attributes</h3>
+        <ul class="tick">
+          <li><strong>Freshness:</strong> stock positions visible <strong>"within a few minutes" [VGI-F06]</strong> of a sale. A tighter branch closer to <strong>one minute [VGI-F07]</strong> would change staffing, but that is not stated as the current requirement.</li>
+          <li><strong>Scalability:</strong> sustain roughly <strong>900,000 basket events per day [VGI-F05]</strong> with a weekday-evening peak [VGI-F05].</li>
+          <li><strong>Outage behavior:</strong> the near-real-time view may lose up to roughly <strong>15 minutes [VGI-F18]</strong> during an outage if that loss is visible to merchandising [VGI-F18] and corrected by the next morning [VGI-F18].</li>
+          <li><strong>Recovery:</strong> POS journals are retained for <strong>72 hours [VGI-F16]</strong>, and dropped events are re-sent in the overnight batch [VGI-F17].</li>
+          <li><strong>Security / compliance:</strong> PCI DSS applies [VGI-F20], and cardholder data must never land in the analytics platform [VGI-F21].</li>
+          <li><strong>Cost:</strong> cloud run-rate ceiling of <strong>USD 8,000 per month [VGI-F19]</strong> for the new platform.</li>
+          <li><strong>Operability:</strong> workable for <strong>two full-time data engineers [VGI-F11]</strong> with no platform team [VGI-F12].</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="scenarios">
+    <span class="badge">Step 3 → Measurable</span>
+    <h2>4. Quality-Attribute Scenarios</h2>
+
+    <h3>Scenario 1 — Sale-to-Stock Visibility</h3>
+    <table>
+      <tr><th>Source</th><td>Point-of-sale terminals already emitting one transaction event per basket [VGI-F03]</td></tr>
+      <tr><th>Stimulus</th><td>A basket sale reduces the on-hand quantity for an item in a store</td></tr>
+      <tr><th>Environment</th><td>Normal operation, including the weekday-evening peak within roughly <strong>900,000 basket events per day [VGI-F05]</strong></td></tr>
+      <tr><th>Artifact</th><td>Inventory projection pipeline and replenishment-facing stock view</td></tr>
+      <tr><th>Response</th><td>The sale is consumed, inventory state is updated, and the replenishment-facing stock view refreshes</td></tr>
+      <tr><th>Response Measure</th><td>Store-level stock positions become visible within <strong>"a few minutes" [VGI-F06]</strong> of the sale. A tighter branch closer to <strong>one minute [VGI-F07]</strong> remains a business-impact threshold rather than the current requirement.</td></tr>
+    </table>
+
+    <h3>Scenario 2 — Visible Bounded-Loss Outage</h3>
+    <table>
+      <tr><th>Source</th><td>Network interruption or stream-processing outage</td></tr>
+      <tr><th>Stimulus</th><td>The near-real-time path drops or misses basket events</td></tr>
+      <tr><th>Environment</th><td>Production operation while POS journals remain available for replay via the overnight batch [VGI-F16] [VGI-F17]</td></tr>
+      <tr><th>Artifact</th><td>Near-real-time inventory view, outage indicator, and overnight correction path</td></tr>
+      <tr><th>Response</th><td>The view flags degraded freshness to merchandising, tolerates a bounded loss window, and is corrected by the next morning through the journal resend path</td></tr>
+      <tr><th>Response Measure</th><td>Loss of up to roughly <strong>15 minutes [VGI-F18]</strong> from the near-real-time inventory view is tolerated during an outage if the loss is visible to merchandising [VGI-F18] and corrected by the next morning [VGI-F18].</td></tr>
+    </table>
+
+    <h3>Scenario 3 — PCI Boundary Enforcement</h3>
+    <table>
+      <tr><th>Source</th><td>POS transaction event carrying cardholder-related attributes</td></tr>
+      <tr><th>Stimulus</th><td>The event is about to leave the store network</td></tr>
+      <tr><th>Environment</th><td>Normal store operations under PCI DSS scope [VGI-F20]</td></tr>
+      <tr><th>Artifact</th><td>Store-egress sanitization/tokenization boundary and downstream analytics path</td></tr>
+      <tr><th>Response</th><td>Cardholder data is removed or tokenised before egress, and only the compliant event continues downstream</td></tr>
+      <tr><th>Response Measure</th><td>Cardholder data never lands in the analytics platform [VGI-F21], and sanitization occurs before the event leaves the store network [VGI-F21].</td></tr>
+    </table>
+  </section>
+
+  <section id="asrs">
+    <span class="badge">Step 4</span>
+    <h2>5. Architecturally Significant Requirements (ASRs)</h2>
+    <div class="mermaid">
+graph TD
+  R["Verdant Grocers Inventory Visibility"] --> A1["ASR 1<br/>Freshness at chain scale"]
+  R --> A2["ASR 2<br/>Visible bounded-loss near-real-time view"]
+  R --> A3["ASR 3<br/>PCI boundary before analytics"]
+  A1 --> A1d["'Few minutes' [VGI-F06]<br/>at 900,000/day scale [VGI-F05]"]
+  A2 --> A2d["72-hour POS journal [VGI-F16]<br/>15-minute tolerated loss [VGI-F18]"]
+  A3 --> A3d["PCI DSS [VGI-F20]<br/>CHD never lands in analytics [VGI-F21]"]
+  style R fill:#0b1f3a,color:#fff
+  style A1 fill:#e0762b,color:#fff
+  style A2 fill:#e0762b,color:#fff
+  style A3 fill:#e0762b,color:#fff
+    </div>
+    <table>
+      <tr><th>ASR</th><th>Why it is architecturally significant</th></tr>
+      <tr><td><strong>ASR 1 — Freshness at chain scale</strong></td><td>The target is inventory visibility within a few minutes [VGI-F06] while processing roughly 900,000 basket events per day [VGI-F05]. That combination shapes ingestion, state management, and serving architecture, so it is structural rather than a tuning detail.</td></tr>
+      <tr><td><strong>ASR 2 — Visible bounded-loss near-real-time view</strong></td><td>The corrected fact no longer requires a lossless real-time ledger. Instead, the architecture must make outages visible, tolerate loss of up to roughly 15 minutes [VGI-F18] in the near-real-time view, and rely on the 72-hour POS journal [VGI-F16] plus overnight resend [VGI-F17] for correction. That changes the stream-durability and cost profile materially.</td></tr>
+      <tr><td><strong>ASR 3 — PCI boundary before analytics</strong></td><td>PCI DSS applies [VGI-F20], and cardholder data must be removed or tokenised before events leave the store network [VGI-F21]. That dictates the system boundary itself, which is exactly what makes it architecturally significant.</td></tr>
+    </table>
+  </section>
+
+  <section id="utility">
+    <span class="badge">Step 4 → Prioritization</span>
+    <h2>6. Utility Tree</h2>
+    <div class="mermaid">
+graph LR
+  U["Utility"] --> QA1["Freshness"]
+  U --> QA2["Outage behavior / Recovery"]
+  U --> QA3["Security / Compliance"]
+  U --> QA4["Cost / Operability"]
+
+  QA1 --> S1["Stock view within a few minutes [VGI-F06]<br/>at chain event volume [VGI-F05]<br/><b>(High, High)</b>"]
+  QA2 --> S2["Up to 15 minutes loss tolerated [VGI-F18]<br/>corrected by next morning [VGI-F18]<br/><b>(High, Medium)</b>"]
+  QA3 --> S3["Cardholder data never lands in analytics [VGI-F21]<br/><b>(High, High)</b>"]
+  QA4 --> S4["Cloud run-rate <= USD 8,000/month [VGI-F19]<br/>run by two engineers [VGI-F11]<br/><b>(High, Medium)</b>"]
+
+  style U fill:#0b1f3a,color:#fff
+  style QA1 fill:#1f5fa8,color:#fff
+  style QA2 fill:#1f5fa8,color:#fff
+  style QA3 fill:#1f5fa8,color:#fff
+  style QA4 fill:#1f5fa8,color:#fff
+  style S1 fill:#e0c02b,color:#1a2233
+  style S2 fill:#e0c02b,color:#1a2233
+  style S3 fill:#c0392b,color:#fff
+  style S4 fill:#e0c02b,color:#1a2233
+    </div>
+  </section>
+
+  <section id="decisions">
+    <span class="badge">Step 5</span>
+    <h2>7. Architecture Decisions &amp; Trade-offs</h2>
+    <div class="change-note">
+      <strong>The "¿Para qué?" test applied to every recommendation.</strong> Each decision below states the outcome it serves, the business objective it traces to, and the ASR that makes it necessary rather than optional.
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Finance-safe coexistence</strong></td><td>Give replenishment same-day visibility without breaking the finance path that still depends on the overnight warehouse</td><td>O1 and O2</td><td>ASR 1 and ASR 2</td></tr>
+      <tr><td><strong>2 — Best-effort near-real-time projection with visible outage gaps</strong></td><td>Lower cost and complexity in the real-time path because finance recovery now comes from the POS journal and overnight resend</td><td>O2 and O3</td><td>ASR 2</td></tr>
+      <tr><td><strong>3 — Store-egress PCI sanitization</strong></td><td>Keep cardholder data out of analytics while preserving the sale signal the inventory pipeline needs</td><td>O2 and O3</td><td>ASR 3</td></tr>
+    </table>
+
+    <div class="decision">
+      <h4>Decision 1 — Keep a sidecar near-real-time inventory path while retaining the finance warehouse</h4>
+      <p><strong>Chosen approach.</strong> Reuse the existing on-premises broker [VGI-F04] as the authoritative post-egress event feed, keep the overnight finance warehouse in service [VGI-F08], and add a sidecar near-real-time inventory projector rather than replacing finance's path in this phase.</p>
+      <p><strong>Technology options (capability first, then ecosystem).</strong> The capability required is stateful event-driven inventory projection sourced from the existing broker while finance continues on the overnight warehouse path.<br/>
+      • <em>Open-source / portable:</em> Kafka Streams for broker-adjacent stateful projection, Apache Flink for keyed low-latency state, or Spark Structured Streaming if the team prefers a more SQL-centric projector. <strong>This remains the default direction in Phase 3</strong> because it reuses the existing broker [VGI-F04] and keeps the smallest additional priced footprint under the <strong>USD 8,000/month [VGI-F19]</strong> ceiling.<br/>
+      • <em>Platform / lakehouse:</em> Databricks Structured Streaming + Workflows when the stock-serving layer already lives in a lakehouse, Snowflake Snowpipe Streaming + Tasks when the serving layer is warehouse-centric, or Confluent Cloud if the broker layer itself is what the team wants managed. <strong>These remain secondary options</strong> because they add a priced control plane on top of the retained broker and overnight warehouse.<br/>
+      • <em>Hyperscaler-managed:</em> Azure Event Hubs + Stream Analytics, Google Cloud Pub/Sub + Dataflow, or Amazon MSK/Kinesis + Glue are <strong>still not the default recommendation in this phase</strong> because the budget ceiling [VGI-F19] disfavors duplicating the retained estate with a second fully managed control plane.<br/>
+      <em>Selection driver:</em> fastest safe path from the current broker to the stock-serving view, using the smallest additional priced footprint compatible with the budget ceiling [VGI-F19].</p>
+      <p><strong>Rejected alternative.</strong> Replace the overnight warehouse now with a single new end-to-end platform for both merchandising and finance.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> One platform would remove duplicate inventory logic, reduce reconciliation between operational and finance views, and avoid carrying both batch and near-real-time paths at once. If finance were free to move and the budget ceiling were much larger, consolidation could be the simpler long-term design.</p>
+      <p><strong>What is sacrificed.</strong> This sidecar pattern keeps two inventory paths alive for a period, so reconciliation, semantic drift, and duplicate testing remain real engineering work.</p>
+      <p><strong>What is gained.</strong> It directly protects the facts that the overnight warehouse is finance-critical [VGI-F08], cannot be switched off [VGI-F09], and monthly close must not regress [VGI-F10], while still improving operational freshness toward the "few minutes" target [VGI-F06] under the cloud cost ceiling [VGI-F19].</p>
+      <p><strong>Reversal condition.</strong> Revisit this and collapse to one platform only after finance validates that the new path can replace the old warehouse without harming close activities, and only if the replacement still fits within the run-rate ceiling [VGI-F19].</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The practical meaning of "not locked into one vendor" is still undefined [VGI-U04]. That unresolved fact can still change which managed or open-source implementation sits under this coexistence pattern, even though the coexistence pattern itself now stands.</p>
+      <p class="tradeoff">Trade-off: temporary duplication and reconciliation burden, in exchange for reducing business and budget risk while inventory freshness improves.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 2 — Best-effort near-real-time projection with visible outage gaps and overnight correction</h4>
+      <p><strong>Chosen approach.</strong> Use a simpler best-effort near-real-time inventory projector that makes outage loss visible to merchandising [VGI-F18], tolerates loss of up to roughly <strong>15 minutes [VGI-F18]</strong> in the near-real-time view during an outage, and relies on the POS journal retained for <strong>72 hours [VGI-F16]</strong> plus overnight resend [VGI-F17] to correct the data by the next morning [VGI-F18].</p>
+      <p><strong>Technology options.</strong> The capability required is a low-cost, operationally lightweight near-real-time projector whose outages are visible and whose financial recovery comes from the separate journal-and-batch path.<br/>
+      • <em>Open-source / portable:</em> Kafka Streams or Spark Structured Streaming with simple state stores and visible lag/health indicators, using the existing broker [VGI-F04] and the overnight resend path [VGI-F17]. <strong>This is now the default direction</strong> because it matches the corrected bounded-loss fact [VGI-F18] and keeps the run-rate lowest against the <strong>USD 8,000/month [VGI-F19]</strong> ceiling.<br/>
+      • <em>Platform / lakehouse:</em> Databricks, Snowflake, or Confluent-managed streaming remain viable only if the organization already absorbs part of their control-plane cost elsewhere; the corrected bounded-loss fact removes the strongest reason to pay for premium always-on durability in the real-time path.<br/>
+      • <em>Hyperscaler-managed:</em> Azure, Google Cloud, or AWS managed streaming can still work, but they are now even harder to justify as the default because the corrected fact no longer requires a lossless real-time ledger and therefore weakens the case for paying for stronger managed durability semantics.<br/>
+      <em>Selection driver:</em> lowest incremental run-rate and simplest operational footprint that still delivers the freshness goal [VGI-F06] and the bounded-loss outage behavior [VGI-F18].</p>
+      <p><strong>Rejected alternative.</strong> Keep the Phase 2 lossless, replayable streaming ledger as the core of the near-real-time path.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It gives stronger continuity during outages, reduces divergence between the real-time and overnight views, and avoids waiting until the next morning to correct missed events. That is why Phase 2 chose it under the then-stated fact pattern.</p>
+      <p><strong>What is sacrificed.</strong> During an outage, merchandising may see an incomplete near-real-time view for up to roughly <strong>15 minutes [VGI-F18]</strong>, and the correction arrives by the next morning [VGI-F18] rather than through a lossless real-time replay path.</p>
+      <p><strong>What is gained.</strong> The design now matches the corrected facts: POS journals retained for <strong>72 hours [VGI-F16]</strong> provide the financial recovery mechanism, the overnight resend path [VGI-F17] satisfies reconciliation, and the business explicitly tolerates the bounded-loss near-real-time behavior [VGI-F18]. It also makes the <strong>USD 8,000/month [VGI-F19]</strong> ceiling easier to meet because the real-time path no longer needs the strongest durability semantics.</p>
+      <p><strong>Reversal condition.</strong> Phase 1 pre-committed to simplify this decision if bounded loss proved acceptable and overnight correction proved operationally sufficient. That is now the stated fact pattern [VGI-F17] [VGI-F18]. Revisit this and move back toward a lossless real-time ledger only if the business later stops tolerating roughly <strong>15 minutes [VGI-F18]</strong> of outage loss in the near-real-time inventory view, or if finance again needs to reconcile directly from the streaming path rather than from the journal-plus-overnight route.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The unresolved vendor-lock-in boundary [VGI-U04] can still change whether the bounded-loss projector is built from open components or a managed streaming service, but it does not restore the old reason for a lossless real-time ledger.</p>
+      <p class="tradeoff">Trade-off: a bounded outage gap in the near-real-time inventory view, in exchange for lower cost and simpler operations because financial recovery now comes from the POS journal and overnight batch rather than from a lossless streaming ledger. This is the explicit Phase 3 change in the direction pre-committed in Phase 1.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 3 — Remove or tokenise cardholder data before the event leaves the store network</h4>
+      <p><strong>Chosen approach.</strong> Insert a store-egress sanitization/tokenization boundary so the event published downstream preserves the sale signal needed for inventory and finance, but cardholder data is removed or tokenised before the event leaves the store network [VGI-F21].</p>
+      <p><strong>Technology options.</strong> The capability required is a CHD-before-egress sanitization boundary that satisfies the supplied PCI facts [VGI-F20] [VGI-F21] while preserving event utility downstream.<br/>
+      • <em>Open-source / portable:</em> a broker-side sanitizer or stream processor plus Vault-backed tokenization, or a lightweight edge service that emits a compliant event contract to Kafka, Pulsar, or another portable broker.<br/>
+      • <em>Platform / lakehouse:</em> Confluent stream processing plus external tokenization, or Databricks / Snowflake only after the compliant event contract has already been produced upstream.<br/>
+      • <em>Hyperscaler-managed:</em> Azure, Google Cloud, or AWS tokenization and secrets tooling may support this boundary, but the compliant event must exist <em>before</em> the analytics platform receives it [VGI-F21].<br/>
+      <em>Selection driver:</em> where the PCI boundary is enforced, not which analytics platform is most convenient.</p>
+      <p><strong>Rejected alternative.</strong> Send the raw POS event to the cloud analytics platform and mask or tokenize it only after ingestion.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is operationally simpler, keeps fewer moving parts at the edge, and is a common pattern in lower-sensitivity pipelines because the full raw event is available to every downstream consumer from one place.</p>
+      <p><strong>What is sacrificed.</strong> A new edge-processing boundary must be operated, observed, and tested; debugging can be harder because the downstream platform no longer sees raw cardholder fields.</p>
+      <p><strong>What is gained.</strong> The design still satisfies the supplied facts that PCI DSS applies [VGI-F20] and cardholder data must never land in the analytics platform, but instead be removed or tokenised before events leave the store network [VGI-F21].</p>
+      <p><strong>Reversal condition.</strong> Revisit the implementation details only if the downstream platform stops being an analytics platform for this stream or if the compliance boundary itself changes. The corrected outage-loss fact does not alter this boundary.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The unresolved lock-in definition [VGI-U04] still affects whether tokenization and policy enforcement should be as vendor-neutral as possible or whether a managed provider's native controls are acceptable.</p>
+      <p class="tradeoff">Trade-off: more edge-boundary engineering and a stricter data contract, in exchange for an architecture that satisfies the supplied PCI boundary facts [VGI-F20] [VGI-F21] by ensuring analytics never receives raw cardholder data. The Phase 3 loss-tolerance correction does not weaken this decision.</p>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <span class="badge">Visualized Solution</span>
+    <h2>8. Proposed Architecture (Phase 3)</h2>
+    <div class="mermaid">
+flowchart LR
+  subgraph STORE["Store network"]
+    POS["POS basket events [VGI-F03]"]
+    JOURNAL["Local POS journal<br/>72 hours [VGI-F16]"]
+    EDGE["CHD removal / tokenization boundary<br/>before egress [VGI-F21]"]
+  end
+
+  subgraph CURRENT["Current / retained estate"]
+    BROKER["Existing on-premises broker [VGI-F04]<br/>compliant event feed"]
+    BATCH["Existing overnight warehouse [VGI-F08]<br/>journal resend path [VGI-F17]"]
+  end
+
+  subgraph NEW["New platform"]
+    PROJ["Best-effort near-real-time projector<br/>visible outage gap <= 15 minutes [VGI-F18]"]
+    VIEW["Store stock visibility view<br/>'few minutes' target [VGI-F06]"]
+  end
+
+  subgraph USERS["Consumers"]
+    MERCH["Merchandising / replenishment"]
+    FIN["Finance"]
+  end
+
+  POS --> JOURNAL
+  POS --> EDGE
+  EDGE --> BROKER
+  JOURNAL --> BATCH
+  BROKER --> PROJ
+  PROJ --> VIEW
+  VIEW --> MERCH
+  BATCH --> FIN
+
+  style STORE fill:#eaf2fb,stroke:#1f5fa8
+  style CURRENT fill:#1f5fa8,color:#fff
+  style NEW fill:#e0762b,color:#fff
+  style USERS fill:#eaf2fb,stroke:#1f5fa8
+    </div>
+  </section>
+
+  <section id="governance">
+    <span class="badge">Required Section</span>
+    <h2>9. Governance &amp; Security Recommendations</h2>
+    <p><strong>Is governance/security an ASR here?</strong> <strong>Yes.</strong> PCI DSS applies [VGI-F20], and cardholder data must be removed or tokenised before the event leaves the store network [VGI-F21], so the compliance boundary shapes the ingestion topology itself. <strong>This report does not claim full PCI certification.</strong> It reasons only from the supplied facts about the egress boundary and analytics prohibition; broader PCI operating controls would need separate confirmation before anyone could claim end-to-end compliance status.</p>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Data classification</td><td>Classify raw POS events that still contain cardholder elements as <strong>Restricted-PCI</strong> <em>(derived from VGI-F20 and VGI-F21)</em>. Classify the post-egress sanitized event as <strong>Internal Operational</strong> <em>(assumption)</em> unless later facts raise it further.</td></tr>
+      <tr><td>Access-control model</td><td>Use a strict boundary between the Restricted-PCI zone and the analytics zone. Finance and merchandising should consume the compliant downstream contract, not raw cardholder data. Prefer tag-based policy if more consumer groups are added later.</td></tr>
+      <tr><td>PII / CHD protection</td><td>Remove or tokenise cardholder data before egress [VGI-F21]. Do not rely on masking after ingestion into analytics; that would violate the stated fact.</td></tr>
+      <tr><td>Auditability</td><td>Log which edge transformation version produced each downstream event, which tokenization policy ran, and when the near-real-time path signaled degraded freshness to merchandising [VGI-F18].</td></tr>
+      <tr><td>Lineage &amp; data contracts</td><td>Track lineage from POS event [VGI-F03] through the PCI boundary [VGI-F21], into the best-effort projector, and into the overnight warehouse/journal resend path [VGI-F17]. Treat the compliant post-egress event schema as a governed contract.</td></tr>
+      <tr><td>Data quality &amp; quarantine</td><td>Quarantine malformed or non-compliant events rather than silently dropping them. Because correction relies on journal resend [VGI-F17], quarantine must preserve evidence and make the degradation visible, not silently discard it.</td></tr>
+      <tr><td>Secrets &amp; keys</td><td>Keep tokenization secrets and keys outside code, in a dedicated secrets manager. The exact product remains open to the still-undefined lock-in boundary [VGI-U04].</td></tr>
+    </table>
+  </section>
+
+  <section id="cost">
+    <span class="badge">Step 5 → Reflection</span>
+    <h2>10. Cost of Change</h2>
+    <div class="cost-spectrum">
+      <div class="cost-bar"></div>
+      <div class="cost-labels">
+        <span>Reversible</span>
+        <span>Partially Reversible</span>
+        <span>Near-Irreversible</span>
+      </div>
+      <div class="cost-points">
+        <div class="cost-point" style="left:14%;"><div class="dot"></div>Dashboard layout and replenishment screens</div>
+        <div class="cost-point" style="left:35%;"><div class="dot"></div>Processing engine choice under the cloud ceiling</div>
+        <div class="cost-point" style="left:58%;"><div class="dot"></div>Sidecar coexistence pattern</div>
+        <div class="cost-point" style="left:74%;"><div class="dot"></div>Outage-visibility semantics and next-morning correction contract</div>
+        <div class="cost-point" style="left:94%;"><div class="dot"></div>PCI boundary and compliant event contract</div>
+      </div>
+    </div>
+    <p>The most expensive decisions to reverse are now the compliant post-egress event contract [VGI-F21] and the outage-visibility / next-morning-correction contract created by the POS journal and overnight resend path [VGI-F16] [VGI-F17] [VGI-F18]. Those are the boundaries downstream consumers and operating procedures will depend on.</p>
+    <p>The cloud budget ceiling of <strong>USD 8,000 per month [VGI-F19]</strong> becomes easier to satisfy under bounded loss because the near-real-time path no longer has to pay for the strongest streaming durability semantics. The budget still rules out casually duplicating the retained broker [VGI-F04] and overnight warehouse [VGI-F08] with a second premium managed stack, but the corrected outage fact moves Decision 2 leftward on the cost spectrum compared with Phase 2.</p>
+  </section>
+
+  <section id="gaps">
+    <span class="badge">Do Not Invent Requirements</span>
+    <h2>11. Open Questions for the Stakeholder</h2>
+    <div class="gap-box">
+      <ol>
+        <li>What does <strong>"not locked into one vendor"</strong> mean in practice [VGI-U04]? Without that answer, the report can justify the architectural boundaries above, but not a final stance on how much managed-provider coupling is acceptable inside those boundaries.</li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Verdant Grocers controlled-test report — Phase 3 revision grounded in supplied facts and explicit residual unknowns.
+</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>

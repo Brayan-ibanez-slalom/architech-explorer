@@ -179,3 +179,90 @@ scenarios:
         topic: "whether the firmware team can accept a blocking schema-compatibility check before release"
       - id: RIOT-U05
         topic: "data residency / regulatory constraints per region"
+
+  # =========================================================================
+  - id: verdant-grocers
+    name: "Verdant Grocers - Near-Real-Time Inventory Visibility"
+    source: "GitHub issue #8 + PR comments 5818993306 and 5820970476 source artifact: knowledge-base/VerdantGrocers_Issue8_Source.pdf"
+    facts:
+      - id: VGI-F01
+        value: "140 stores"
+        matches: '140\s*stores?'
+        quote: "140 stores across three states."
+      - id: VGI-F02
+        value: "three states"
+        quote: "140 stores across three states."
+      - id: VGI-F03
+        value: "point-of-sale terminals already emit a transaction event per basket"
+        quote: "Each store has point-of-sale terminals that already emit a transaction event per basket."
+      - id: VGI-F04
+        value: "events reach an on-premises message broker today"
+        quote: "The events reach an on-premises message broker today."
+      - id: VGI-F05
+        value: "roughly 900,000 basket events per day with a weekday-evening peak"
+        matches: '900,?000'
+        quote: "Roughly 900,000 basket events per day across the chain, with a pronounced weekday-evening peak."
+      - id: VGI-F06
+        value: "stock positions visible within a few minutes of a sale"
+        subject: "inventory|stock|minutes|sale|freshness|replenishment|visible"
+        quote: "The merchandising team wants store-level stock positions visible \"within a few minutes\" of a sale, and has said that a figure closer to one minute would change how they staff replenishment."
+        note: "Deliberately imprecise in the source. Do NOT convert this to a numeric SLA."
+      - id: VGI-F07
+        value: "closer to one minute would change replenishment staffing"
+        matches: 'one\s*minute|1\s*minute'
+        subject: "minute|staff|staffing|replenishment|freshness"
+        quote: "The merchandising team wants store-level stock positions visible \"within a few minutes\" of a sale, and has said that a figure closer to one minute would change how they staff replenishment."
+        note: "A business-impact threshold, not the current requirement."
+      - id: VGI-F08
+        value: "existing overnight batch warehouse that finance depends on"
+        quote: "There is an existing overnight batch warehouse that finance depends on."
+      - id: VGI-F09
+        value: "batch warehouse cannot be switched off"
+        quote: "It cannot be switched off, and finance's monthly close must not regress."
+      - id: VGI-F10
+        value: "finance's monthly close must not regress"
+        quote: "It cannot be switched off, and finance's monthly close must not regress."
+      - id: VGI-F11
+        value: "two full-time data engineers"
+        quote: "The company has two full-time data engineers."
+      - id: VGI-F12
+        value: "no platform team"
+        quote: "There is no platform team."
+      - id: VGI-F13
+        value: "leadership does not want to be locked into one vendor"
+        quote: "Leadership has said it does not want to be \"locked into one vendor\", but has not defined what that means in practice."
+      - id: VGI-F14
+        value: "vendor lock-in concern is not defined in practice"
+        quote: "Leadership has said it does not want to be \"locked into one vendor\", but has not defined what that means in practice."
+      - id: VGI-F15
+        value: "a product that sells out at 10 AM is not visible as out-of-stock until the next morning"
+        matches: '10\s*AM|next\s*morning'
+        subject: "out-of-stock|next morning|sell|sells|inventory|stock"
+        quote: "Store managers currently reorder from a report that is refreshed overnight, so a product that sells out at 10 AM is not visible as out-of-stock to the replenishment team until the next morning."
+      - id: VGI-F16
+        value: "each POS terminal keeps a local journal of every basket it rings, retained for 72 hours"
+        matches: '72\s*hours?'
+        quote: "Each POS terminal keeps a local journal of every basket it rings, retained for 72 hours."
+      - id: VGI-F17
+        value: "if the streaming path drops events during an outage, the journal is re-sent in the overnight batch and finance reconciles from that"
+        quote: "If the streaming path drops events during an outage, the journal is re-sent in the overnight batch and finance reconciles from that."
+      - id: VGI-F18
+        value: "the business tolerates loss of up to roughly 15 minutes of basket events from the near-real-time inventory view during an outage, provided the loss is visible to merchandising and is corrected by the next morning"
+        matches: '15\s*minutes?|next\s*morning'
+        subject: "minutes|outage|near-real-time|inventory view|visible|merchandising|next morning|loss"
+        quote: "The business therefore tolerates loss of up to roughly 15 minutes of basket events from the near-real-time inventory view during an outage, provided the loss is visible to merchandising and is corrected by the next morning."
+      - id: VGI-F19
+        value: "cloud run-rate ceiling of USD 8,000 per month for the new platform, excluding the existing overnight warehouse"
+        matches: '8,000'
+        subject: "budget|cost|run-rate|cloud|month|platform"
+        quote: "A cloud run-rate ceiling of USD 8,000 per month for the new platform, excluding the existing overnight warehouse, which is budgeted separately."
+      - id: VGI-F20
+        value: "PCI DSS applies to the POS transaction stream"
+        quote: "PCI DSS applies to the POS transaction stream."
+      - id: VGI-F21
+        value: "cardholder data must never land in the analytics platform and must be removed or tokenised before events leave the store network"
+        subject: "cardholder|analytics|tokenised|tokenized|store network|pci|remove"
+        quote: "Cardholder data must never land in the analytics platform; it has to be removed or tokenised before the events leave the store network."
+    unknowns:
+      - id: VGI-U04
+        topic: "what 'not locked into one vendor' means in practice"

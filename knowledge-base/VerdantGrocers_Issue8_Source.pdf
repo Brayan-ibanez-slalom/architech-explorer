@@ -1,0 +1,111 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
+4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
+5 0 obj << /Length 2873 >> stream
+BT
+/F1 11 Tf
+54 770 Td
+(Verdant Grocers - Near-Real-Time Inventory Visibility \(Controlled Test Source\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Original scenario) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Verdant Grocers is a regional chain. Store managers currently reorder from a report that is) Tj
+0 -14 Td
+(refreshed overnight, so a product that sells out at 10 AM is not visible as out-of-stock to) Tj
+0 -14 Td
+(the replenishment team until the next morning.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(What is known:) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- 140 stores across three states.) Tj
+0 -14 Td
+(- Each store has point-of-sale terminals that already emit a transaction event per basket.) Tj
+0 -14 Td
+(The events reach an on-premises message broker today.) Tj
+0 -14 Td
+(- Roughly 900,000 basket events per day across the chain, with a pronounced weekday-evening) Tj
+0 -14 Td
+(peak.) Tj
+0 -14 Td
+(- The merchandising team wants store-level stock positions visible "within a few minutes" of) Tj
+0 -14 Td
+(a sale, and has said that a figure closer to one minute would change how they staff) Tj
+0 -14 Td
+(replenishment.) Tj
+0 -14 Td
+(- There is an existing overnight batch warehouse that finance depends on. It cannot be) Tj
+0 -14 Td
+(switched off, and finance's monthly close must not regress.) Tj
+0 -14 Td
+(- The company has two full-time data engineers. There is no platform team.) Tj
+0 -14 Td
+(- Leadership has said it does not want to be "locked into one vendor", but has not defined) Tj
+0 -14 Td
+(what that means in practice.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Phase 2 additions from PR comment 5818993306) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Zero basket-event loss is required.) Tj
+0 -14 Td
+(- Finance reconciles store sales against this event stream, and a missing basket is a) Tj
+0 -14 Td
+(missing sale on the books.) Tj
+0 -14 Td
+(- A gap must be recoverable, not merely detected.) Tj
+0 -14 Td
+(- A cloud run-rate ceiling of USD 8,000 per month for the new platform, excluding the) Tj
+0 -14 Td
+(existing overnight warehouse, which is budgeted separately.) Tj
+0 -14 Td
+(- PCI DSS applies to the POS transaction stream.) Tj
+0 -14 Td
+(- Cardholder data must never land in the analytics platform; it has to be removed or) Tj
+0 -14 Td
+(tokenised before the events leave the store network.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Phase 3 correction from PR comment 5820970476) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(- Each POS terminal keeps a local journal of every basket it rings, retained for 72 hours.) Tj
+0 -14 Td
+(- If the streaming path drops events during an outage, the journal is re-sent in the) Tj
+0 -14 Td
+(overnight batch and finance reconciles from that.) Tj
+0 -14 Td
+(- The business therefore tolerates loss of up to roughly 15 minutes of basket events from) Tj
+0 -14 Td
+(the near-real-time inventory view during an outage, provided the loss is visible to) Tj
+0 -14 Td
+(merchandising and is corrected by the next morning.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+3236
+%%EOF
