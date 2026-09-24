@@ -117,6 +117,7 @@
 ---
 
 ## Anti-Bias Checklist (apply before recommending any tool)
+- [ ] **"¿Para qué?"** — can I state the outcome this tool serves, the business objective it traces to, and the ASR that makes it necessary? If not, it is a preference, not a decision.
 - [ ] Did I state the **capability** required before naming any product?
 - [ ] Did I offer options from **at least 2–3 different ecosystems** (not all one cloud)?
 - [ ] Did I include at least one **open-source / portable** option where one genuinely exists?

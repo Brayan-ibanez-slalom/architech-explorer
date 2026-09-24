@@ -123,6 +123,9 @@
   .flow-legend{font-size:.8rem;color:var(--gray);margin-top:6px;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+  .status-pending { background:#fff3cd; color:#7a5b00; border:1px solid #e0c060;
+                    border-radius:4px; padding:2px 8px; font-size:0.75em;
+                    font-weight:700; letter-spacing:.03em; vertical-align:middle; }
 </style>
 </head>
 <body>
@@ -166,7 +169,7 @@
       <tr><td>Architecture decisions</td><td>Named as patterns only (e.g., "hybrid ingestion architecture")</td><td>Each decision now names <strong>concrete tool options</strong>, justified by the trade-off — not by popularity</td></tr>
       <tr><td>ASR justification</td><td>Implicit — shown only inside the diagram node</td><td>Explicit one-sentence justification for <em>why</em> each ASR is architecturally significant, written out in prose</td></tr>
       <tr><td>Framework grounding</td><td>None</td><td>Cites ATAM (utility tree), ADRs (decision persistence), and Well-Architected pillars where relevant</td></tr>
-      <tr><td><strong>Vendor neutrality</strong></td><td>AWS-skewed (bias audit: 11 AWS/Amazon/Kinesis mentions vs. 2 Azure, 1 GCP, 0 Databricks/Snowflake)</td><td>Every decision now offers options across <strong>open-source, platform/lakehouse, and hyperscaler</strong> ecosystems, selected by trade-off — plus an explicit "what platform are you on?" open question instead of assuming one</td></tr>
+      <tr><td><strong>Vendor neutrality</strong></td><td>AWS-skewed (repository-wide bias audit: 11 AWS/Amazon/Kinesis mentions across all files vs. 2 Azure, 1 GCP, 0 Databricks/Snowflake)</td><td>Every decision now offers options across <strong>open-source, platform/lakehouse, and hyperscaler</strong> ecosystems, selected by trade-off — plus an explicit "what platform are you on?" open question instead of assuming one</td></tr>
       <tr><td><strong>Governance &amp; security</strong></td><td>Mentioned only inside Decision 3 and one ASR</td><td>Dedicated <a href="#governance">Section 11</a> covering classification, ABAC access model, PII protection techniques, auditability, lineage, data contracts, quality/quarantine, plus anti-patterns</td></tr>
       <tr><td>Cost of Change coverage</td><td>Technical decisions only</td><td>Adds governance model and storage-format lock-in to the spectrum, with an explicit optionality recommendation (open table formats)</td></tr>
       <tr><td>Self-audit</td><td>Not shown</td><td>Definition-of-Done checklist run explicitly against this report (see end of section)</td></tr>
@@ -232,11 +235,11 @@ graph LR
       <div>
         <h3>Current Scale</h3>
         <ul class="tick">
-          <li>20M customers</li>
-          <li>5M interactions/day</li>
+          <li>20M [C360-F11] customers</li>
+          <li>5M interactions [C360-F12]/day</li>
           <li>4 initial source systems</li>
-          <li>3 years of historical data</li>
-          <li>3× interaction growth expected within 2 years</li>
+          <li>3 years [C360-F14] of historical data</li>
+          <li>3× interaction growth expected within 2 years [C360-F05]</li>
         </ul>
       </div>
     </div>
@@ -256,11 +259,11 @@ graph LR
     <h3>Constraints</h3>
     <table>
       <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
-      <tr><td>C1</td><td>First production release within 4 months</td><td>Timeline</td></tr>
+      <tr><td>C1</td><td>First production release within 4 months [C360-F09]</td><td>Timeline</td></tr>
       <tr><td>C2</td><td>Infra/processing cost must stay observable as usage grows</td><td>Budget</td></tr>
-      <tr><td>C3</td><td>Standard new source onboarded within 2 weeks</td><td>Delivery capacity</td></tr>
+      <tr><td>C3</td><td>Standard new source onboarded within 2 weeks [C360-F07]</td><td>Delivery capacity</td></tr>
       <tr><td>C4</td><td>Data contains PII — controlled, auditable access required</td><td>Regulatory / Security</td></tr>
-      <tr><td>C5</td><td>3× growth in interactions within 2 years</td><td>Scale</td></tr>
+      <tr><td>C5</td><td>3× growth in interactions within 2 years [C360-F05]</td><td>Scale</td></tr>
     </table>
   </section>
 
@@ -284,12 +287,12 @@ graph LR
       <div>
         <h3>Quality Attributes (how well)</h3>
         <ul class="tick">
-          <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM</li>
-          <li><strong>Latency (tiered):</strong> Marketing = hours; Service ≤ 15 min</li>
-          <li><strong>Scalability:</strong> absorb 3× growth in 2 years</li>
-          <li><strong>Modifiability:</strong> 2–4 new sources/yr, standard onboarding ≤ 2 weeks</li>
+          <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM [C360-F01]</li>
+          <li><strong>Latency (tiered):</strong> Marketing = "several hours" tolerance <em>(no precise bound given — see Open Questions)</em>; Service ≤ 15 min [C360-F03]</li>
+          <li><strong>Scalability:</strong> absorb 3× growth in 2 years [C360-F05]</li>
+          <li><strong>Modifiability:</strong> 2–4 new sources [C360-F06]/yr, standard onboarding ≤ 2 weeks [C360-F07]</li>
           <li><strong>Security:</strong> auditable, controlled PII access</li>
-          <li><strong>Cost efficiency:</strong> observable, non-linear cost growth</li>
+          <li><strong>Cost observability:</strong> infrastructure and processing costs must remain <em>observable</em> as usage grows <em>(no budget ceiling or unit-cost target given — see Open Questions)</em></li>
         </ul>
       </div>
     </div>
@@ -307,17 +310,17 @@ graph LR
       <tr><th>Environment</th><td>Normal business operations, peak hours</td></tr>
       <tr><th>Artifact</th><td>Customer 360 pipeline / serving layer</td></tr>
       <tr><th>Response</th><td>Interaction ingested, resolved to customer identity, made available</td></tr>
-      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes</strong>, 99% of the time</td></tr>
+      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes [C360-F03]</strong>. <em>Attainment percentile (e.g. p95/p99) and measurement window were not specified — see Open Questions.</em></td></tr>
     </table>
 
     <h3>Scenario 2 — New Source Onboarding</h3>
     <table>
       <tr><th>Source</th><td>Data engineering team</td></tr>
       <tr><th>Stimulus</th><td>Request to onboard a new standard-format source</td></tr>
-      <tr><th>Environment</th><td>Ongoing production, zero downtime allowed</td></tr>
+      <tr><th>Environment</th><td>Ongoing production operation <em>(permitted disruption during onboarding was not specified — see Open Questions)</em></td></tr>
       <tr><th>Artifact</th><td>Ingestion / schema layer</td></tr>
       <tr><th>Response</th><td>New source integrated using standard connector pattern</td></tr>
-      <tr><th>Response Measure</th><td>Onboarded within <strong>≤ 2 weeks</strong>, zero disruption to existing pipelines</td></tr>
+      <tr><th>Response Measure</th><td>Onboarded and flowing into Customer 360 within <strong>≤ 2 weeks [C360-F07]</strong> <em>(given). Acceptable impact on existing pipelines was not specified — see Open Questions.</em></td></tr>
     </table>
   </section>
 
@@ -330,9 +333,9 @@ graph TD
   R["Customer 360 Platform"] --> A1["ASR 1<br/>Identity Resolution at Scale"]
   R --> A2["ASR 2<br/>Tiered Freshness Requirements"]
   R --> A3["ASR 3<br/>Auditable PII Access Under Extensibility"]
-  A1 --> A1d["20M+ customers, 4+ sources,<br/>3x growth — trust depends on match accuracy"]
-  A2 --> A2d["Hours vs 15min vs 7AM daily —<br/>forces layered ingestion/serving design"]
-  A3 --> A3d["Security must scale with new sources<br/>added every 2-4 weeks, no re-architecture"]
+  A1 --> A1d["20M [C360-F11]+ customers, 4+ sources [C360-F13],<br/>3x [C360-F18] growth — trust depends on match accuracy"]
+  A2 --> A2d["Hours vs 15min [C360-F03] vs 7AM [C360-F01] daily —<br/>forces layered ingestion/serving design"]
+  A3 --> A3d["Security must scale as 2-4 new sources [C360-F06]<br/>are added per year, each within a 2-week SLA"]
   style R fill:#0b1f3a,color:#fff
   style A1 fill:#e0762b,color:#fff
   style A2 fill:#e0762b,color:#fff
@@ -341,9 +344,9 @@ graph TD
     <h3>Why Each ASR Is Architecturally Significant (explicit justification)</h3>
     <table>
       <tr><th>ASR</th><th>Justification</th></tr>
-      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 11).</td></tr>
-      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours / 15 min / 7 AM) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
-      <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
+      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M [C360-F11]+ customers across 4+ systems [C360-F13]; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 12).</td></tr>
+      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours [C360-F02] / 15 min [C360-F03] / 7 AM [C360-F01]) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
+      <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources [C360-F06] are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
     </table>
   </section>
 
@@ -359,11 +362,11 @@ graph LR
   U --> QA3["Security"]
   U --> QA4["Modifiability"]
 
-  QA1 --> S1["Absorb 3x interaction growth<br/>in 2 years without re-arch<br/><b>(High, High)</b>"]
-  QA2 --> S2["CS data available ≤15min, 99%<br/><b>(High, Medium)</b>"]
-  QA2 --> S3["Dashboards ready by 7:00 AM daily<br/><b>(Medium, Low)</b>"]
+  QA1 --> S1["Absorb 3x [C360-F18] interaction growth<br/>in 2 years [C360-F05] without re-arch<br/><b>(High, High)</b>"]
+  QA2 --> S2["CS data available ≤15min [C360-F03]<br/><b>(High, Medium)</b>"]
+  QA2 --> S3["Dashboards ready by 7:00 AM [C360-F01] daily<br/><b>(Medium, Low)</b>"]
   QA3 --> S4["PII access controlled & auditable<br/>across all sources<br/><b>(High, Medium)</b>"]
-  QA4 --> S5["New standard source onboarded<br/>in ≤2 weeks<br/><b>(Medium, Medium)</b>"]
+  QA4 --> S5["New standard source onboarded<br/>in ≤2 weeks [C360-F07]<br/><b>(Medium, Medium)</b>"]
 
   style U fill:#0b1f3a,color:#fff
   style QA1 fill:#1f5fa8,color:#fff
@@ -383,53 +386,95 @@ graph LR
   <section id="decisions">
     <span class="badge">Step 5</span>
     <h2>9. Architecture Decisions & Trade-offs</h2>
+    <div style="background:#eaf2fb;border-left:4px solid #1f5fa8;padding:14px 18px;border-radius:6px;margin-bottom:18px;">
+      <strong>The "¿Para qué?" test applied to each decision below.</strong> Before naming any tool,
+      each decision must answer: <em>What outcome does this serve? Which business objective does it
+      trace back to? Which quality attribute or ASR makes it necessary rather than optional?</em>
+      A recommendation that cannot answer all three is a preference, not a justified decision.
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Hybrid ingestion</strong></td><td>Customer Service sees interactions fast enough to act on them, without paying real-time cost for marketing data</td><td>O2 (fast-turnaround insight for Customer Service)</td><td>ASR 2 — tiered freshness (15 min [C360-F03] vs. hours vs. 7 AM [C360-F01])</td></tr>
+      <tr><td><strong>2 — Identity resolution service</strong></td><td>One customer appears as one customer, so every downstream number can be trusted</td><td>O1 (trusted unified view, eliminating manual reconciliation)</td><td>ASR 1 — identity resolution at scale across 20M [C360-F11]+ customers</td></tr>
+      <tr><td><strong>3 — Connector framework + central access control</strong></td><td>New sources onboard fast <em>without</em> re-opening compliance risk each time</td><td>O3 (onboard new sources quickly for analytics/DS)</td><td>ASR 3 — auditable PII access under continuous extensibility</td></tr>
+    </table>
 
     <div class="decision">
-      <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
-      <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min SLA) and standard batch for marketing/dashboard data (7 AM SLA).</p>
-      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is a streaming/micro-batch ingestion path sustaining the ≤15 min SLA alongside a batch path for the 7 AM SLA.<br/>
+      <h4>Decision 1 — Ingestion topology <span class="status-pending">(PENDING VALIDATION — not settled)</span></h4>
+      <p><strong>Provisional direction:</strong> micro-batch/streaming for Customer Service-facing events (≤15 min [C360-F03] SLA) and standard batch for marketing/dashboard data (7 AM [C360-F01] SLA).</p>
+      <p class="note"><strong>Why this is marked pending rather than decided.</strong> The entire case for two paths is that batch is materially cheaper for the marketing data. No budget or unit-cost target was given [C360-U04], so that saving is <em>assumed, not measured</em> &mdash; while the duplicate-path reconciliation cost is certain. On the stated evidence the honest output is a decision to <em>run a comparison</em>, not a decision to build a hybrid.</p>
+      <p><strong>Validation required before this becomes a decision.</strong> Prototype one representative source both ways &mdash; a single unified incremental path, and split batch/streaming paths. Compare infrastructure cost, operational effort, reconciliation defects, and the test surface for a schema change. Adopt the hybrid <em>only</em> if the measured saving exceeds the duplicated engineering and reconciliation cost.</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is a streaming/micro-batch ingestion path sustaining the ≤15 min [C360-F03] SLA alongside a batch path for the 7 AM [C360-F01] SLA.<br/>
       • <em>Open-source / portable:</em> Apache Kafka or Apache Pulsar + Apache Flink (streaming-native) or Spark Structured Streaming; Airflow or Dagster for batch orchestration.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Auto Loader + Structured Streaming + Workflows), Snowflake (Snowpipe Streaming + Dynamic Tables + Tasks), Confluent Cloud.<br/>
       • <em>Hyperscaler-managed:</em> Azure Event Hubs + Data Factory, Google Cloud Pub/Sub + Dataflow, or Amazon MSK/Kinesis + Glue.<br/>
       <em>Selection driver:</em> pick by team skills and existing platform commitment — not by vendor. With no stated cloud commitment, a portable Kafka/Flink or lakehouse-native option preserves optionality.</p>
-      <p class="tradeoff">Trade-off: Higher operational complexity (two pipelines) vs. cheaply meeting divergent latency SLAs — avoids over-engineering everything to real-time. (Consistent with the "Performance Efficiency" pillar across AWS/Azure/GCP Well-Architected frameworks: match the solution to the actual requirement, not the tightest one.)</p>
+      <p><strong>Rejected alternative.</strong> A <em>single</em> incremental/streaming path serving every consumer, with each consumer reading at its own refresh cadence. One pipeline, one code path, one set of semantics.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> Nothing in the scenario forbids it. Modern incremental engines can hold a ≤15 min [C360-F03] SLA and also materialise a 7 AM [C360-F01] view from the same stream. It removes the reconciliation problem entirely, because there is only one version of a record. An earlier revision of this report asserted that tiered SLAs "cannot be solved by picking one ingestion pattern" — <em>that assertion was not demonstrated and has been withdrawn.</em></p>
+      <p><strong>What the chosen approach sacrifices.</strong> Two code paths with two failure modes, and a genuine consistency problem: the batch and streaming views of the same customer will disagree between runs, so reconciliation and late-arriving-data handling become real design work. It also doubles the surface that must be tested when a source schema changes.</p>
+      <p><strong>What the chosen approach gains.</strong> It avoids paying streaming cost and streaming operational burden for the marketing data, whose stated tolerance is "several hours" [C360-F02]. Matching spend to the actual requirement, rather than to the tightest one, is the stated reason.</p>
+      <p><strong>Reversal condition.</strong> Revisit this and collapse to a single incremental path if (a) the measured cost gap between the two designs is small relative to the engineering cost of maintaining two paths, (b) reconciliation defects between the batch and streaming views appear in practice, or (c) the marketing tolerance tightens, which would erase the reason for a separate batch path.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No cost ceiling or unit-cost target was given [C360-U04], and no per-consumer volume figures were given. The whole justification rests on the batch path being materially cheaper, and that has not been measured. If it is not, this decision inverts.</p>
+      <p class="tradeoff">Trade-off: two pipelines, two failure modes and a real reconciliation burden, in exchange for not paying real-time cost on data whose stated tolerance is several hours [C360-F02]. <strong>This trade is unproven.</strong> It is recorded as a hypothesis to be tested by the spike above, not as a settled architecture. The diagram shows the provisional topology and should not be read as final.</p>
     </div>
 
     <div class="decision">
       <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
-      <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
-      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M+ customers and 4+ systems, with the ability to reprocess history when rules change.<br/>
+      <p><strong>Chosen approach.</strong> Build a decoupled golden-record and identity-resolution layer with explicit survivorship rules, operated separately from source ingestion so match rules can change without rebuilding pipelines.</p>
+      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M [C360-F11]+ customers and 4+ systems [C360-F13], with the ability to reprocess history when rules change.<br/>
       • <em>Open-source / portable:</em> Zingg (ML-based entity resolution) or Splink (probabilistic record linkage) running on Spark.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Spark ML matching pipelines + Delta time travel for reprocessing), Snowflake (Snowpark-based matching).<br/>
       • <em>Commercial specialist:</em> Senzing, Informatica MDM, Reltio, Tamr.<br/>
       • <em>Hyperscaler-managed:</em> AWS Entity Resolution (note: narrower portability).<br/>
       <em>Selection driver:</em> explainability and auditability of merges matter most here because PII is involved — favor options whose match decisions can be inspected and replayed.</p>
-      <p class="tradeoff">Trade-off: Upfront investment in matching logic vs. long-term trust and reduced rework; near-irreversible once adopted, so worth designing early. Recommend capturing this decision as an <strong>ADR</strong> (Architecture Decision Record) given its low reversibility, and choosing an open table format (Iceberg/Delta) for the golden-record store to avoid locking the most expensive-to-change asset into one engine.</p>
+      <p><strong>Rejected alternative.</strong> Warehouse-native matching: resolve identity with SQL rules inside the analytics platform, as part of the transformation layer, with no separate service.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is far cheaper to build, uses skills the team already has, and for 4 source systems [C360-F13] the rule set may be small enough to be tractable. Many organisations run this successfully for years. It is the correct choice if match logic stays simple.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> Significant upfront build before any business value is visible, a new component to operate, and the risk of over-engineering if the match problem turns out to be easy. It also needs stewardship workflow and survivorship ownership that the scenario never mentions.</p>
+      <p><strong>What is gained.</strong> Match decisions become inspectable and replayable across 20M [C360-F11] customers and 4 source systems [C360-F13], which is what makes the controlled and auditable access [C360-F08] required over PII [C360-F04] enforceable at the point where records are merged rather than only at the point where they are read.</p>
+      <p><strong>Reversal condition.</strong> Revisit this if a pilot shows warehouse-native rules reach acceptable match accuracy on real data, or if no owner can be found for stewardship — an identity service without a steward degrades into an unmaintained black box, which is worse than SQL rules.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No target match accuracy and no tolerance for false merges were given [C360-U08]. A false merge of two customers is a privacy incident, not just a data defect, and the acceptable rate drives whether a probabilistic service is justified at all. The claim that this decision is "near-irreversible" should be treated as a hypothesis until that is known.</p>
+      <p class="tradeoff">Trade-off: upfront build cost and a new operational component, in exchange for auditable, replayable match decisions over PII [C360-F04]. Capture as an <strong>ADR</strong>, and store the golden record in an open table format (Iceberg/Delta) so the most expensive-to-change asset is not locked to one engine.</p>
     </div>
 
     <div class="decision">
-      <h4>Decision 3 — Standard Connector Framework with Centralized Access Control</h4>
-      <p>Schema-on-write connector standard plus centralized, attribute-level access control &amp; audit logging (not bolted on per source).</p>
-      <p><strong>Technology options:</strong> the capability required is a repeatable source-onboarding path meeting the ≤2-week SLA, with PII policy enforced centrally rather than per source.<br/>
-      • <em>Open-source / portable:</em> Airbyte (OSS) or Meltano for connectors; Open Policy Agent (OPA) or Apache Ranger for centralized policy; OpenMetadata or DataHub for catalog/lineage.<br/>
-      • <em>Platform / lakehouse:</em> Databricks Unity Catalog (tag-based ABAC, row filters, column masks) or Snowflake Horizon (dynamic masking, row access policies, tag-based policies).<br/>
-      • <em>Commercial:</em> Fivetran/Matillion for connectors; Immuta or Privacera for policy enforcement; Collibra/Alation/Atlan for governance.<br/>
-      • <em>Hyperscaler-native:</em> Microsoft Purview + ADF, Google Dataplex + Data Fusion, or AWS Lake Formation + Glue.<br/>
-      <em>Selection driver:</em> prefer tag/attribute-based policy that scales as 2–4 new sources arrive per year; per-table grant models tend to drift into audit gaps.</p>
-      <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale. Centralized policy engines (OPA) maximize portability across engines; platform-native enforcement (Unity Catalog / Horizon) is simpler but must be re-implemented if the platform changes.</p>
+      <h4>Decision 3 — Standard Connector Framework for Source Onboarding</h4>
+      <p class="note"><strong>Note on scope.</strong> An earlier revision bundled the connector standard together with the access-control architecture as a single "Decision 3". That was wrong: they have different alternatives, different failure modes and very different reversibility &mdash; a connector framework can be swapped in weeks, an authorisation model cannot. They are now two independent decision records, so they can be accepted, rejected or superseded separately.</p>
+      <p><strong>Chosen approach.</strong> Adopt a single schema-on-write connector framework as the standard path for onboarding every new source, rather than writing a bespoke pipeline per source.</p>
+      <p><strong>Rejected alternative.</strong> Hand-built per-source pipelines, each written to fit the quirks of its own source exactly, with no shared framework.</p>
+      <p><strong>Why that alternative is genuinely viable.</strong> With only 4 source systems [C360-F13] today, bespoke pipelines reach first value faster and never force an awkward source into a framework's abstractions. This is the correct choice at a fixed source count, and many teams run it successfully for years.</p>
+      <p><strong>What is sacrificed.</strong> Per-source flexibility, plus a hard dependency on the framework supporting each future connector; an unsupported source becomes an exception that undermines the standard.</p>
+      <p><strong>What is gained.</strong> A repeatable onboarding path, which is what makes the standard onboarding SLA of 2 weeks [C360-F07] achievable as new sources arrive at 2&ndash;4 new sources [C360-F06] per year rather than a per-source negotiation.</p>
+      <p><strong>Reversal condition.</strong> Revisit this decision if the stated source growth rate does not materialise, or if two consecutive onboardings require framework workarounds costing more than a bespoke pipeline would have.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> Whether disruption to existing pipelines is acceptable during onboarding was never stated [C360-U03]. If no disruption is tolerable, the migration path to a shared framework becomes materially more expensive than this decision assumes.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Airbyte (OSS) or Meltano. <em>Platform / lakehouse:</em> Databricks Auto Loader, Snowflake Snowpipe. <em>Commercial:</em> Fivetran, Matillion. <em>Hyperscaler-native:</em> Azure Data Factory, Google Cloud Data Fusion, AWS Glue.</p>
+      <p class="tradeoff">Trade-off: upfront framework design cost and reduced per-source flexibility, in exchange for a repeatable path that makes the 2 weeks [C360-F07] onboarding SLA a property of the system rather than a per-source effort.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 4 — Centralised Attribute-Based Access Control and Audit Logging</h4>
+      <p><strong>Chosen approach.</strong> Adopt centralised, attribute/tag-based access control with audit logging applied across the platform, rather than access rules attached per source or per table.</p>
+      <p><strong>Rejected alternative.</strong> Per-table grants managed natively in the warehouse, which is the default model in most data platforms and requires no additional component.</p>
+      <p><strong>Why that alternative is genuinely viable.</strong> It is simple, universally understood by data teams, introduces no new infrastructure, and is entirely adequate when the number of tables and roles is small and stable. It is not a straw man; it is what most organisations actually run.</p>
+      <p><strong>What is sacrificed.</strong> Simplicity, and a hard dependency on classification being complete and timely. <em>Correction to an earlier revision:</em> this report previously claimed tag-based policy "fails open" while per-table grants "fail closed". That is not inherent to either model &mdash; ABAC can and must deny access to unclassified assets, and per-table grants can over-expose through inherited roles or permissive defaults. The genuine sacrifice is the dependency on classification coverage and on policy evaluation being correct, so this design <strong>requires deny-by-default for unclassified assets</strong> as an explicit condition of adoption.</p>
+      <p><strong>What is gained.</strong> Policy that scales with sources rather than with tables, which is what sustains the controlled and auditable access [C360-F08] required over data containing PII [C360-F04] as new sources arrive, without per-source security rework.</p>
+      <p><strong>Reversal condition.</strong> Revisit this decision if classification coverage cannot be automated and audited, because unclassified PII under an attribute-based model that is not deny-by-default is less safe than explicit per-table grants.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The applicable compliance regime and data residency rules were never stated [C360-U05]. A regime with strict residency or right-to-erasure obligations could dictate the enforcement model outright and override this comparison.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Open Policy Agent or Apache Ranger; OpenMetadata or DataHub for catalog and lineage. <em>Platform / lakehouse:</em> Databricks Unity Catalog (tag-based ABAC, row filters, column masks) or Snowflake Horizon (dynamic masking, row access policies). <em>Commercial:</em> Immuta, Privacera, Collibra, Alation, Atlan. <em>Hyperscaler-native:</em> Microsoft Purview, Google Dataplex, AWS Lake Formation.</p>
+      <p class="tradeoff">Trade-off: an additional policy component and a dependency on correct, complete data classification, in exchange for PII [C360-F04] governance that scales with source count instead of table count. Centralised policy (OPA) maximises portability across engines; platform-native enforcement is simpler but is re-implemented if the platform changes.</p>
     </div>
 
     <h3>Definition-of-Done Self-Audit (v2)</h3>
     <table>
       <tr><th>Checklist item</th><th>Status</th></tr>
       <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass</td></tr>
-      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass</td></tr>
-      <tr><td>Every quality requirement has a number/time bound</td><td>✅ Pass (7 AM, 15 min, 3×, 2 weeks, 4 months)</td></tr>
+      <tr><td>All constraints sourced from input, none invented</td><td>⚠️ <strong>No unsupported constraint found in the currently detected citation classes.</strong> This is deliberately weaker than "none invented", because the checker has known limits: it validates that a cited fact supports the value, but manifest quotes are machine-verified against the source PDF only by text match, and bare integer counts are outside its detection grammar. Two prior revisions of this table claimed a clean pass while fabrications were present — the first in prose, the second hidden inside the Utility Tree diagram. <em>A self-audit is evidence of intent, not of correctness.</em></td></tr>
+      <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM [C360-F01], ≤15 min [C360-F03], 3× within 2 years [C360-F05], ≤2 weeks [C360-F07], 4 months [C360-F09], 2–4 sources/year [C360-F06]. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
       <tr><td>2+ full quality-attribute scenarios (6 fields each)</td><td>✅ Pass</td></tr>
       <tr><td>3 ASRs with explicit justification</td><td>✅ Pass — added in this v2 report</td></tr>
       <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
       <tr><td>3 decisions with named trade-offs</td><td>✅ Pass</td></tr>
       <tr><td>Each decision names a concrete tool option</td><td>✅ Pass — added in this v2 report</td></tr>
+      <tr><td>Every decision passes the "¿Para qué?" test</td><td>✅ Pass — outcome / objective / ASR mapped for all 3 decisions (table above)</td></tr>
       <tr><td>Tooling options span 2–3 ecosystems (no single-cloud default)</td><td>✅ Pass — open-source, lakehouse, and hyperscaler options per decision</td></tr>
       <tr><td>At least one open-source / portable option offered</td><td>✅ Pass (Kafka, Flink, Spark, Airflow/Dagster, Zingg/Splink, Airbyte, OPA, OpenMetadata)</td></tr>
       <tr><td>Lock-in / reversibility flagged via Cost of Change</td><td>✅ Pass — open table format recommended for the golden-record store</td></tr>
@@ -461,11 +506,11 @@ flowchart TB
   end
 
   subgraph SPEED["Speed Layer (streaming/micro-batch)"]
-    ST["Real-time events<br/>≤15 min SLA"]
+    ST["Real-time events<br/>≤15 min [C360-F03] SLA"]
   end
 
   subgraph BATCH["Batch Layer"]
-    BT["Nightly/Hourly batch<br/>7:00 AM dashboard SLA"]
+    BT["Nightly/Hourly batch<br/>7:00 AM [C360-F01] dashboard SLA"]
   end
 
   subgraph IDR["Identity Resolution Service"]
@@ -532,8 +577,8 @@ flowchart TB
       <tr><td>Ownership &amp; stewardship</td><td>Assign a data owner per source domain (e-commerce, loyalty, support, marketing). Unowned sources become untrusted — which directly undermines objective O1 ("trusted view").</td></tr>
       <tr><td>Catalog &amp; discoverability</td><td>Register every dataset with business definitions, owner, freshness, and sensitivity tags. Without this, the "trusted customer view" fails at adoption even if the pipeline is technically correct.</td></tr>
       <tr><td>Lineage &amp; traceability</td><td>Capture column-level lineage source → transformation → consumption; prefer the open <strong>OpenLineage</strong> standard to preserve engine optionality. Required to answer "where did this number come from?" for leadership's daily metrics.</td></tr>
-      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems can change independently without breaking the 7 AM dashboard SLA.</td></tr>
-      <tr><td>Data quality</td><td>Express expectations as measurable checks (completeness, uniqueness of customer keys, freshness). Decide explicitly whether a failed check <em>blocks</em> or <em>alerts</em> — a real trade-off between trust and availability against the 7 AM deadline.</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems [C360-F13] can change independently without breaking the 7 AM [C360-F01] dashboard SLA.</td></tr>
+      <tr><td>Data quality</td><td>Express expectations as measurable checks (completeness, uniqueness of customer keys, freshness). Decide explicitly whether a failed check <em>blocks</em> or <em>alerts</em> — a real trade-off between trust and availability against the 7 AM [C360-F01] deadline.</td></tr>
       <tr><td>Quarantine path</td><td>Route rejected/unresolvable records to a dead-letter store rather than dropping them silently — essential when identity resolution cannot confidently match a customer.</td></tr>
       <tr><td>Master data rules</td><td>Make survivorship rules (which source wins per attribute) explainable and auditable, and retain the ability to <strong>reprocess history</strong> when rules change — otherwise the matching logic becomes permanently frozen.</td></tr>
       <tr><td>Cost governance (FinOps)</td><td>Tag resources by domain and make cost per pipeline/consumer observable — directly satisfies constraint C2 ("costs must remain observable as usage grows").</td></tr>
@@ -542,7 +587,7 @@ flowchart TB
     <h3>Security Recommendations</h3>
     <table>
       <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
-      <tr><td>Data classification</td><td>Classify at ingestion (Public / Internal / Confidential / Restricted-PII) and propagate classification as metadata through every layer. Attach policies to <strong>tags</strong>, not table names — this is what lets security scale as 2–4 new sources arrive per year.</td></tr>
+      <tr><td>Data classification</td><td>Classify at ingestion (Public / Internal / Confidential / Restricted-PII) and propagate classification as metadata through every layer. Attach policies to <strong>tags</strong>, not table names — this is what lets security scale as 2–4 new sources [C360-F06] arrive per year.</td></tr>
       <tr><td>Access control model</td><td>Prefer <strong>ABAC / tag-based</strong> policy over per-table RBAC grants. With continuous source growth, RBAC grant sprawl is the predictable failure mode. Enforce least privilege and purpose-based access.</td></tr>
       <tr><td>PII protection</td><td>Apply <em>dynamic masking</em> for Customer Service views that need the row but not the raw value; <em>tokenization</em> where referential integrity across systems is required without exposing values; <em>salted hashing</em> for join keys; encryption at rest and in transit as a non-negotiable baseline.</td></tr>
       <tr><td>Auditability</td><td>Log who accessed what, when, and for what purpose. Store audit logs <strong>separately from the data plane</strong> and make them tamper-evident — the scenario's "auditable access" wording makes this a hard requirement, not a nice-to-have.</td></tr>
@@ -592,7 +637,7 @@ flowchart TB
     <h2>13. Open Questions for the Stakeholder</h2>
     <div class="gap-box">
       <ul>
-        <li>What is the required <strong>data retention</strong> policy beyond the existing 3 years of history?</li>
+        <li>What is the required <strong>data retention</strong> policy beyond the existing 3 years [C360-F14] of history?</li>
         <li>Is there a specific <strong>compliance regime</strong> (GDPR, CCPA, etc.) governing PII beyond "controlled and auditable"?</li>
         <li>What is the acceptable <strong>identity-match accuracy / false-merge tolerance</strong> for customer resolution?</li>
         <li>Is there a target/cap on <strong>infrastructure cost</strong> (e.g., $/customer/month), or is "observability" the only requirement?</li>
@@ -601,7 +646,11 @@ flowchart TB
         <li>Are there <strong>data residency or sovereignty</strong> requirements constraining where customer data may be stored or processed?</li>
         <li>Is <strong>right-to-erasure</strong> (customer data deletion) required? This must be answered before finalizing an append-only/immutable storage design, since it materially changes the storage architecture.</li>
         <li>Are <strong>customer-managed encryption keys (CMK/BYOK)</strong> required, or is provider-managed encryption acceptable?</li>
-        <li>Should failed data-quality checks <strong>block</strong> the pipeline or <strong>alert only</strong>? This trades trust against hitting the 7:00 AM dashboard deadline.</li>
+        <li>Should failed data-quality checks <strong>block</strong> the pipeline or <strong>alert only</strong>? This trades trust against hitting the 7:00 AM [C360-F01] dashboard deadline.</li>
+        <li>What <strong>attainment percentile and measurement window</strong> apply to the 15-minute Customer Service SLA (e.g. p95 over a rolling day) [C360-U01]? Only the bound was given, not the reliability target.</li>
+        <li>What is the precise <strong>latency tolerance for Marketing</strong> data? "Several hours" was given, which is not yet a measurable bound.</li>
+        <li>What level of <strong>disruption to existing pipelines is acceptable</strong> while onboarding a new source? The 2-week SLA was given; the permitted impact was not.</li>
+        <li>Is there a <strong>budget ceiling or unit-cost target</strong> (e.g. $/customer/month)? "Costs must remain observable" specifies visibility, not a threshold.</li>
       </ul>
     </div>
   </section>

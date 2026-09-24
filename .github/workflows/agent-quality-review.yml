@@ -1,0 +1,115 @@
+name: "Agent Quality Review"
+
+# Replaces grep-based validation with an actual AGENT REVIEW of report quality.
+#
+# Behaviour required by the repo owner:
+#   - The agent reviews whether the HTML report genuinely IMPROVED.
+#   - If it improved  -> the PR is allowed to proceed (check passes).
+#   - If it did NOT   -> the check FAILS, the verdict is posted to the PR,
+#                        and the client is told what to iterate on.
+#
+# The structural check below is a fast pre-filter only. It can prove a report is
+# INCOMPLETE, but it can never prove a report is GOOD — that is the reviewer's job.
+
+on:
+  pull_request:
+    paths:
+      - "docs/*.html"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  structural-prefilter:
+    name: "Structural pre-filter (necessary, not sufficient)"
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.detect.outputs.files }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed reports
+        id: detect
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'docs/*.html' | tr '\n' ' ')
+          echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "Changed reports: $CHANGED"
+
+      - name: Install manifest verification dependency
+        run: pip install --quiet pypdf
+        # Required by scripts/verify_manifest.py. Without it the manifest check
+        # degrades to a warning, which would let a fabricated fact through CI.
+
+      - name: Run the SAME gate developers run locally
+        if: steps.detect.outputs.files != ''
+        run: |
+          # CI must not diverge from scripts/preflight.sh. A red-team test found
+          # reports that passed locally but failed CI (and vice versa) because the
+          # two implementations drifted apart. There is now one implementation.
+          set -o pipefail
+          git diff --name-only -z origin/${{ github.base_ref }}...HEAD -- 'docs/*.html' \
+            | xargs -0 -r ./scripts/preflight.sh
+
+  agent-review:
+    name: "Agent quality review (improved? -> PR | not improved? -> iterate)"
+    needs: structural-prefilter
+    if: needs.structural-prefilter.outputs.changed != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Post review instructions to the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/review-request.md <<'EOF'
+          ## 🔍 Agent Quality Review required
+
+          The structural pre-filter passed — but **that only proves the sections exist, not that the analysis is good.**
+
+          A reviewing agent must now assess whether this report genuinely **improved**, and answer each question below with evidence (quote specific lines):
+
+          1. **Did it genuinely improve, or is it just longer?** Length is not quality.
+          2. **Are there FABRICATED requirements?** Check every number against the source scenario in `knowledge-base/`. Anything not given and not flagged as an assumption or Open Question is a failure.
+          3. **Is each trade-off REAL** (naming what is given up and which alternative was rejected), or a disguised benefit statement?
+          4. **Is vendor neutrality genuine or superficial?** Listing vendor names is not neutrality — is there reasoning about *when* to pick each?
+          5. **Is Governance & Security substantive**, or boilerplate that could be pasted into any project?
+          6. **Does every decision pass the "¿Para qué?" test** — outcome, objective, and ASR identifiable?
+          7. **Any internal inconsistencies**, wrong section references, or contradictions?
+
+          ### Required verdict format
+          ```
+          VERDICT: IMPROVED | NOT IMPROVED | MIXED
+          CONFIDENCE: <1-10>
+          TOP 3 REMAINING WEAKNESSES:
+          SPECIFIC FIXES RECOMMENDED:
+          ```
+
+          ### Decision rule
+          - **IMPROVED** → approve; the PR may merge.
+          - **MIXED / NOT IMPROVED** → **do not merge.** Report the weaknesses to the client, iterate on the fixes, and push the corrections to this same PR.
+
+          > Run locally with: `/rubber-duck` or the `rubber-duck` agent, pointing it at the changed report(s).
+          EOF
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/review-request.md
+
+      - name: Require reviewed-by evidence in PR body
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BODY=$(gh pr view "${{ github.event.pull_request.number }}" --json body -q .body)
+          if echo "$BODY" | grep -qi "VERDICT: *IMPROVED"; then
+            echo "✅ Agent review verdict IMPROVED found in PR description."
+            exit 0
+          fi
+          if echo "$BODY" | grep -qiE "VERDICT: *(NOT IMPROVED|MIXED)"; then
+            echo "::error::Agent review returned a non-IMPROVED verdict. Iterate on the findings and push corrections before merging."
+            exit 1
+          fi
+          echo "::error::No agent review verdict found in the PR description. Run the reviewing agent and paste its verdict block (VERDICT / CONFIDENCE / WEAKNESSES / FIXES) into the PR body before merging."
+          exit 1

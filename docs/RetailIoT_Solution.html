@@ -80,7 +80,7 @@
   <section id="context">
     <span class="badge">Scenario Context</span>
     <h2>1. Business Context</h2>
-    <p>A retail company operates <strong>500 stores</strong> equipped with IoT devices that continuously generate telemetry events. Operations teams want to use this data to monitor store and device conditions, detect operational issues, and support near-real-time analytics. The company expects the number of connected devices to grow as the platform expands to new regions.</p>
+    <p>A retail company operates <strong>500 stores [RIOT-F01]</strong> equipped with IoT devices that continuously generate telemetry events. Operations teams want to use this data to monitor store and device conditions, detect operational issues, and support near-real-time analytics. The company expects the number of connected devices to grow as the platform expands to new regions.</p>
     <div class="two-col">
       <div>
         <h3>What the System Must Do</h3>
@@ -95,10 +95,10 @@
       <div>
         <h3>Known Operating Conditions</h3>
         <ul class="tick">
-          <li>50K events/sec peak ingestion bursts during business hours</li>
-          <li>p95 ingestion latency &lt; 200ms during peak load</li>
-          <li>Recovery from a single availability-zone failure in &lt;30 sec</li>
-          <li>Deploy a new event schema without pipeline downtime, &lt;1 day</li>
+          <li>50K events/sec [RIOT-F02] peak ingestion bursts during business hours</li>
+          <li>p95 ingestion latency &lt; 200ms [RIOT-F03] during peak load</li>
+          <li>Recovery from a single availability-zone failure in &lt;30 sec [RIOT-F04]</li>
+          <li>Deploy a new event schema without pipeline downtime, &lt;1 day [RIOT-F05]</li>
         </ul>
       </div>
     </div>
@@ -141,8 +141,8 @@ graph LR
     <table>
       <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
       <tr><td>C1</td><td>Delivery team has strong batch-processing experience but limited streaming experience</td><td>Team skills / delivery risk</td></tr>
-      <tr><td>C2</td><td>New event schema versions must deploy without pipeline downtime, within 1 day</td><td>Operational / modifiability</td></tr>
-      <tr><td>C3</td><td>Must recover from a single availability-zone failure in &lt;30 sec</td><td>Availability</td></tr>
+      <tr><td>C2</td><td>New event schema versions must deploy without pipeline downtime, within 1 day [RIOT-F05]</td><td>Operational / modifiability</td></tr>
+      <tr><td>C3</td><td>Must recover from a single availability-zone failure in &lt;30 sec [RIOT-F04]</td><td>Availability</td></tr>
       <tr><td>C4</td><td>Device/store/customer/loyalty identifiers require controlled access</td><td>Security / compliance</td></tr>
     </table>
   </section>
@@ -164,10 +164,10 @@ graph LR
       <div>
         <h3>Quality Attributes (how well)</h3>
         <ul class="tick">
-          <li><strong>Throughput:</strong> sustain 50K events/sec peak bursts</li>
-          <li><strong>Latency:</strong> p95 ingestion &lt; 200ms at peak load</li>
-          <li><strong>Availability:</strong> recover from a single AZ failure in &lt;30 sec</li>
-          <li><strong>Modifiability:</strong> deploy new schema version, zero downtime, &lt;1 day</li>
+          <li><strong>Throughput:</strong> sustain 50K events/sec [RIOT-F02] peak bursts</li>
+          <li><strong>Latency:</strong> p95 ingestion &lt; 200ms [RIOT-F03] at peak load</li>
+          <li><strong>Availability:</strong> recover from a single AZ failure in &lt;30 sec [RIOT-F04]</li>
+          <li><strong>Modifiability:</strong> deploy new schema version without pipeline downtime <em>(given)</em>, &lt;1 day [RIOT-F05]</li>
           <li><strong>Security:</strong> controlled access to device/store/customer/loyalty identifiers</li>
         </ul>
       </div>
@@ -180,12 +180,12 @@ graph LR
 
     <h3>Scenario 1 — Peak Ingestion Load</h3>
     <table>
-      <tr><th>Source</th><td>IoT devices across 500 stores</td></tr>
+      <tr><th>Source</th><td>IoT devices across 500 stores [RIOT-F01]</td></tr>
       <tr><th>Stimulus</th><td>Burst of telemetry events during business hours</td></tr>
       <tr><th>Environment</th><td>Peak load conditions</td></tr>
       <tr><th>Artifact</th><td>Ingestion pipeline</td></tr>
-      <tr><th>Response</th><td>Events are validated and persisted without loss</td></tr>
-      <tr><th>Response Measure</th><td>Sustains <strong>50K events/sec</strong> with p95 latency <strong>&lt; 200ms</strong>, zero event loss</td></tr>
+      <tr><th>Response</th><td>Events are validated and durably persisted. <em>The degree of durability under failure is not specified in the scenario — see [RIOT-U01].</em></td></tr>
+      <tr><th>Response Measure</th><td>Sustains <strong>50K events/sec [RIOT-F02]</strong> with p95 latency <strong>&lt; 200ms at p95 [RIOT-F03].</strong> <em>Durability target (tolerable event loss) was not specified in the scenario — see Open Questions [RIOT-U01].</em></td></tr>
     </table>
 
     <h3>Scenario 2 — Availability-Zone Failure</h3>
@@ -195,7 +195,7 @@ graph LR
       <tr><th>Environment</th><td>Production, normal or peak load</td></tr>
       <tr><th>Artifact</th><td>Ingestion and persistence layer</td></tr>
       <tr><th>Response</th><td>System fails over to a healthy AZ and resumes processing</td></tr>
-      <tr><th>Response Measure</th><td>Recovery time <strong>&lt; 30 sec</strong>, zero data loss</td></tr>
+      <tr><th>Response Measure</th><td>Recovery time <strong>&lt; 30 sec [RIOT-F04]</strong> <em>(given)</em>. <em>Acceptable data loss during failover was not specified — see Open Questions.</em></td></tr>
     </table>
   </section>
 
@@ -207,9 +207,9 @@ graph TD
   R["Retail IoT Monitoring Platform"] --> A1["ASR 1<br/>Scale Pressure"]
   R --> A2["ASR 2<br/>Recovery Pressure"]
   R --> A3["ASR 3<br/>Schema Evolution Pressure"]
-  A1 --> A1d["50K events/sec growing with regional<br/>expansion — batch architecture cannot meet this"]
+  A1 --> A1d["50K events/sec [RIOT-F02] growing with regional<br/>expansion — batch architecture cannot meet this"]
   A2 --> A2d["Recover in &lt;30s from AZ failure —<br/>requires redundancy/failover design, not an add-on"]
-  A3 --> A3d["New schema deployed &lt;1 day, zero downtime —<br/>needs governed schema versioning strategy"]
+  A3 --> A3d["New schema deployed &lt;1 day [RIOT-F05] without pipeline<br/>downtime (given) — needs schema versioning strategy"]
   style R fill:#0b1f3a,color:#fff
   style A1 fill:#e0762b,color:#fff
   style A2 fill:#e0762b,color:#fff
@@ -227,9 +227,9 @@ graph LR
   U --> QA3["Modifiability"]
   U --> QA4["Security"]
 
-  QA1 --> S1["Sustain 50K events/sec,<br/>p95 &lt;200ms<br/><b>(High, High)</b>"]
+  QA1 --> S1["Sustain 50K events/sec [RIOT-F02],<br/>p95 &lt;200ms [RIOT-F03]<br/><b>(High, High)</b>"]
   QA2 --> S2["Recover &lt;30s from<br/>single AZ failure<br/><b>(High, Medium)</b>"]
-  QA3 --> S3["Deploy new schema &lt;1 day,<br/>zero downtime<br/><b>(High, Medium)</b>"]
+  QA3 --> S3["Deploy new schema &lt;1 day [RIOT-F05], no<br/>pipeline downtime (given)<br/><b>(High, Medium)</b>"]
   QA4 --> S4["Controlled access to device/<br/>customer/loyalty identifiers<br/><b>(Medium, Medium)</b>"]
 
   style U fill:#0b1f3a,color:#fff
@@ -248,16 +248,33 @@ graph LR
   <section id="decisions">
     <span class="badge">Step 5</span>
     <h2>8. Architecture Decisions & Trade-offs</h2>
+    <div style="background:#eaf2fb;border-left:4px solid #1f5fa8;padding:14px 18px;border-radius:6px;margin-bottom:18px;">
+      <strong>The "¿Para qué?" test applied to each decision below.</strong> Before naming any tool,
+      each decision must answer: <em>What outcome does this serve? Which business objective does it
+      trace back to? Which quality attribute or ASR makes it necessary rather than optional?</em>
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Streaming ingestion</strong></td><td>Operations teams detect store/device issues while they still matter, instead of the next day</td><td>O1 (near-real-time monitoring to detect issues quickly)</td><td>ASR 1 — 50K events/sec [RIOT-F02] at &lt;200ms p95 [RIOT-F03], unreachable with batch</td></tr>
+      <tr><td><strong>2 — Schema registry</strong></td><td>Device firmware can evolve independently without breaking the pipeline or pausing monitoring</td><td>O2 (expand to new regions without re-architecting)</td><td>ASR 3 — new schema deployed &lt;1 day [RIOT-F05] without pipeline downtime <em>(given)</em></td></tr>
+      <tr><td><strong>3 — Multi-AZ failover</strong></td><td>Monitoring keeps working during an infrastructure failure, when issue detection matters most</td><td>O3 (preserve trusted telemetry for downstream use)</td><td>ASR 2 — recover from AZ failure in &lt;30 sec [RIOT-F04]</td></tr>
+    </table>
 
     <div class="decision">
       <h4>Decision 1 — Managed Streaming Ingestion (not batch)</h4>
-      <p>Adopt a streaming ingestion platform with multi-AZ replication instead of a batch-only ingestion path.</p>
-      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is durable, ordered, replayable event ingestion sustaining 50K events/sec at &lt;200ms p95.<br/>
+      <p>Adopt a streaming ingestion platform with multi-AZ <em>failover</em> instead of a batch-only ingestion path. <strong>Note:</strong> this decision selects streaming and cross-AZ availability only. It deliberately does <em>not</em> select a replication mode or acknowledgement semantics &mdash; those depend on the unstated RPO and are deferred in Decision 3.</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is event ingestion sustaining 50K events/sec [RIOT-F02] at &lt;200ms p95 [RIOT-F03]. <span class="warn-inline">Ordering scope, replay window and acknowledgement semantics are <em>not specified</em> in the scenario [RIOT-U06]; they are stated here as open questions, not as required properties. They are exactly the properties that would differentiate these platforms, so the choice between them cannot be finalised until the RPO is answered.</span><br/>
       • <em>Open-source / portable:</em> Apache Kafka, Apache Pulsar, or Redpanda, paired with Apache Flink for streaming processing.<br/>
       • <em>Platform / managed OSS:</em> Confluent Cloud, Redpanda Cloud, or Databricks Structured Streaming with Auto Loader.<br/>
       • <em>Hyperscaler-managed:</em> Azure Event Hubs, Google Cloud Pub/Sub, or Amazon MSK/Kinesis.<br/>
       <em>Selection driver:</em> given the team's limited streaming experience (constraint C1), a <strong>managed</strong> offering in whichever ecosystem the client already operates reduces delivery risk more than any feature difference between these products.</p>
-      <p class="tradeoff">Trade-off: Requires the team to build new streaming skills and operational practices vs. batch-only comfort — necessary because 50K events/sec at &lt;200ms p95 cannot be met with batch processing alone. Managed services trade higher per-GB cost for lower operational burden, which is the right trade given C1.</p>
+      <p><strong>Rejected alternative.</strong> Micro-batch ingestion on a short interval — the team's existing batch toolchain, run every few seconds rather than hourly.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is not a straw man. The team has strong batch-processing experience [RIOT-F08], and micro-batch reuses tooling, skills and operational practice they already have. The reason it is rejected is specific and measurable, not stylistic: the requirement is a <em>p95 [RIOT-F03] ingestion latency</em> of &lt;200ms [RIOT-F03]. A micro-batch trigger interval sets a latency floor roughly equal to the interval, so meeting a 200ms p95 [RIOT-F03] would require a sub-200ms [RIOT-F03] batch interval — at which point it is streaming with extra scheduling overhead.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> The team must build streaming skills and on-call practice it does not have [RIOT-F08], which is a delivery risk, not just a training cost. Managed offerings also cost more per GB and give up low-level control.</p>
+      <p><strong>What the chosen approach gains.</strong> Of the two options considered it is the one without the latency floor above, so it is the credible route to &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02]. <em>Stated precisely:</em> conventional scheduled micro-batch is an implausible fit and would have to demonstrate compliance by benchmark before being selected &mdash; that is weaker than claiming no non-streaming implementation could ever work, and a managed offering keeps the new operational burden as small as possible given the skills gap.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No budget ceiling was stated for the platform [RIOT-U03], and the managed-versus-self-managed comparison turns on cost at sustained throughput. Until that is known, "managed" is a risk-reduction preference rather than a costed decision.</p>
+      <p><strong>Reversal condition.</strong> Revisit if the p95 [RIOT-F03] latency requirement is relaxed — if the true need is "near real time" rather than a hard 200ms [RIOT-F03], micro-batch becomes the better choice on skills and cost alone. Also revisit if measured managed-service cost at 50K events/sec [RIOT-F02] exceeds the budget, which is unstated [RIOT-U03].</p>
+      <p class="tradeoff">Trade-off: a real skills and delivery risk for a batch-experienced team [RIOT-F08], plus higher per-GB managed cost, in exchange for the only design that meets &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02]. Note the boundary: this justifies <em>streaming</em>; it does not by itself justify any particular durability or replication guarantee — see Decision 3.</p>
     </div>
 
     <div class="decision">
@@ -267,19 +284,37 @@ graph LR
       • <em>Open-source / portable:</em> Confluent Schema Registry (community edition), Apicurio Registry, or Buf Schema Registry for Protobuf.<br/>
       • <em>Platform / lakehouse:</em> Databricks Unity Catalog schema enforcement, or Delta Lake / Apache Iceberg schema evolution at the storage layer.<br/>
       • <em>Hyperscaler-managed:</em> Azure Schema Registry (in Event Hubs), Google Cloud Managed Service for Apache Kafka, or AWS Glue Schema Registry.<br/>
-      <em>Selection driver:</em> choose whichever registry integrates natively with the streaming platform selected in Decision 1 — cross-ecosystem pairing adds avoidable operational friction.</p>
-      <p class="tradeoff">Trade-off: Adds schema-governance overhead vs. the ability to roll out new firmware-driven event versions within a day without pipeline downtime. Using an open serialization format (Avro/Protobuf) keeps the contract portable even if the registry product changes.</p>
+      <em>Selection driver:</em> <strong>where compatibility is enforced</strong>, not which product is most convenient. An earlier revision said "choose whichever registry integrates natively with the streaming platform" — that is circular, and it also listed storage-layer schema evolution (Delta/Iceberg) as equivalent to a registry. It is not: storage-layer evolution protects the <em>table</em>, it does not stop an incompatible producer from breaking live streaming consumers. Enforcement must sit at the producer boundary.</p>
+      <p><strong>Rejected alternative.</strong> Consumer-side tolerant reading: no registry, no producer-side gate; each consumer defensively ignores unknown fields and defaults missing ones.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is the lowest-friction option, adds no infrastructure, and is a well-established pattern. With few consumers it works, and it never blocks a firmware rollout — which matters because firmware evolves independently [RIOT-F07] and is not centrally controlled.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> A central gate that <em>can block a firmware release</em>. If a device fleet ships a breaking schema, the registry rejects it — good for consumers, but the fleet may already be deployed in 500 stores [RIOT-F01] and not easily recalled. This decision accepts a coordination cost between firmware and platform teams that the tolerant-reader approach avoids entirely.</p>
+      <p><strong>What the chosen approach gains.</strong> Compatibility is checked once, centrally, rather than depending on every consumer being written defensively — which is what makes "deploy a new event schema without pipeline downtime" [RIOT-F05] a property of the system rather than a hope about each consumer's code quality.</p>
+      <p><strong>Reversal condition.</strong> Revisit if firmware release cycles cannot absorb a compatibility gate, or if the registry becomes an availability dependency on the ingest path. In either case, move enforcement to a validating consumer at the boundary and keep tolerant readers behind it.</p>
+      <p><strong>Unresolved fact.</strong> Whether the firmware team can accept a blocking compatibility check before release is not stated [RIOT-U07]. This decision is not safe to finalise without that answer.</p>
+      <p class="tradeoff">Trade-off: schema-governance overhead and a coordination dependency on the firmware team, in exchange for making no-downtime schema deployment [RIOT-F05] a structural guarantee rather than a per-consumer convention. An open serialisation format (Avro/Protobuf) keeps the contract portable if the registry product changes.</p>
     </div>
 
     <div class="decision">
-      <h4>Decision 3 — Multi-AZ Redundancy with Automated Failover</h4>
-      <p>Design the ingestion and persistence tiers for multi-AZ redundancy with automated failover, rather than single-AZ deployment with manual recovery.</p>
-      <p><strong>Technology options:</strong> the capability required is automated failover within 30 seconds with zero data loss.<br/>
-      • <em>Open-source / portable:</em> Kafka with <code>min.insync.replicas</code> and rack-aware replica placement across zones; Apache Iceberg or Delta Lake on zone-redundant object storage for the persistence tier.<br/>
-      • <em>Platform:</em> Databricks or Snowflake managed multi-AZ durability (failover handled by the platform).<br/>
-      • <em>Hyperscaler-managed:</em> zone-redundant configurations of Azure Event Hubs, Google Cloud Pub/Sub (regional by default), or Amazon MSK multi-AZ.<br/>
-      <em>Selection driver:</em> verify the <em>measured</em> failover time of the chosen option against the &lt;30 sec requirement — vendor "high availability" claims are not equivalent to a tested RTO.</p>
-      <p class="tradeoff">Trade-off: Higher infrastructure cost (duplicated resources across AZs) vs. meeting the &lt;30 sec recovery requirement. This is a direct, quantifiable cost-for-availability exchange that should be confirmed against the (currently unstated) infrastructure budget.</p>
+      <h4>Decision 3 — Automated cross-AZ failover now; defer persistence semantics until the RPO is known</h4>
+      <p><strong>Chosen approach.</strong> Design the ingestion and persistence tiers for automated cross-AZ failover, and verify by workload-level test that recovery completes within &lt;30 sec [RIOT-F04]. <strong>Do not yet fix</strong> acknowledgement mode, replica counts, or a lossless persistence guarantee: the scenario states a recovery <em>time</em> but no tolerable data loss [RIOT-U01].</p>
+      <p><strong>Rejected alternative.</strong> Self-managed Kafka spread across AZs with <code>min.insync.replicas</code>, rack-aware placement and operator-controlled failover.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It can meet the same 30-second target and gives explicit control over placement, acknowledgement policy, portability and failure testing. It is a credible architecture, not a straw man — and it is the stronger choice if the RPO turns out to be zero.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> Lower-level control, some portability, and probably lower unit cost at sustained scale. Its real failover and durability behaviour depends on vendor implementation and must be measured, because a "highly available" label is not a tested RTO.</p>
+      <p><strong>What is gained.</strong> A testable route to the recovery target of &lt;30 sec [RIOT-F04] reached sooner and with materially lower operational burden, which matters directly because the scenario states the team has strong batch experience but limited streaming experience [RIOT-F08]. Operational simplicity is not a general virtue here; it is what makes the cited recovery requirement achievable by this team.</p>
+      <p><strong>Reversal condition.</strong> Revisit this decision if (a) measured failover misses &lt;30 sec [RIOT-F04], (b) the answer to the RPO requires acknowledgement or replication guarantees the managed service cannot demonstrate, or (c) measured cost exceeds the stakeholder-approved budget. Under any of these, move to the self-managed cross-AZ design.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The tolerable event loss (RPO) [RIOT-U01]. The three possible answers lead to <em>different</em> architectures, and this is the point at which they diverge:</p>
+      <table class="qa-table">
+        <tr><th>If the RPO answer is…</th><th>Then the persistence design becomes…</th><th>Cost direction</th></tr>
+        <tr><td>Zero loss <em>(hypothetical branch &mdash; not specified in the scenario)</em></td><td>Synchronous cross-AZ acknowledgement, min.insync.replicas &gt; 1, producer acks=all. Write latency rises and must be re-checked against the &lt;200ms p95 [RIOT-F03] budget.</td><td>Highest</td></tr>
+        <tr><td>Bounded loss (e.g. seconds)</td><td>Asynchronous replication with a measured replication lag SLO; failover may discard in-flight events within that bound.</td><td>Moderate</td></tr>
+        <tr><td>Best-effort</td><td>Single-zone write path with cross-AZ recovery only; cheapest, and adequate if telemetry is statistical rather than transactional.</td><td>Lowest</td></tr>
+      </table>
+      <p><strong>Technology options:</strong><br/>
+      • <em>Open-source / portable:</em> Kafka with <code>min.insync.replicas</code> and rack-aware placement; Apache Iceberg or Delta Lake on zone-redundant object storage.<br/>
+      • <em>Platform:</em> Databricks or Snowflake managed multi-AZ (failover handled by the platform).<br/>
+      • <em>Hyperscaler-managed:</em> zone-redundant Azure Event Hubs, Google Cloud Pub/Sub (regional by default), or Amazon MSK multi-AZ.<br/>
+      <em>Selection driver:</em> measured failover time, not vendor availability labels.</p>
+      <p class="tradeoff">Trade-off: duplicated cross-AZ resources and reduced low-level control, in exchange for a testable &lt;30 sec [RIOT-F04] recovery reached with an operationally realistic path for a team with limited streaming experience [RIOT-F08]. Note what this trade-off deliberately does <em>not</em> settle: the durability semantics above remain open, because the scenario never gave an RPO. An earlier revision of this report selected "durable, ordered, replayable" ingestion anyway — that was reasoning from an assumption, not from the scenario.</p>
     </div>
   </section>
 
@@ -288,14 +323,14 @@ graph LR
     <h2>9. Proposed Architecture (High Level)</h2>
     <div class="mermaid">
 flowchart TB
-  subgraph DEV["500 Stores — IoT Devices"]
+  subgraph DEV["500 Stores [RIOT-F01] — IoT Devices"]
     direction LR
     D1["Store Devices<br/>(sensors, gateways)"]
   end
 
   subgraph ING["Managed Streaming Ingestion"]
     direction TB
-    K["Kafka / Kinesis / Event Hubs<br/>Multi-AZ replication"]
+    K["Kafka / Kinesis / Event Hubs<br/>Multi-AZ failover<br/>replication mode: TBD"]
   end
 
   subgraph VAL["Validation & Schema Layer"]
@@ -303,7 +338,7 @@ flowchart TB
   end
 
   subgraph PERS["Persistence Layer"]
-    P["Multi-AZ Durable Store<br/>Automated failover"]
+    P["Multi-AZ Store<br/>Automated failover (RTO &lt;30s)<br/>replication mode: TBD pending RPO"]
   end
 
   subgraph SEC["Access Control"]
@@ -342,10 +377,10 @@ flowchart TB
     <h3>Governance Recommendations</h3>
     <table>
       <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
-      <tr><td>Data contracts &amp; schema governance</td><td>Device firmware evolves independently, so producer/consumer contracts with enforced backward/forward compatibility are mandatory — this is the mechanism that makes the &lt;1 day, zero-downtime schema rollout achievable (Decision 2).</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Device firmware evolves independently, so producer/consumer contracts with enforced backward/forward compatibility are mandatory — this is the mechanism that makes the &lt;1 day [RIOT-F05], zero-downtime schema rollout achievable (Decision 2).</td></tr>
       <tr><td>Catalog &amp; lineage</td><td>Register telemetry datasets with owner, freshness, and sensitivity tags; capture lineage via the open <strong>OpenLineage</strong> standard so ops teams can trace an alert back to its originating device and schema version.</td></tr>
-      <tr><td>Data quality &amp; quarantine</td><td>Validation is an explicit functional requirement. Route rejected events to a dead-letter/quarantine topic rather than dropping them — silent loss would make the "zero event loss" measure unverifiable.</td></tr>
-      <tr><td>Retention lifecycle</td><td>Define retention tiers for raw vs. aggregated telemetry. At 50K events/sec, retention policy is the dominant storage-cost driver.</td></tr>
+      <tr><td>Data quality &amp; quarantine</td><td>Validation is an explicit functional requirement. Route rejected events to a dead-letter/quarantine topic rather than dropping them — silent loss would make ingestion-completeness unverifiable. <em>Note: the course uses "zero event loss" as an illustrative measure [RIOT-X01]; it is not stated in this scenario’s operating conditions, so it is an open question [RIOT-U01], not a requirement.</em></td></tr>
+      <tr><td>Retention lifecycle</td><td>Define retention tiers for raw vs. aggregated telemetry. At 50K events/sec [RIOT-F02], retention policy is the dominant storage-cost driver.</td></tr>
       <tr><td>Cost governance (FinOps)</td><td>Tag resources by region/store cluster so cost per region is observable as the platform expands — otherwise regional growth hides cost regressions.</td></tr>
     </table>
 
@@ -355,7 +390,7 @@ flowchart TB
       <tr><td>Data classification</td><td>Classify identifier fields at ingestion (device/store = Internal; customer/loyalty = Restricted-PII) and attach policies to <strong>tags</strong> rather than topic or table names, so new event schema versions inherit protection automatically.</td></tr>
       <tr><td>Access control model</td><td>Prefer <strong>ABAC / tag-based</strong> column-level policy so ops teams can see device and store telemetry without exposing customer or loyalty identifiers — least privilege by default.</td></tr>
       <tr><td>PII protection</td><td>Tokenize or salted-hash customer/loyalty identifiers at the ingestion boundary where downstream analytics only need joinability, not the raw value. Encrypt in transit (TLS, including device-to-gateway) and at rest.</td></tr>
-      <tr><td>Device identity &amp; trust</td><td>Authenticate devices individually (per-device certificates or keys) with rotation and revocation. Shared device credentials across 500 stores create an unrevocable blast radius.</td></tr>
+      <tr><td>Device identity &amp; trust</td><td>Authenticate devices individually (per-device certificates or keys) with rotation and revocation. Shared device credentials across 500 stores [RIOT-F01] create an unrevocable blast radius.</td></tr>
       <tr><td>Auditability</td><td>Log access to identifier-bearing fields separately from the data plane, tamper-evident, with retention aligned to the (currently unstated) compliance regime.</td></tr>
       <tr><td>Network boundaries</td><td>Define clear trust boundaries between device ingress, processing, and serving zones; use private connectivity for the data plane where sensitivity demands it.</td></tr>
     </table>
@@ -395,6 +430,7 @@ flowchart TB
     <div class="gap-box">
       <ul>
         <li>What is the required <strong>retention period</strong> for raw telemetry events?</li>
+        <li>What <strong>data loss is tolerable during an AZ failover</strong>? The scenario gives a &lt;30 second [RIOT-F04] recovery target but no durability target — these are two different requirements, and assuming zero loss is an unsourced inference, not specified in the scenario (an assumption, not given) would materially change the replication design and its cost.</li>
         <li>What is the specific <strong>access control policy</strong> (roles, masking rules) for device/store/customer/loyalty identifiers?</li>
         <li>Is there a <strong>budget ceiling</strong> for infrastructure as the platform expands to new regions?</li>
         <li>What is the target <strong>onboarding time for a new region/store cluster</strong> (analogous to a new-source SLA)?</li>
