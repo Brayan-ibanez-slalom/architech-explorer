@@ -360,7 +360,7 @@ graph LR
   U --> QA4["Modifiability"]
 
   QA1 --> S1["Absorb 3x interaction growth<br/>in 2 years without re-arch<br/><b>(High, High)</b>"]
-  QA2 --> S2["CS data available ≤15min, 99%<br/><b>(High, Medium)</b>"]
+  QA2 --> S2["CS data available ≤15min<br/><b>(High, Medium)</b>"]
   QA2 --> S3["Dashboards ready by 7:00 AM daily<br/><b>(Medium, Low)</b>"]
   QA3 --> S4["PII access controlled & auditable<br/>across all sources<br/><b>(High, Medium)</b>"]
   QA4 --> S5["New standard source onboarded<br/>in ≤2 weeks<br/><b>(Medium, Medium)</b>"]
@@ -435,7 +435,7 @@ graph LR
     <table>
       <tr><th>Checklist item</th><th>Status</th></tr>
       <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass</td></tr>
-      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass <em>(after correction)</em> — an independent review of the prior revision found fabricated values ("99% of the time", "zero downtime", "zero disruption", "non-linear cost growth"). All have been removed and converted into Open Questions.</td></tr>
+      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass <em>(after two rounds of correction)</em> — a first independent review found fabricated values ("99% of the time", "zero downtime", "zero disruption", "non-linear cost growth") in the prose. A <strong>second</strong> review then found that "99%" had survived <em>inside the Utility Tree diagram</em>, while this very row claimed it had been removed. Both the value and the tooling blind spot that hid it are now fixed. <em>The lesson is recorded rather than hidden: a self-audit is evidence of intent, not of correctness.</em></td></tr>
       <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM, ≤15 min, 3× within 2 years, ≤2 weeks, 4 months, 2–4 sources/year. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
       <tr><td>2+ full quality-attribute scenarios (6 fields each)</td><td>✅ Pass</td></tr>
       <tr><td>3 ASRs with explicit justification</td><td>✅ Pass — added in this v2 report</td></tr>

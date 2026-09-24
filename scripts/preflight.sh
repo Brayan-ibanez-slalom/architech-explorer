@@ -27,19 +27,40 @@ head_() { echo; echo "${BLU}── $* ${RST}"; }
 
 # ---------------------------------------------------------------------------
 # Resolve target files
+#
+# NOTE: deliberately avoids `mapfile`/`readarray`. macOS ships bash 3.2, where
+# those builtins do not exist — an earlier version silently printed
+# "command not found" and then exited 0, i.e. the gate PASSED by failing.
+# A gate must never pass because it broke.
 # ---------------------------------------------------------------------------
-FILES=("$@")
-if [ ${#FILES[@]} -eq 0 ]; then
-  BASE=$(git rev-parse --verify -q main >/dev/null 2>&1 && echo main || echo HEAD~1)
-  mapfile -t FILES < <(git diff --name-only "$BASE"...HEAD -- 'docs/*.html' 2>/dev/null)
-  # include uncommitted work too
-  mapfile -O ${#FILES[@]} -t FILES < <(git diff --name-only -- 'docs/*.html'; git ls-files -o --exclude-standard -- 'docs/*.html')
-  mapfile -t FILES < <(printf '%s\n' "${FILES[@]:-}" | grep -v '^$' | sort -u)
+FILES=()
+if [ "$#" -gt 0 ]; then
+  for a in "$@"; do FILES+=("$a"); done
+else
+  if git rev-parse --git-dir >/dev/null 2>&1; then
+    if git rev-parse --verify -q main >/dev/null 2>&1; then BASE=main; else BASE=HEAD; fi
+    CAND=$( { git diff --name-only "$BASE"...HEAD -- 'docs/*.html' 2>/dev/null
+              git diff --name-only -- 'docs/*.html' 2>/dev/null
+              git diff --name-only --cached -- 'docs/*.html' 2>/dev/null
+              git ls-files -o --exclude-standard -- 'docs/*.html' 2>/dev/null
+            } | grep -v '^$' | sort -u )
+    while IFS= read -r line; do
+      [ -n "$line" ] && FILES+=("$line")
+    done <<< "$CAND"
+  else
+    echo "${RED}✗ Not a git repository and no files given.${RST}" >&2
+    echo "Usage: $0 docs/<Scenario>_Solution.html" >&2
+    exit 2
+  fi
 fi
 
-if [ ${#FILES[@]} -eq 0 ]; then
-  echo "No changed docs/*.html found. Nothing to validate."
-  exit 0
+if [ "${#FILES[@]}" -eq 0 ]; then
+  echo "${YEL}No changed docs/*.html detected.${RST}"
+  echo "If you expected files here, pass them explicitly:"
+  echo "    $0 docs/<Scenario>_Solution.html"
+  echo
+  echo "Exiting 2 (indeterminate) rather than 0 — 'nothing checked' is NOT 'checks passed'."
+  exit 2
 fi
 
 echo "Pre-flight validation for: ${FILES[*]}"
@@ -49,12 +70,13 @@ for f in "${FILES[@]}"; do
 
   # v1 is an intentionally preserved defective baseline — never gate on it.
   case "$f" in
-    *Customer360_Capstone_Solution.html)
+    docs/Customer360_Capstone_Solution.html)
       warn "$f is the archived v1 baseline (known defects, intentionally uncorrected) — skipped"
       continue ;;
   esac
 
   echo; echo "═══ $f ═══"
+  FILEFAIL_START=$FAIL
 
   # -------------------------------------------------------------------------
   head_ "1. Required reasoning-chain sections"
@@ -69,12 +91,15 @@ for f in "${FILES[@]}"; do
   head_ "2. Fabricated-precision scan (every hit must be traceable to the source)"
   # Strip <style>/<script> blocks first — CSS percentages and Mermaid config are not
   # requirements, and flagging them buries the real findings in noise.
+  # Strip <style>/<script> only. Mermaid diagram bodies are DELIBERATELY included:
+  # a fabricated "99%" survived a previous cleanup precisely because an earlier
+  # version of this script excluded diagrams as "noise". Diagrams state requirements,
+  # so they must be scanned. CSS percentages are excluded via the style strip.
   PROSE=$(python3 - "$f" <<'PY'
 import sys,re
 s=open(sys.argv[1],encoding='utf-8').read()
 s=re.sub(r'(?is)<style.*?</style>','',s)
 s=re.sub(r'(?is)<script.*?</script>','',s)
-s=re.sub(r'(?is)<div class="mermaid".*?</div>','',s)
 sys.stdout.write(s)
 PY
 )
@@ -125,7 +150,9 @@ PY
         fail "$v is $((n*100/TOTAL))% of hyperscaler mentions (limit 60%) — rebalance"
       fi
     done
-    [ "$FAIL" -eq 0 ] && pass "no single hyperscaler exceeds 60% of mentions"
+    # Compare against this file's starting count, not the global one — otherwise a
+    # failure in an earlier file suppresses this file's pass message.
+    [ "$FAIL" -eq "$FILEFAIL_START" ] && pass "no single hyperscaler exceeds 60% of mentions"
   else
     pass "too few vendor mentions to skew ($TOTAL)"
   fi
