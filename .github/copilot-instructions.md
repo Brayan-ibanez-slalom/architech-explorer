@@ -138,6 +138,38 @@ do not submit a partial analysis silently.
 - [ ] Output delivered as `docs/<scenario-slug>_Solution.html` using Mermaid diagrams + tables, matching `docs/Customer360_Capstone_Solution.html` in depth and structure
 - [ ] No requirement, number, or constraint appears in the output that wasn't provided by the user, the knowledge base, or explicitly flagged as an assumption
 
+## Source Traceability (Required — prevents fabricated requirements)
+
+This rule exists because an independent review found invented values ("99% of the
+time", "zero downtime", "non-linear cost growth") in reports that had simultaneously
+self-certified as containing no invented constraints. A self-audit that cannot detect
+its own fabrications is worse than no self-audit, because it manufactures false trust.
+
+**Every number, percentage, threshold, and time bound in a report must fall into
+exactly one of four categories, and the category must be visible to the reader:**
+
+| Category | Meaning | How it must appear |
+|---|---|---|
+| **Given** | Stated verbatim in the source scenario | Use freely |
+| **Derived** | Follows logically from a given fact | State the derivation |
+| **Assumption** | Not given; needed to proceed | Label `(assumption)` inline |
+| **Unknown** | Not given; must not be guessed | Put in **Open Questions** |
+
+**Hard prohibitions:**
+- Never attach an attainment percentile (99%, p95, p99) to an SLA unless one was given.
+  A latency bound and a reliability target are two different requirements.
+- Never write "zero downtime", "zero disruption", or "zero data loss" unless stated.
+  These are among the most expensive requirements in architecture — inventing one
+  silently inflates cost and distorts every downstream decision.
+- Never convert "costs must remain observable" into a cost-efficiency target.
+  Observability is visibility; efficiency is a threshold. They are not the same.
+- Never present an unresolved option (e.g. "Nightly batch") as settled in a diagram.
+
+**Before finalizing, re-read every numeric value in the report and locate it in the
+source scenario. If you cannot point to it, it is an assumption or an open question —
+never a requirement.** If the self-audit table would claim "none invented", it must
+only do so after this pass has actually been performed.
+
 ## Handling Incomplete Input (Required Behavior)
 If the Definition of Done cannot be met because information is missing, respond with
 a **numbered list of specific clarifying questions** (referencing which section of the
