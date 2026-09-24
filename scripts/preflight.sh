@@ -91,6 +91,19 @@ else
   fi
 fi
 
+head_ "0-pre. Workflow files parse (a workflow that cannot parse never runs)"
+if python3 "$(dirname "$0")/check_workflows.py" >"$WORK/wf.out" 2>&1; then
+  pass "$(tail -1 "$WORK/wf.out")"
+else
+  WF_RC=$?
+  cat "$WORK/wf.out"
+  if [ "$WF_RC" -eq 2 ]; then
+    warn "workflow files could NOT be checked"
+  else
+    fail "a workflow file is invalid — CI would silently stop running"
+  fi
+fi
+
 head_ "0a. Source provenance (is the evidence really the evidence?)"
 # A generated report once added a PDF it had authored itself, which the manifest
 # verifier then accepted as the source for its own quotes. Scoping sources per

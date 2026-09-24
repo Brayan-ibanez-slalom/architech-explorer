@@ -80,7 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Post review instructions to the PR
-        if: needs.structural-prefilter.outputs.changed != '''
+        if: needs.structural-prefilter.outputs.changed != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
