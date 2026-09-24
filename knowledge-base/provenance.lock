@@ -1,0 +1,8 @@
+# Pinned hashes of captured source documents.
+# A capture is only evidence if it can be shown to match what upstream actually
+# says. scripts/verify_provenance.py re-fetches the GitHub issue and compares.
+# Regenerate deliberately, never to make a red check go green.
+verdant-grocers:
+  source_issue: 8
+  file: "verdant-grocers.source.txt"
+  sha256: "d51be9afc29aba0056a6b2c6efe065dc927e594ada6a88209aaf7aa50c1e6615"

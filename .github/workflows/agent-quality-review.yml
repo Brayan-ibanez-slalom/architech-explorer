@@ -53,6 +53,11 @@ jobs:
 
       - name: Run the SAME gate developers run locally
         if: steps.detect.outputs.files != ''
+        env:
+          # Needed by scripts/verify_provenance.py, which re-fetches the upstream
+          # GitHub issue a scenario's facts were captured from. Without it that
+          # check degrades to a warning rather than silently passing.
+          GH_TOKEN: ${{ github.token }}
         run: |
           # CI must not diverge from scripts/preflight.sh. A red-team test found
           # reports that passed locally but failed CI (and vice versa) because the
@@ -64,7 +69,10 @@ jobs:
   agent-review:
     name: "Agent quality review (improved? -> PR | not improved? -> iterate)"
     needs: structural-prefilter
-    if: needs.structural-prefilter.outputs.changed != ''
+    # Deliberately NOT gated on changed reports. This job used to skip whenever a
+    # PR touched no docs/*.html, which meant changes to the gate scripts - the
+    # files that decide what the repo accepts as true - needed no review at all.
+    # The first PR to add the independent-review check skipped that very check.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -72,6 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Post review instructions to the PR
+        if: needs.structural-prefilter.outputs.changed != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -106,18 +115,53 @@ jobs:
           EOF
           gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/review-request.md
 
-      - name: Require reviewed-by evidence in PR body
+      # The previous version of this step grepped the PR body for
+      # "VERDICT: IMPROVED". The PR author writes the PR body, so the author
+      # could certify their own work by typing eight characters. That is not
+      # evidence of review; it is evidence of typing.
+      #
+      # The gates in this repo check sourcing, structure and decision shape.
+      # They cannot check whether the reasoning is CORRECT. Only a second
+      # party can. So the thing this step now looks for is a second party.
+      - name: Require judgement from someone other than the author
         env:
           GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          BODY=$(gh pr view "${{ github.event.pull_request.number }}" --json body -q .body)
-          if echo "$BODY" | grep -qi "VERDICT: *IMPROVED"; then
-            echo "✅ Agent review verdict IMPROVED found in PR description."
+          APPROVERS=$(gh api "repos/${{ github.repository }}/pulls/$PR/reviews" \
+            --jq "[.[] | select(.state == \"APPROVED\") | .user.login] | unique | .[]" \
+            | grep -v "^${AUTHOR}$" || true)
+
+          if [ -n "$APPROVERS" ]; then
+            echo "Independent approval from: $(echo "$APPROVERS" | tr '\n' ' ')"
+            echo "Someone other than the author has judged this. That is the only"
+            echo "check in this repository that speaks to CORRECTNESS."
             exit 0
           fi
-          if echo "$BODY" | grep -qiE "VERDICT: *(NOT IMPROVED|MIXED)"; then
-            echo "::error::Agent review returned a non-IMPROVED verdict. Iterate on the findings and push corrections before merging."
-            exit 1
+
+          # The marker must start a line and carry a real reason.
+          #
+          # The first version searched the body for the substring anywhere. The
+          # very PR that introduced this check then passed it - because the PR
+          # description EXPLAINED the escape hatch, and the explanation contained
+          # the magic words. The check matched its own documentation.
+          #
+          # Anchoring to line start excludes the inline-code and prose mentions
+          # that any honest description of this rule will contain, and requiring
+          # 15+ characters of reason excludes the "<why>" placeholder.
+          BODY=$(gh pr view "$PR" --json body -q .body)
+          if echo "$BODY" | grep -qE "^NO INDEPENDENT REVIEW: *[^<[:space:]].{14,}"; then
+            echo "::warning::Merging without independent review, acknowledged in the PR body."
+            echo "The structural gates passed. Nothing has checked whether the"
+            echo "reasoning is correct. That is now a recorded, deliberate choice"
+            echo "rather than a silent one."
+            exit 0
           fi
-          echo "::error::No agent review verdict found in the PR description. Run the reviewing agent and paste its verdict block (VERDICT / CONFIDENCE / WEAKNESSES / FIXES) into the PR body before merging."
+
+          echo "::error::No approving review from anyone other than @${AUTHOR}."
+          echo "The structural gates prove the report is SOURCED and well-SHAPED."
+          echo "They cannot prove it is RIGHT. Either get a second party to"
+          echo "approve, or state the trade-off explicitly by adding a line to the"
+          echo "PR body: 'NO INDEPENDENT REVIEW: <why this is acceptable here>'."
           exit 1
