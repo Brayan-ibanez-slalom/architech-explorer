@@ -248,6 +248,17 @@ graph LR
   <section id="decisions">
     <span class="badge">Step 5</span>
     <h2>8. Architecture Decisions & Trade-offs</h2>
+    <div style="background:#eaf2fb;border-left:4px solid #1f5fa8;padding:14px 18px;border-radius:6px;margin-bottom:18px;">
+      <strong>The "¿Para qué?" test applied to each decision below.</strong> Before naming any tool,
+      each decision must answer: <em>What outcome does this serve? Which business objective does it
+      trace back to? Which quality attribute or ASR makes it necessary rather than optional?</em>
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Streaming ingestion</strong></td><td>Operations teams detect store/device issues while they still matter, instead of the next day</td><td>O1 (near-real-time monitoring to detect issues quickly)</td><td>ASR 1 — 50K events/sec at &lt;200ms p95, unreachable with batch</td></tr>
+      <tr><td><strong>2 — Schema registry</strong></td><td>Device firmware can evolve independently without breaking the pipeline or pausing monitoring</td><td>O2 (expand to new regions without re-architecting)</td><td>ASR 3 — new schema deployed &lt;1 day, zero downtime</td></tr>
+      <tr><td><strong>3 — Multi-AZ failover</strong></td><td>Monitoring keeps working during an infrastructure failure, when issue detection matters most</td><td>O3 (preserve trusted telemetry for downstream use)</td><td>ASR 2 — recover from AZ failure in &lt;30 sec</td></tr>
+    </table>
 
     <div class="decision">
       <h4>Decision 1 — Managed Streaming Ingestion (not batch)</h4>

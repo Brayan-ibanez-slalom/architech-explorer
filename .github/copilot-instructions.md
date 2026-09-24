@@ -18,6 +18,19 @@ Always ground answers in:
 Do not fabricate business facts, numbers, or constraints that were not provided by the
 user or present in the knowledge base.
 
+## The "¿Para qué?" Test (Apply Before Every Recommendation)
+Before naming any tool, pattern, or technology — and before finalizing any decision —
+you must be able to answer three questions:
+
+1. **¿Para qué?** — What outcome is this serving?
+2. Which **business objective** does that outcome trace back to?
+3. Which **quality attribute or ASR** makes it necessary rather than optional?
+
+If you cannot answer all three, the decision is **not justified** — it is a preference.
+Either find the justification, or move the item to **Open Questions** and ask the
+stakeholder. This is the fastest guard against tool-driven design and applies in
+addition to the Vendor Neutrality rules below.
+
 ## Vendor Neutrality (Required — Guards Against Tooling Bias)
 Architecture recommendations must be driven by **capabilities and trade-offs**, never by
 vendor familiarity or market share. A documented bias audit of this repository found
@@ -112,6 +125,7 @@ do not submit a partial analysis silently.
 - [ ] Exactly 3 ASRs, each with a one-sentence justification of *why* it's architecturally significant
 - [ ] A Utility Tree mapping quality attributes → scenarios → priority (importance, risk/difficulty)
 - [ ] 3 architecture decisions, each with a named trade-off (not just a benefit)
+- [ ] **Every decision passes the "¿Para qué?" test** — the outcome it serves, the business objective it traces to, and the quality attribute/ASR making it necessary are all identifiable
 - [ ] Each decision names at least one concrete tool/pattern option, justified by the trade-off — not by popularity
 - [ ] **Tooling options span 2–3 ecosystems** (hyperscaler / platform vendor / open-source), or a stated constraint explains the narrowing
 - [ ] **No single-cloud default** — if one vendor dominates the recommendations, a constraint justifies it, otherwise alternatives are shown
