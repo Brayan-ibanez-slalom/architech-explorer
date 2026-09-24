@@ -1,0 +1,33 @@
+name: "Label & Route New Scenarios"
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  label-scenario:
+    if: contains(github.event.issue.labels.*.name, 'scenario') || contains(github.event.issue.title, '[Scenario]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure scenario labels exist
+        run: |
+          gh label create scenario --color "1f5fa8" --description "New architecture scenario for agent analysis" --force
+          gh label create needs-triage --color "e0762b" --description "Awaiting completeness check before analysis" --force
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Apply labels to the issue
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" --add-label "scenario,needs-triage"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Post workflow reminder
+        run: |
+          gh issue comment "${{ github.event.issue.number }}" --body \
+            "Thanks for the submission. Per \`.github/copilot-instructions.md\`, the assigned agent will first check this against the Definition of Done checklist and ask clarifying questions for any missing inputs before producing the full analysis. Once clarifying questions (if any) are answered, remove the \`needs-triage\` label to signal the analysis can proceed."
+        env:
+          GH_TOKEN: ${{ github.token }}

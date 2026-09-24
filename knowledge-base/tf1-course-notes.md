@@ -130,6 +130,22 @@ Every significant decision should be traceable back to the business objective:
 **Task format required for any new capstone scenario:**
 2–3 objectives → key constraints → functional and quality requirements → 2 quality-attribute scenarios → 3 ASRs → 3 architecture decisions → trade-offs. Do not invent requirements — identify gaps and state what to ask the stakeholder.
 
+## Related Frameworks (Supplementary — Not from the Deck)
+These are widely recognized industry frameworks that reinforce the same reasoning
+chain taught in TF1. Use them for extra rigor or terminology, but never replace the
+deck's methodology or its required output structure with these.
+
+| Framework | Purpose | How it maps to TF1 |
+|---|---|---|
+| **ATAM** (Architecture Tradeoff Analysis Method, SEI/Carnegie Mellon) | Structured method to evaluate architecture against multiple competing quality attributes | Formalizes the Utility Tree + trade-off analysis taught in this course |
+| **ADR** (Architecture Decision Records) | Lightweight, versioned document capturing one decision, its context, and consequences | Use to persist each "Decision + Trade-off" from the reasoning chain as a durable artifact (`decisions/NNNN-title.md`) |
+| **C4 Model** (Context, Containers, Components, Code) | Layered diagramming notation for visualizing architecture at increasing detail | Complements (does not replace) the Mermaid architecture diagrams in `docs/*.html` |
+| **Cloud Well-Architected Frameworks** (AWS/Azure/GCP) | Pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability | Each pillar maps to one or more TF1 quality attributes (e.g., Reliability → Availability, Cost Optimization → Cost of Change) |
+
+**When to cite these:** only to strengthen a decision's justification (e.g., "this
+follows the AWS Well-Architected Reliability pillar") — never as a substitute for the
+Objectives → Constraints → Requirements → ASRs → Decisions chain.
+
 ## Key Takeaways
 Great architects do not start with solutions. They start by understanding the problem space:
 - Understanding business objectives

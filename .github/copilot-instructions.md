@@ -56,3 +56,34 @@ prompt) submits a new scenario:
 - Every quality attribute must be measurable (numbers, percentages, time bounds).
 - Never skip a step in the reasoning chain (Objectives → Constraints → Requirements → ASRs → Decisions).
 - Prefer Mermaid.js for flowcharts/trees, matching the existing HTML reports' diagram style.
+- You may cite supplementary frameworks (ATAM, ADRs, C4, Well-Architected pillars — see
+  `knowledge-base/tf1-course-notes.md`) to strengthen justification, but never replace
+  the required TF1 reasoning-chain structure with them.
+
+## Definition of Done (Self-Audit Before Submitting)
+Before delivering any scenario analysis, verify — explicitly, line by line — that the
+output satisfies ALL of the following. If any item fails, fix it before responding;
+do not submit a partial analysis silently.
+
+- [ ] 2–3 business objectives stated, each traceable to something the user actually said
+- [ ] All constraints listed are from user input or the knowledge base — none invented
+- [ ] Functional requirements are actions ("the system must..."), not quality attributes
+- [ ] Every quality requirement includes a number, percentage, or time bound
+- [ ] At least 2 quality-attribute scenarios, each with all 6 fields (Source, Stimulus, Environment, Artifact, Response, Response Measure)
+- [ ] Exactly 3 ASRs, each with a one-sentence justification of *why* it's architecturally significant
+- [ ] A Utility Tree mapping quality attributes → scenarios → priority (importance, risk/difficulty)
+- [ ] 3 architecture decisions, each with a named trade-off (not just a benefit)
+- [ ] Each decision names at least one concrete tool/pattern option, justified by the trade-off — not by popularity
+- [ ] A cost-of-change placement (reversible / partially reversible / near-irreversible) for the decisions most likely to be hard to undo
+- [ ] An "Open Questions for the Stakeholder" section listing every gap instead of a guessed value
+- [ ] Output delivered as `docs/<scenario-slug>_Solution.html` using Mermaid diagrams + tables, matching `docs/Customer360_Capstone_Solution.html` in depth and structure
+- [ ] No requirement, number, or constraint appears in the output that wasn't provided by the user, the knowledge base, or explicitly flagged as an assumption
+
+## Handling Incomplete Input (Required Behavior)
+If the Definition of Done cannot be met because information is missing, respond with
+a **numbered list of specific clarifying questions** (referencing which section of the
+reasoning chain is blocked) instead of proceeding. Do not produce a partial or
+best-guess report. Example:
+> "Before I can define ASR-level scenarios, I need: (1) a target latency or throughput
+> number for X, (2) whether Y has a compliance requirement, (3) the expected growth
+> rate for Z."
