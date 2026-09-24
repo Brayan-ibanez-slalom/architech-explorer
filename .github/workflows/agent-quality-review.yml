@@ -69,7 +69,10 @@ jobs:
   agent-review:
     name: "Agent quality review (improved? -> PR | not improved? -> iterate)"
     needs: structural-prefilter
-    if: needs.structural-prefilter.outputs.changed != ''
+    # Deliberately NOT gated on changed reports. This job used to skip whenever a
+    # PR touched no docs/*.html, which meant changes to the gate scripts - the
+    # files that decide what the repo accepts as true - needed no review at all.
+    # The first PR to add the independent-review check skipped that very check.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -77,6 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Post review instructions to the PR
+        if: needs.structural-prefilter.outputs.changed != '''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
