@@ -148,6 +148,7 @@
   <a href="#utility">Utility Tree</a>
   <a href="#decisions">Decisions & Trade-offs</a>
   <a href="#architecture">Architecture Diagram</a>
+  <a href="#governance">Governance & Security</a>
   <a href="#cost">Cost of Change</a>
   <a href="#gaps">Open Questions</a>
 </nav>
@@ -165,6 +166,9 @@
       <tr><td>Architecture decisions</td><td>Named as patterns only (e.g., "hybrid ingestion architecture")</td><td>Each decision now names <strong>concrete tool options</strong>, justified by the trade-off — not by popularity</td></tr>
       <tr><td>ASR justification</td><td>Implicit — shown only inside the diagram node</td><td>Explicit one-sentence justification for <em>why</em> each ASR is architecturally significant, written out in prose</td></tr>
       <tr><td>Framework grounding</td><td>None</td><td>Cites ATAM (utility tree), ADRs (decision persistence), and Well-Architected pillars where relevant</td></tr>
+      <tr><td><strong>Vendor neutrality</strong></td><td>AWS-skewed (bias audit: 11 AWS/Amazon/Kinesis mentions vs. 2 Azure, 1 GCP, 0 Databricks/Snowflake)</td><td>Every decision now offers options across <strong>open-source, platform/lakehouse, and hyperscaler</strong> ecosystems, selected by trade-off — plus an explicit "what platform are you on?" open question instead of assuming one</td></tr>
+      <tr><td><strong>Governance &amp; security</strong></td><td>Mentioned only inside Decision 3 and one ASR</td><td>Dedicated <a href="#governance">Section 11</a> covering classification, ABAC access model, PII protection techniques, auditability, lineage, data contracts, quality/quarantine, plus anti-patterns</td></tr>
+      <tr><td>Cost of Change coverage</td><td>Technical decisions only</td><td>Adds governance model and storage-format lock-in to the spectrum, with an explicit optionality recommendation (open table formats)</td></tr>
       <tr><td>Self-audit</td><td>Not shown</td><td>Definition-of-Done checklist run explicitly against this report (see end of section)</td></tr>
     </table>
     <p><a href="Customer360_Capstone_Solution.html">→ Open v1 (original) in a new tab to compare side-by-side</a></p>
@@ -383,22 +387,36 @@ graph LR
     <div class="decision">
       <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
       <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min SLA) and standard batch for marketing/dashboard data (7 AM SLA).</p>
-      <p><strong>Concrete tool options:</strong> streaming/micro-batch via <em>Kafka + Kafka Streams</em>, <em>AWS Kinesis</em>, or <em>Debezium CDC → Spark Structured Streaming</em>; batch orchestration via <em>Airflow</em> or <em>dbt + a scheduler</em> for the 7 AM dashboard SLA.</p>
-      <p class="tradeoff">Trade-off: Higher operational complexity (two pipelines) vs. cheaply meeting divergent latency SLAs — avoids over-engineering everything to real-time. (Aligned with AWS Well-Architected "Performance Efficiency" pillar: match the solution to the actual latency requirement, not the tightest one.)</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is a streaming/micro-batch ingestion path sustaining the ≤15 min SLA alongside a batch path for the 7 AM SLA.<br/>
+      • <em>Open-source / portable:</em> Apache Kafka or Apache Pulsar + Apache Flink (streaming-native) or Spark Structured Streaming; Airflow or Dagster for batch orchestration.<br/>
+      • <em>Platform / lakehouse:</em> Databricks (Auto Loader + Structured Streaming + Workflows), Snowflake (Snowpipe Streaming + Dynamic Tables + Tasks), Confluent Cloud.<br/>
+      • <em>Hyperscaler-managed:</em> Azure Event Hubs + Data Factory, Google Cloud Pub/Sub + Dataflow, or Amazon MSK/Kinesis + Glue.<br/>
+      <em>Selection driver:</em> pick by team skills and existing platform commitment — not by vendor. With no stated cloud commitment, a portable Kafka/Flink or lakehouse-native option preserves optionality.</p>
+      <p class="tradeoff">Trade-off: Higher operational complexity (two pipelines) vs. cheaply meeting divergent latency SLAs — avoids over-engineering everything to real-time. (Consistent with the "Performance Efficiency" pillar across AWS/Azure/GCP Well-Architected frameworks: match the solution to the actual requirement, not the tightest one.)</p>
     </div>
 
     <div class="decision">
       <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
       <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
-      <p><strong>Concrete tool options:</strong> managed match/merge engines such as <em>AWS Entity Resolution</em>, <em>Senzing</em>, or <em>Zingg</em> (open-source ML-based entity resolution), fronted by a golden-record store (e.g., a dedicated schema in the warehouse/lakehouse, not embedded in a source system).</p>
-      <p class="tradeoff">Trade-off: Upfront investment in matching logic vs. long-term trust and reduced rework; near-irreversible once adopted, so worth designing early. Recommend capturing this decision as an <strong>ADR</strong> (Architecture Decision Record) given its low reversibility.</p>
+      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M+ customers and 4+ systems, with the ability to reprocess history when rules change.<br/>
+      • <em>Open-source / portable:</em> Zingg (ML-based entity resolution) or Splink (probabilistic record linkage) running on Spark.<br/>
+      • <em>Platform / lakehouse:</em> Databricks (Spark ML matching pipelines + Delta time travel for reprocessing), Snowflake (Snowpark-based matching).<br/>
+      • <em>Commercial specialist:</em> Senzing, Informatica MDM, Reltio, Tamr.<br/>
+      • <em>Hyperscaler-managed:</em> AWS Entity Resolution (note: narrower portability).<br/>
+      <em>Selection driver:</em> explainability and auditability of merges matter most here because PII is involved — favor options whose match decisions can be inspected and replayed.</p>
+      <p class="tradeoff">Trade-off: Upfront investment in matching logic vs. long-term trust and reduced rework; near-irreversible once adopted, so worth designing early. Recommend capturing this decision as an <strong>ADR</strong> (Architecture Decision Record) given its low reversibility, and choosing an open table format (Iceberg/Delta) for the golden-record store to avoid locking the most expensive-to-change asset into one engine.</p>
     </div>
 
     <div class="decision">
       <h4>Decision 3 — Standard Connector Framework with Centralized Access Control</h4>
-      <p>Schema-on-write connector standard plus centralized, attribute-level access control & audit logging (not bolted on per source).</p>
-      <p><strong>Concrete tool options:</strong> managed connector frameworks such as <em>Fivetran</em> or <em>Airbyte</em> for the "standard source" onboarding path; centralized policy enforcement via <em>Open Policy Agent (OPA)</em> or a data-catalog-integrated access layer (e.g., <em>Immuta</em>/<em>Privacera</em>) for attribute-level PII masking and audit logging.</p>
-      <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale. (Aligned with Well-Architected "Security" pillar: centralize access control rather than re-implement it per source.)</p>
+      <p>Schema-on-write connector standard plus centralized, attribute-level access control &amp; audit logging (not bolted on per source).</p>
+      <p><strong>Technology options:</strong> the capability required is a repeatable source-onboarding path meeting the ≤2-week SLA, with PII policy enforced centrally rather than per source.<br/>
+      • <em>Open-source / portable:</em> Airbyte (OSS) or Meltano for connectors; Open Policy Agent (OPA) or Apache Ranger for centralized policy; OpenMetadata or DataHub for catalog/lineage.<br/>
+      • <em>Platform / lakehouse:</em> Databricks Unity Catalog (tag-based ABAC, row filters, column masks) or Snowflake Horizon (dynamic masking, row access policies, tag-based policies).<br/>
+      • <em>Commercial:</em> Fivetran/Matillion for connectors; Immuta or Privacera for policy enforcement; Collibra/Alation/Atlan for governance.<br/>
+      • <em>Hyperscaler-native:</em> Microsoft Purview + ADF, Google Dataplex + Data Fusion, or AWS Lake Formation + Glue.<br/>
+      <em>Selection driver:</em> prefer tag/attribute-based policy that scales as 2–4 new sources arrive per year; per-table grant models tend to drift into audit gaps.</p>
+      <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale. Centralized policy engines (OPA) maximize portability across engines; platform-native enforcement (Unity Catalog / Horizon) is simpler but must be re-implemented if the platform changes.</p>
     </div>
 
     <h3>Definition-of-Done Self-Audit (v2)</h3>
@@ -412,6 +430,11 @@ graph LR
       <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
       <tr><td>3 decisions with named trade-offs</td><td>✅ Pass</td></tr>
       <tr><td>Each decision names a concrete tool option</td><td>✅ Pass — added in this v2 report</td></tr>
+      <tr><td>Tooling options span 2–3 ecosystems (no single-cloud default)</td><td>✅ Pass — open-source, lakehouse, and hyperscaler options per decision</td></tr>
+      <tr><td>At least one open-source / portable option offered</td><td>✅ Pass (Kafka, Flink, Spark, Airflow/Dagster, Zingg/Splink, Airbyte, OPA, OpenMetadata)</td></tr>
+      <tr><td>Lock-in / reversibility flagged via Cost of Change</td><td>✅ Pass — open table format recommended for the golden-record store</td></tr>
+      <tr><td>Governance &amp; Security Recommendations section present</td><td>✅ Pass — Section 11</td></tr>
+      <tr><td>No compliance regime assumed unless stated</td><td>✅ Pass — GDPR/CCPA, residency, erasure, and CMK all listed as Open Questions</td></tr>
       <tr><td>Cost-of-change placement for hard-to-reverse decisions</td><td>✅ Pass</td></tr>
       <tr><td>Open questions listed instead of guessed values</td><td>✅ Pass</td></tr>
     </table>
@@ -488,10 +511,60 @@ flowchart TB
     </div>
   </section>
 
+  <!-- GOVERNANCE & SECURITY -->
+  <section id="governance">
+    <span class="badge">Design Recommendations</span>
+    <h2>11. Governance &amp; Security Recommendations</h2>
+    <p>The course lists <em>security boundaries</em> and <em>data isolation</em> among the capabilities that are
+    <strong>expensive to introduce later</strong>. Because this scenario explicitly involves PII and
+    continuously growing sources, governance and security are treated here as <strong>design concerns</strong>,
+    not post-build add-ons.</p>
+
+    <h3>Is Governance/Security an ASR Here?</h3>
+    <p><strong>Yes — ASR 3 already captures it.</strong> "Auditable PII access under extensibility" qualifies because
+    the requirement shapes the <em>connector architecture itself</em>: if access control is implemented per source
+    rather than centrally, every 2-week onboarding cycle re-opens compliance risk. That is a structural
+    consequence, which is the test for architectural significance.</p>
+
+    <h3>Governance Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Ownership &amp; stewardship</td><td>Assign a data owner per source domain (e-commerce, loyalty, support, marketing). Unowned sources become untrusted — which directly undermines objective O1 ("trusted view").</td></tr>
+      <tr><td>Catalog &amp; discoverability</td><td>Register every dataset with business definitions, owner, freshness, and sensitivity tags. Without this, the "trusted customer view" fails at adoption even if the pipeline is technically correct.</td></tr>
+      <tr><td>Lineage &amp; traceability</td><td>Capture column-level lineage source → transformation → consumption; prefer the open <strong>OpenLineage</strong> standard to preserve engine optionality. Required to answer "where did this number come from?" for leadership's daily metrics.</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems can change independently without breaking the 7 AM dashboard SLA.</td></tr>
+      <tr><td>Data quality</td><td>Express expectations as measurable checks (completeness, uniqueness of customer keys, freshness). Decide explicitly whether a failed check <em>blocks</em> or <em>alerts</em> — a real trade-off between trust and availability against the 7 AM deadline.</td></tr>
+      <tr><td>Quarantine path</td><td>Route rejected/unresolvable records to a dead-letter store rather than dropping them silently — essential when identity resolution cannot confidently match a customer.</td></tr>
+      <tr><td>Master data rules</td><td>Make survivorship rules (which source wins per attribute) explainable and auditable, and retain the ability to <strong>reprocess history</strong> when rules change — otherwise the matching logic becomes permanently frozen.</td></tr>
+      <tr><td>Cost governance (FinOps)</td><td>Tag resources by domain and make cost per pipeline/consumer observable — directly satisfies constraint C2 ("costs must remain observable as usage grows").</td></tr>
+    </table>
+
+    <h3>Security Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Data classification</td><td>Classify at ingestion (Public / Internal / Confidential / Restricted-PII) and propagate classification as metadata through every layer. Attach policies to <strong>tags</strong>, not table names — this is what lets security scale as 2–4 new sources arrive per year.</td></tr>
+      <tr><td>Access control model</td><td>Prefer <strong>ABAC / tag-based</strong> policy over per-table RBAC grants. With continuous source growth, RBAC grant sprawl is the predictable failure mode. Enforce least privilege and purpose-based access.</td></tr>
+      <tr><td>PII protection</td><td>Apply <em>dynamic masking</em> for Customer Service views that need the row but not the raw value; <em>tokenization</em> where referential integrity across systems is required without exposing values; <em>salted hashing</em> for join keys; encryption at rest and in transit as a non-negotiable baseline.</td></tr>
+      <tr><td>Auditability</td><td>Log who accessed what, when, and for what purpose. Store audit logs <strong>separately from the data plane</strong> and make them tamper-evident — the scenario's "auditable access" wording makes this a hard requirement, not a nice-to-have.</td></tr>
+      <tr><td>Environment isolation</td><td>Never use raw production PII in development or test. Mask or synthesize — a common and avoidable breach vector during a 4-month delivery crunch (constraint C1).</td></tr>
+      <tr><td>Secrets &amp; keys</td><td>No secrets in pipeline configs or code; use a secrets manager (HashiCorp Vault, Key Vault, Secret Manager, or equivalent). Decide explicitly whether customer-managed keys (CMK/BYOK) are required — this is a regulatory question, not a preference.</td></tr>
+      <tr><td>Data Science / ML paths</td><td>Apply the same classification and masking policies to feature stores and training sets as to BI consumption. Models can memorize and leak PII — the scenario explicitly anticipates churn/propensity models.</td></tr>
+    </table>
+
+    <h3>Anti-Patterns to Avoid in This Design</h3>
+    <ul class="tick">
+      <li>Per-source, hand-rolled access rules (guarantees drift and audit gaps as sources grow)</li>
+      <li>Security added after the pipeline works ("we'll lock it down later") — especially tempting under the 4-month deadline</li>
+      <li>Masking applied only at the dashboard layer while the underlying store stays exposed</li>
+      <li>Catalog and lineage treated as documentation rather than as enforced controls</li>
+      <li>Silent dropping of records that fail identity resolution</li>
+    </ul>
+  </section>
+
   <!-- COST OF CHANGE -->
   <section id="cost">
     <span class="badge">Step 5 → Reflection</span>
-    <h2>11. Cost of Change — Where Do These Decisions Sit?</h2>
+    <h2>12. Cost of Change — Where Do These Decisions Sit?</h2>
     <p>The harder a decision is to reverse, the more intentional we should be about making it.</p>
     <div class="cost-spectrum">
       <div class="cost-bar"></div>
@@ -501,19 +574,22 @@ flowchart TB
         <span>Near-Irreversible</span>
       </div>
       <div class="cost-points">
-        <div class="cost-point" style="left:12%;"><div class="dot"></div>Dashboard layout, report formats</div>
-        <div class="cost-point" style="left:38%;"><div class="dot"></div>Choice of streaming tool for speed layer</div>
-        <div class="cost-point" style="left:62%;"><div class="dot"></div>Connector framework standard (Decision 3)</div>
-        <div class="cost-point" style="left:85%;"><div class="dot"></div>Identity resolution model / golden record schema (Decision 2)</div>
+        <div class="cost-point" style="left:10%;"><div class="dot"></div>Dashboard layout, report formats</div>
+        <div class="cost-point" style="left:32%;"><div class="dot"></div>Choice of streaming tool for speed layer</div>
+        <div class="cost-point" style="left:55%;"><div class="dot"></div>Connector framework standard (Decision 3)</div>
+        <div class="cost-point" style="left:74%;"><div class="dot"></div>Classification scheme &amp; access-control model</div>
+        <div class="cost-point" style="left:92%;"><div class="dot"></div>Identity resolution model / golden record schema &amp; table format (Decision 2)</div>
       </div>
     </div>
     <p style="margin-top:44px;">Decision 2 (Identity Resolution) sits closest to <strong>near-irreversible</strong> — once source systems and downstream consumers depend on a given golden-record model, changing the matching/survivorship logic requires reprocessing history and re-validating trust. This justifies investing in it early and getting it right before scaling to more sources.</p>
+    <p><strong>Governance is also near-irreversible.</strong> The data classification scheme and access-control model are plotted deliberately far right: once dozens of datasets and consumers depend on a given tagging and policy structure, retrofitting a different model means re-classifying every asset and re-validating every grant. This is why governance belongs in the upfront design, not in a later hardening phase.</p>
+    <p><strong>Lock-in note (preserve optionality).</strong> Storage format is the most expensive thing to change here, so favour an <strong>open table format (Apache Iceberg or Delta Lake)</strong> for the golden-record store. Compute engines, orchestrators, and connectors are comparatively replaceable; a proprietary storage format freezes the one decision you least want frozen. Where a platform-native policy engine is chosen (Unity Catalog, Snowflake Horizon), accept that policy definitions are a re-implementation cost if the platform changes — a legitimate trade-off, but one to make knowingly.</p>
   </section>
 
   <!-- GAPS -->
   <section id="gaps">
     <span class="badge">Do Not Invent Requirements</span>
-    <h2>12. Open Questions for the Stakeholder</h2>
+    <h2>13. Open Questions for the Stakeholder</h2>
     <div class="gap-box">
       <ul>
         <li>What is the required <strong>data retention</strong> policy beyond the existing 3 years of history?</li>
@@ -521,6 +597,11 @@ flowchart TB
         <li>What is the acceptable <strong>identity-match accuracy / false-merge tolerance</strong> for customer resolution?</li>
         <li>Is there a target/cap on <strong>infrastructure cost</strong> (e.g., $/customer/month), or is "observability" the only requirement?</li>
         <li>Do Data Science workloads have their own <strong>latency/freshness SLA</strong>, or is daily batch acceptable?</li>
+        <li><strong>Is there an existing cloud or data-platform commitment</strong> (AWS / Azure / Google Cloud / Databricks / Snowflake / on-prem)? This is the single biggest factor in narrowing the tooling options in Section 9 — without it, we deliberately keep multi-ecosystem options open rather than assuming a vendor.</li>
+        <li>Are there <strong>data residency or sovereignty</strong> requirements constraining where customer data may be stored or processed?</li>
+        <li>Is <strong>right-to-erasure</strong> (customer data deletion) required? This must be answered before finalizing an append-only/immutable storage design, since it materially changes the storage architecture.</li>
+        <li>Are <strong>customer-managed encryption keys (CMK/BYOK)</strong> required, or is provider-managed encryption acceptable?</li>
+        <li>Should failed data-quality checks <strong>block</strong> the pipeline or <strong>alert only</strong>? This trades trust against hitting the 7:00 AM dashboard deadline.</li>
       </ul>
     </div>
   </section>

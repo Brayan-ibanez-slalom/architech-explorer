@@ -69,6 +69,7 @@
   <a href="#utility">Utility Tree</a>
   <a href="#decisions">Decisions & Trade-offs</a>
   <a href="#architecture">Architecture Diagram</a>
+  <a href="#governance">Governance & Security</a>
   <a href="#cost">Cost of Change</a>
   <a href="#gaps">Open Questions</a>
   <a href="index.html">← All Reports</a>
@@ -250,20 +251,35 @@ graph LR
 
     <div class="decision">
       <h4>Decision 1 — Managed Streaming Ingestion (not batch)</h4>
-      <p>Adopt a managed streaming platform (e.g., Apache Kafka / Amazon Kinesis / Azure Event Hubs) with multi-AZ replication instead of a batch-only ingestion path.</p>
-      <p class="tradeoff">Trade-off: Requires the team to build new streaming skills and operational practices vs. batch-only comfort — necessary because 50K events/sec at &lt;200ms p95 cannot be met with batch processing alone.</p>
+      <p>Adopt a streaming ingestion platform with multi-AZ replication instead of a batch-only ingestion path.</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is durable, ordered, replayable event ingestion sustaining 50K events/sec at &lt;200ms p95.<br/>
+      • <em>Open-source / portable:</em> Apache Kafka, Apache Pulsar, or Redpanda, paired with Apache Flink for streaming processing.<br/>
+      • <em>Platform / managed OSS:</em> Confluent Cloud, Redpanda Cloud, or Databricks Structured Streaming with Auto Loader.<br/>
+      • <em>Hyperscaler-managed:</em> Azure Event Hubs, Google Cloud Pub/Sub, or Amazon MSK/Kinesis.<br/>
+      <em>Selection driver:</em> given the team's limited streaming experience (constraint C1), a <strong>managed</strong> offering in whichever ecosystem the client already operates reduces delivery risk more than any feature difference between these products.</p>
+      <p class="tradeoff">Trade-off: Requires the team to build new streaming skills and operational practices vs. batch-only comfort — necessary because 50K events/sec at &lt;200ms p95 cannot be met with batch processing alone. Managed services trade higher per-GB cost for lower operational burden, which is the right trade given C1.</p>
     </div>
 
     <div class="decision">
       <h4>Decision 2 — Schema Registry with Governed Evolution</h4>
-      <p>Use a schema registry (e.g., Confluent Schema Registry / AWS Glue Schema Registry) with backward/forward-compatible schema evolution (Avro/Protobuf), decoupled from consumer deployment cycles.</p>
-      <p class="tradeoff">Trade-off: Adds schema-governance overhead vs. the ability to roll out new firmware-driven event versions within a day without pipeline downtime.</p>
+      <p>Use a schema registry with backward/forward-compatible schema evolution (Avro/Protobuf), decoupled from consumer deployment cycles.</p>
+      <p><strong>Technology options:</strong> the capability required is enforced compatibility checking so independently-evolving firmware cannot break live consumers.<br/>
+      • <em>Open-source / portable:</em> Confluent Schema Registry (community edition), Apicurio Registry, or Buf Schema Registry for Protobuf.<br/>
+      • <em>Platform / lakehouse:</em> Databricks Unity Catalog schema enforcement, or Delta Lake / Apache Iceberg schema evolution at the storage layer.<br/>
+      • <em>Hyperscaler-managed:</em> Azure Schema Registry (in Event Hubs), Google Cloud Managed Service for Apache Kafka, or AWS Glue Schema Registry.<br/>
+      <em>Selection driver:</em> choose whichever registry integrates natively with the streaming platform selected in Decision 1 — cross-ecosystem pairing adds avoidable operational friction.</p>
+      <p class="tradeoff">Trade-off: Adds schema-governance overhead vs. the ability to roll out new firmware-driven event versions within a day without pipeline downtime. Using an open serialization format (Avro/Protobuf) keeps the contract portable even if the registry product changes.</p>
     </div>
 
     <div class="decision">
       <h4>Decision 3 — Multi-AZ Redundancy with Automated Failover</h4>
       <p>Design the ingestion and persistence tiers for multi-AZ redundancy with automated failover, rather than single-AZ deployment with manual recovery.</p>
-      <p class="tradeoff">Trade-off: Higher infrastructure cost (duplicated resources across AZs) vs. meeting the &lt;30 sec recovery requirement.</p>
+      <p><strong>Technology options:</strong> the capability required is automated failover within 30 seconds with zero data loss.<br/>
+      • <em>Open-source / portable:</em> Kafka with <code>min.insync.replicas</code> and rack-aware replica placement across zones; Apache Iceberg or Delta Lake on zone-redundant object storage for the persistence tier.<br/>
+      • <em>Platform:</em> Databricks or Snowflake managed multi-AZ durability (failover handled by the platform).<br/>
+      • <em>Hyperscaler-managed:</em> zone-redundant configurations of Azure Event Hubs, Google Cloud Pub/Sub (regional by default), or Amazon MSK multi-AZ.<br/>
+      <em>Selection driver:</em> verify the <em>measured</em> failover time of the chosen option against the &lt;30 sec requirement — vendor "high availability" claims are not equivalent to a tested RTO.</p>
+      <p class="tradeoff">Trade-off: Higher infrastructure cost (duplicated resources across AZs) vs. meeting the &lt;30 sec recovery requirement. This is a direct, quantifiable cost-for-availability exchange that should be confirmed against the (currently unstated) infrastructure budget.</p>
     </div>
   </section>
 
@@ -316,9 +332,46 @@ flowchart TB
     </div>
   </section>
 
+  <section id="governance">
+    <span class="badge">Design Recommendations</span>
+    <h2>10. Governance &amp; Security Recommendations</h2>
+    <p>The scenario states that events "may contain device, store, customer, or loyalty identifiers that
+    require controlled access". Because the course lists <em>security boundaries</em> among the capabilities
+    that are expensive to introduce later, these are treated as design concerns rather than later hardening.</p>
+
+    <h3>Governance Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Device firmware evolves independently, so producer/consumer contracts with enforced backward/forward compatibility are mandatory — this is the mechanism that makes the &lt;1 day, zero-downtime schema rollout achievable (Decision 2).</td></tr>
+      <tr><td>Catalog &amp; lineage</td><td>Register telemetry datasets with owner, freshness, and sensitivity tags; capture lineage via the open <strong>OpenLineage</strong> standard so ops teams can trace an alert back to its originating device and schema version.</td></tr>
+      <tr><td>Data quality &amp; quarantine</td><td>Validation is an explicit functional requirement. Route rejected events to a dead-letter/quarantine topic rather than dropping them — silent loss would make the "zero event loss" measure unverifiable.</td></tr>
+      <tr><td>Retention lifecycle</td><td>Define retention tiers for raw vs. aggregated telemetry. At 50K events/sec, retention policy is the dominant storage-cost driver.</td></tr>
+      <tr><td>Cost governance (FinOps)</td><td>Tag resources by region/store cluster so cost per region is observable as the platform expands — otherwise regional growth hides cost regressions.</td></tr>
+    </table>
+
+    <h3>Security Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Data classification</td><td>Classify identifier fields at ingestion (device/store = Internal; customer/loyalty = Restricted-PII) and attach policies to <strong>tags</strong> rather than topic or table names, so new event schema versions inherit protection automatically.</td></tr>
+      <tr><td>Access control model</td><td>Prefer <strong>ABAC / tag-based</strong> column-level policy so ops teams can see device and store telemetry without exposing customer or loyalty identifiers — least privilege by default.</td></tr>
+      <tr><td>PII protection</td><td>Tokenize or salted-hash customer/loyalty identifiers at the ingestion boundary where downstream analytics only need joinability, not the raw value. Encrypt in transit (TLS, including device-to-gateway) and at rest.</td></tr>
+      <tr><td>Device identity &amp; trust</td><td>Authenticate devices individually (per-device certificates or keys) with rotation and revocation. Shared device credentials across 500 stores create an unrevocable blast radius.</td></tr>
+      <tr><td>Auditability</td><td>Log access to identifier-bearing fields separately from the data plane, tamper-evident, with retention aligned to the (currently unstated) compliance regime.</td></tr>
+      <tr><td>Network boundaries</td><td>Define clear trust boundaries between device ingress, processing, and serving zones; use private connectivity for the data plane where sensitivity demands it.</td></tr>
+    </table>
+
+    <h3>Anti-Patterns to Avoid</h3>
+    <ul class="tick">
+      <li>Shared device credentials across stores (no revocation granularity)</li>
+      <li>Masking applied only at the dashboard layer while raw telemetry stays exposed</li>
+      <li>Silent dropping of events that fail validation</li>
+      <li>Per-topic hand-rolled access rules that drift as new schema versions ship</li>
+    </ul>
+  </section>
+
   <section id="cost">
     <span class="badge">Step 5 → Reflection</span>
-    <h2>10. Cost of Change — Where Do These Decisions Sit?</h2>
+    <h2>11. Cost of Change — Where Do These Decisions Sit?</h2>
     <div class="cost-spectrum">
       <div class="cost-bar"></div>
       <div class="cost-labels">
@@ -338,7 +391,7 @@ flowchart TB
 
   <section id="gaps">
     <span class="badge">Do Not Invent Requirements</span>
-    <h2>11. Open Questions for the Stakeholder</h2>
+    <h2>12. Open Questions for the Stakeholder</h2>
     <div class="gap-box">
       <ul>
         <li>What is the required <strong>retention period</strong> for raw telemetry events?</li>
@@ -346,6 +399,7 @@ flowchart TB
         <li>Is there a <strong>budget ceiling</strong> for infrastructure as the platform expands to new regions?</li>
         <li>What is the target <strong>onboarding time for a new region/store cluster</strong> (analogous to a new-source SLA)?</li>
         <li>Are there <strong>regulatory requirements</strong> (e.g., data residency per region) affecting where telemetry can be stored/processed?</li>
+        <li><strong>Is there an existing cloud or data-platform commitment</strong> (AWS / Azure / Google Cloud / Databricks / Snowflake / on-prem)? Without this, tooling options in Section 8 are deliberately kept multi-ecosystem rather than assuming a vendor.</li>
       </ul>
     </div>
   </section>

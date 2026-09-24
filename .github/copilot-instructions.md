@@ -10,11 +10,49 @@ method taught in `knowledge-base/tf1-course-notes.md`. Do not invent a different
 ## Ground Truth
 Always ground answers in:
 1. `knowledge-base/tf1-course-notes.md` — the extracted course methodology (source of truth for concepts, definitions, and required output structure).
-2. `knowledge-base/TF1_architectural-foundations-quality-attributes_instructor_slalom.pdf` — original deck, for verification only if the markdown notes seem insufficient.
-3. `docs/Customer360_Capstone_Solution.html` — a fully worked reference example showing the expected depth, structure, and diagram style for a completed capstone.
+2. `knowledge-base/technology-reference.md` — **vendor-neutral** technology options by capability. Consult this before naming any tool.
+3. `knowledge-base/governance-and-security.md` — governance and security design recommendations to include in every analysis handling sensitive or shared data.
+4. `knowledge-base/TF1_architectural-foundations-quality-attributes_instructor_slalom.pdf` — original deck, for verification only if the markdown notes seem insufficient.
+5. `docs/Customer360_Capstone_Solution_v2.html` — a fully worked reference example showing the expected depth, structure, and diagram style for a completed capstone.
 
 Do not fabricate business facts, numbers, or constraints that were not provided by the
 user or present in the knowledge base.
+
+## Vendor Neutrality (Required — Guards Against Tooling Bias)
+Architecture recommendations must be driven by **capabilities and trade-offs**, never by
+vendor familiarity or market share. A documented bias audit of this repository found
+AWS-heavy recommendations; the following rules exist to prevent recurrence.
+
+- **Name the capability before the product.** State what the ASR requires (e.g.,
+  "a streaming ingestion layer sustaining 50K events/sec with exactly-once semantics")
+  before naming any tool.
+- **Offer options from at least 2–3 different ecosystems** for every decision — pairing,
+  where genuinely applicable: one hyperscaler (AWS / Azure / Google Cloud), one
+  platform/lakehouse vendor (Databricks / Snowflake / Confluent), and one
+  **open-source or portable** option (Kafka, Flink, Spark, Airflow, Dagster, dbt,
+  Iceberg, Delta Lake, OPA, OpenMetadata, Zingg, Great Expectations).
+- **Never default to a single cloud.** If you narrow to one vendor, you must cite the
+  explicit **constraint** that justifies it (e.g., "the client is already standardized on
+  Azure"). If no such constraint was stated, present multi-ecosystem options instead and
+  add the platform commitment question to **Open Questions**.
+- **Flag lock-in explicitly** using the Cost of Change model — prefer open table formats
+  and portable interfaces when uncertainty is high (preserve optionality).
+- Run the **Anti-Bias Checklist** at the end of `knowledge-base/technology-reference.md`
+  before finalizing any tooling recommendation.
+
+## Governance & Security (Required Section)
+Every scenario analysis must include a **"Governance & Security Recommendations"**
+section, grounded in `knowledge-base/governance-and-security.md`, covering at minimum:
+data classification, access-control model (prefer ABAC/tag-based where sources grow),
+PII protection technique (masking / tokenization / hashing / encryption), auditability,
+lineage & data contracts, and data quality/quarantine handling.
+
+- If the scenario mentions PII, regulation, auditability, or multi-team access, assess
+  explicitly whether governance/security qualifies as an **ASR** and justify the answer.
+- Place governance decisions on the **Cost of Change** spectrum — centralized access
+  control and classification schemes are typically *near-irreversible*.
+- **Never assume a compliance regime.** If GDPR/CCPA/HIPAA/residency requirements were
+  not stated, list them in **Open Questions** rather than assuming they apply.
 
 ## Workflow: Handling a New Architecture Scenario
 When a user (via an issue using `.github/ISSUE_TEMPLATE/new-scenario.md`, or a direct
@@ -41,8 +79,9 @@ prompt) submits a new scenario:
    - 3 ASRs (Architecturally Significant Requirements), explaining *why* each is architecturally significant
    - A Utility Tree (quality attribute → scenario → priority rating)
    - 3 Architecture Decisions, each with an explicit trade-off
-   - Recommended tools/technology patterns per decision (name concrete options, but justify by trade-off, not by trend)
-   - A Cost-of-Change assessment for the key decisions (reversible / partially reversible / near-irreversible)
+   - Recommended tools/technology patterns per decision — options from **2–3 different ecosystems** (hyperscaler / platform vendor / open-source), justified by trade-off, never by trend or familiarity
+   - A **Governance & Security Recommendations** section (classification, access control, PII protection, auditability, lineage/contracts, quality & quarantine)
+   - A Cost-of-Change assessment for the key decisions (reversible / partially reversible / near-irreversible), including governance and lock-in implications
    - Open questions for the stakeholder (do not invent requirements to avoid gaps)
 
 3. **Output format:** Produce the analysis as a new file under `docs/` named
@@ -74,6 +113,12 @@ do not submit a partial analysis silently.
 - [ ] A Utility Tree mapping quality attributes → scenarios → priority (importance, risk/difficulty)
 - [ ] 3 architecture decisions, each with a named trade-off (not just a benefit)
 - [ ] Each decision names at least one concrete tool/pattern option, justified by the trade-off — not by popularity
+- [ ] **Tooling options span 2–3 ecosystems** (hyperscaler / platform vendor / open-source), or a stated constraint explains the narrowing
+- [ ] **No single-cloud default** — if one vendor dominates the recommendations, a constraint justifies it, otherwise alternatives are shown
+- [ ] At least one **open-source / portable** option offered where one genuinely exists
+- [ ] Lock-in and reversibility implications flagged via the Cost of Change model
+- [ ] A **Governance & Security Recommendations** section is present (classification, access control, PII protection, auditability, lineage/contracts, quality & quarantine)
+- [ ] No compliance regime (GDPR/CCPA/HIPAA/residency) assumed unless stated — otherwise listed in Open Questions
 - [ ] A cost-of-change placement (reversible / partially reversible / near-irreversible) for the decisions most likely to be hard to undo
 - [ ] An "Open Questions for the Stakeholder" section listing every gap instead of a guessed value
 - [ ] Output delivered as `docs/<scenario-slug>_Solution.html` using Mermaid diagrams + tables, matching `docs/Customer360_Capstone_Solution.html` in depth and structure
