@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TF1 Recap & Customer 360 Capstone Solution</title>
+<title>TF1 Recap & Customer 360 Capstone Solution — v2 (Refined Instructions)</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
   :root{
@@ -131,9 +131,13 @@
   <h1>TF1 — Technical Foundations Recap</h1>
   <p>Data Architect Academy · Slalom · Instructor: Iván Trebilcock</p>
   <p><strong>Deliverable:</strong> Course Summary + Capstone Solution — Customer 360 Platform</p>
+  <p style="margin-top:14px;"><span style="background:#e0762b;padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:700;">v2 — Re-run under refined Definition of Done</span></p>
 </header>
 
 <nav>
+  <a href="Customer360_Capstone_Solution.html">← v1 (original)</a>
+  <a href="index.html">All Reports</a>
+  <a href="#changelog">v2 Changes</a>
   <a href="#summary">Course Summary</a>
   <a href="#chain">Reasoning Chain</a>
   <a href="#capstone">Capstone Context</a>
@@ -146,11 +150,25 @@
   <a href="#architecture">Architecture Diagram</a>
   <a href="#cost">Cost of Change</a>
   <a href="#gaps">Open Questions</a>
-  <a href="index.html">← All Reports</a>
-  <a href="Customer360_Capstone_Solution_v2.html" style="color:#e0762b;">v2 available →</a>
 </nav>
 
 <main>
+
+  <section id="changelog" style="background:#fff6ec;border:1px solid #f0d3ad;">
+    <span class="badge" style="background:#fdecd8;color:#c0392b;">What changed vs. v1</span>
+    <h2 style="border-left-color:#c0392b;">0. Re-run Notes — v2 vs. v1</h2>
+    <p>This report re-runs the same Customer 360 capstone scenario after refining
+    <code>.github/copilot-instructions.md</code> with a <strong>Definition of Done</strong>
+    checklist. No new business facts were introduced — only the rigor of the analysis changed.</p>
+    <table>
+      <tr><th>Dimension</th><th>v1 (original)</th><th>v2 (this report)</th></tr>
+      <tr><td>Architecture decisions</td><td>Named as patterns only (e.g., "hybrid ingestion architecture")</td><td>Each decision now names <strong>concrete tool options</strong>, justified by the trade-off — not by popularity</td></tr>
+      <tr><td>ASR justification</td><td>Implicit — shown only inside the diagram node</td><td>Explicit one-sentence justification for <em>why</em> each ASR is architecturally significant, written out in prose</td></tr>
+      <tr><td>Framework grounding</td><td>None</td><td>Cites ATAM (utility tree), ADRs (decision persistence), and Well-Architected pillars where relevant</td></tr>
+      <tr><td>Self-audit</td><td>Not shown</td><td>Definition-of-Done checklist run explicitly against this report (see end of section)</td></tr>
+    </table>
+    <p><a href="Customer360_Capstone_Solution.html">→ Open v1 (original) in a new tab to compare side-by-side</a></p>
+  </section>
 
   <!-- COURSE SUMMARY -->
   <section id="summary">
@@ -316,6 +334,13 @@ graph TD
   style A2 fill:#e0762b,color:#fff
   style A3 fill:#e0762b,color:#fff
     </div>
+    <h3>Why Each ASR Is Architecturally Significant (explicit justification)</h3>
+    <table>
+      <tr><th>ASR</th><th>Justification</th></tr>
+      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 11).</td></tr>
+      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours / 15 min / 7 AM) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
+      <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
+    </table>
   </section>
 
   <!-- UTILITY TREE -->
@@ -358,20 +383,38 @@ graph LR
     <div class="decision">
       <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
       <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min SLA) and standard batch for marketing/dashboard data (7 AM SLA).</p>
-      <p class="tradeoff">Trade-off: Higher operational complexity (two pipelines) vs. cheaply meeting divergent latency SLAs — avoids over-engineering everything to real-time.</p>
+      <p><strong>Concrete tool options:</strong> streaming/micro-batch via <em>Kafka + Kafka Streams</em>, <em>AWS Kinesis</em>, or <em>Debezium CDC → Spark Structured Streaming</em>; batch orchestration via <em>Airflow</em> or <em>dbt + a scheduler</em> for the 7 AM dashboard SLA.</p>
+      <p class="tradeoff">Trade-off: Higher operational complexity (two pipelines) vs. cheaply meeting divergent latency SLAs — avoids over-engineering everything to real-time. (Aligned with AWS Well-Architected "Performance Efficiency" pillar: match the solution to the actual latency requirement, not the tightest one.)</p>
     </div>
 
     <div class="decision">
       <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
       <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
-      <p class="tradeoff">Trade-off: Upfront investment in matching logic vs. long-term trust and reduced rework; near-irreversible once adopted, so worth designing early.</p>
+      <p><strong>Concrete tool options:</strong> managed match/merge engines such as <em>AWS Entity Resolution</em>, <em>Senzing</em>, or <em>Zingg</em> (open-source ML-based entity resolution), fronted by a golden-record store (e.g., a dedicated schema in the warehouse/lakehouse, not embedded in a source system).</p>
+      <p class="tradeoff">Trade-off: Upfront investment in matching logic vs. long-term trust and reduced rework; near-irreversible once adopted, so worth designing early. Recommend capturing this decision as an <strong>ADR</strong> (Architecture Decision Record) given its low reversibility.</p>
     </div>
 
     <div class="decision">
       <h4>Decision 3 — Standard Connector Framework with Centralized Access Control</h4>
       <p>Schema-on-write connector standard plus centralized, attribute-level access control & audit logging (not bolted on per source).</p>
-      <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale.</p>
+      <p><strong>Concrete tool options:</strong> managed connector frameworks such as <em>Fivetran</em> or <em>Airbyte</em> for the "standard source" onboarding path; centralized policy enforcement via <em>Open Policy Agent (OPA)</em> or a data-catalog-integrated access layer (e.g., <em>Immuta</em>/<em>Privacera</em>) for attribute-level PII masking and audit logging.</p>
+      <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale. (Aligned with Well-Architected "Security" pillar: centralize access control rather than re-implement it per source.)</p>
     </div>
+
+    <h3>Definition-of-Done Self-Audit (v2)</h3>
+    <table>
+      <tr><th>Checklist item</th><th>Status</th></tr>
+      <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass</td></tr>
+      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass</td></tr>
+      <tr><td>Every quality requirement has a number/time bound</td><td>✅ Pass (7 AM, 15 min, 3×, 2 weeks, 4 months)</td></tr>
+      <tr><td>2+ full quality-attribute scenarios (6 fields each)</td><td>✅ Pass</td></tr>
+      <tr><td>3 ASRs with explicit justification</td><td>✅ Pass — added in this v2 report</td></tr>
+      <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
+      <tr><td>3 decisions with named trade-offs</td><td>✅ Pass</td></tr>
+      <tr><td>Each decision names a concrete tool option</td><td>✅ Pass — added in this v2 report</td></tr>
+      <tr><td>Cost-of-change placement for hard-to-reverse decisions</td><td>✅ Pass</td></tr>
+      <tr><td>Open questions listed instead of guessed values</td><td>✅ Pass</td></tr>
+    </table>
   </section>
 
   <!-- ARCHITECTURE DIAGRAM -->
