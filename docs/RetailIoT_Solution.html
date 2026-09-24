@@ -262,7 +262,7 @@ graph LR
 
     <div class="decision">
       <h4>Decision 1 — Managed Streaming Ingestion (not batch)</h4>
-      <p>Adopt a streaming ingestion platform with multi-AZ replication instead of a batch-only ingestion path.</p>
+      <p>Adopt a streaming ingestion platform with multi-AZ <em>failover</em> instead of a batch-only ingestion path. <strong>Note:</strong> this decision selects streaming and cross-AZ availability only. It deliberately does <em>not</em> select a replication mode or acknowledgement semantics &mdash; those depend on the unstated RPO and are deferred in Decision 3.</p>
       <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is event ingestion sustaining 50K events/sec [RIOT-F02] at &lt;200ms p95 [RIOT-F03]. <span class="warn-inline">Ordering scope, replay window and acknowledgement semantics are <em>not specified</em> in the scenario [RIOT-U06]; they are stated here as open questions, not as required properties. They are exactly the properties that would differentiate these platforms, so the choice between them cannot be finalised until the RPO is answered.</span><br/>
       • <em>Open-source / portable:</em> Apache Kafka, Apache Pulsar, or Redpanda, paired with Apache Flink for streaming processing.<br/>
       • <em>Platform / managed OSS:</em> Confluent Cloud, Redpanda Cloud, or Databricks Structured Streaming with Auto Loader.<br/>
@@ -271,7 +271,8 @@ graph LR
       <p><strong>Rejected alternative.</strong> Micro-batch ingestion on a short interval — the team's existing batch toolchain, run every few seconds rather than hourly.</p>
       <p><strong>Why the rejected alternative is genuinely viable.</strong> It is not a straw man. The team has strong batch-processing experience [RIOT-F08], and micro-batch reuses tooling, skills and operational practice they already have. The reason it is rejected is specific and measurable, not stylistic: the requirement is a <em>p95 [RIOT-F03] ingestion latency</em> of &lt;200ms [RIOT-F03]. A micro-batch trigger interval sets a latency floor roughly equal to the interval, so meeting a 200ms p95 [RIOT-F03] would require a sub-200ms [RIOT-F03] batch interval — at which point it is streaming with extra scheduling overhead.</p>
       <p><strong>What the chosen approach sacrifices.</strong> The team must build streaming skills and on-call practice it does not have [RIOT-F08], which is a delivery risk, not just a training cost. Managed offerings also cost more per GB and give up low-level control.</p>
-      <p><strong>What the chosen approach gains.</strong> It is the only option that can meet &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02] without the latency floor above, and a managed offering keeps the new operational burden as small as possible given the skills gap.</p>
+      <p><strong>What the chosen approach gains.</strong> Of the two options considered it is the one without the latency floor above, so it is the credible route to &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02]. <em>Stated precisely:</em> conventional scheduled micro-batch is an implausible fit and would have to demonstrate compliance by benchmark before being selected &mdash; that is weaker than claiming no non-streaming implementation could ever work, and a managed offering keeps the new operational burden as small as possible given the skills gap.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No budget ceiling was stated for the platform [RIOT-U03], and the managed-versus-self-managed comparison turns on cost at sustained throughput. Until that is known, "managed" is a risk-reduction preference rather than a costed decision.</p>
       <p><strong>Reversal condition.</strong> Revisit if the p95 [RIOT-F03] latency requirement is relaxed — if the true need is "near real time" rather than a hard 200ms [RIOT-F03], micro-batch becomes the better choice on skills and cost alone. Also revisit if measured managed-service cost at 50K events/sec [RIOT-F02] exceeds the budget, which is unstated [RIOT-U03].</p>
       <p class="tradeoff">Trade-off: a real skills and delivery risk for a batch-experienced team [RIOT-F08], plus higher per-GB managed cost, in exchange for the only design that meets &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02]. Note the boundary: this justifies <em>streaming</em>; it does not by itself justify any particular durability or replication guarantee — see Decision 3.</p>
     </div>
@@ -299,7 +300,7 @@ graph LR
       <p><strong>Rejected alternative.</strong> Self-managed Kafka spread across AZs with <code>min.insync.replicas</code>, rack-aware placement and operator-controlled failover.</p>
       <p><strong>Why the rejected alternative is genuinely viable.</strong> It can meet the same 30-second target and gives explicit control over placement, acknowledgement policy, portability and failure testing. It is a credible architecture, not a straw man — and it is the stronger choice if the RPO turns out to be zero.</p>
       <p><strong>What the chosen approach sacrifices.</strong> Lower-level control, some portability, and probably lower unit cost at sustained scale. Its real failover and durability behaviour depends on vendor implementation and must be measured, because a "highly available" label is not a tested RTO.</p>
-      <p><strong>What the chosen approach gains.</strong> Materially lower operational burden, which matters here because the scenario states the team has <em>strong batch experience but limited streaming experience</em> [RIOT-F08]. It reaches a testable 30-second recovery sooner and with less operational risk.</p>
+      <p><strong>What is gained.</strong> A testable route to the recovery target of &lt;30 sec [RIOT-F04] reached sooner and with materially lower operational burden, which matters directly because the scenario states the team has strong batch experience but limited streaming experience [RIOT-F08]. Operational simplicity is not a general virtue here; it is what makes the cited recovery requirement achievable by this team.</p>
       <p><strong>Reversal condition.</strong> Revisit this decision if (a) measured failover misses &lt;30 sec [RIOT-F04], (b) the answer to the RPO requires acknowledgement or replication guarantees the managed service cannot demonstrate, or (c) measured cost exceeds the stakeholder-approved budget. Under any of these, move to the self-managed cross-AZ design.</p>
       <p><strong>Unresolved fact that could change this choice.</strong> The tolerable event loss (RPO) [RIOT-U01]. The three possible answers lead to <em>different</em> architectures, and this is the point at which they diverge:</p>
       <table class="qa-table">
@@ -329,7 +330,7 @@ flowchart TB
 
   subgraph ING["Managed Streaming Ingestion"]
     direction TB
-    K["Kafka / Kinesis / Event Hubs<br/>Multi-AZ replication"]
+    K["Kafka / Kinesis / Event Hubs<br/>Multi-AZ failover<br/>replication mode: TBD"]
   end
 
   subgraph VAL["Validation & Schema Layer"]

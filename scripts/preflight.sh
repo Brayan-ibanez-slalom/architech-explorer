@@ -210,7 +210,7 @@ for f in "${FILES[@]}"; do
   
   head_ "5b. Decision quality (is the decision reviewable, not just sourced?)"
   if python3 "$(dirname "$0")/check_decisions.py" "$f" >"$WORK/dec.out" 2>&1; then
-    pass "every decision exposes rejected alternative, sacrifice, gain and reversal condition"
+    pass "all 7 decision fields present, substantive and non-negated (does NOT prove the reasoning is correct)"
   else
     fail "one or more decisions are not reviewable"
     grep -E '^  FAIL|^         ' "$WORK/dec.out" || true

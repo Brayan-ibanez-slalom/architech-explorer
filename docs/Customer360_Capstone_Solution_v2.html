@@ -123,6 +123,9 @@
   .flow-legend{font-size:.8rem;color:var(--gray);margin-top:6px;}
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+  .status-pending { background:#fff3cd; color:#7a5b00; border:1px solid #e0c060;
+                    border-radius:4px; padding:2px 8px; font-size:0.75em;
+                    font-weight:700; letter-spacing:.03em; vertical-align:middle; }
 </style>
 </head>
 <body>
@@ -397,8 +400,10 @@ graph LR
     </table>
 
     <div class="decision">
-      <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
-      <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min [C360-F03] SLA) and standard batch for marketing/dashboard data (7 AM [C360-F01] SLA).</p>
+      <h4>Decision 1 — Ingestion topology <span class="status-pending">(PENDING VALIDATION — not settled)</span></h4>
+      <p><strong>Provisional direction:</strong> micro-batch/streaming for Customer Service-facing events (≤15 min [C360-F03] SLA) and standard batch for marketing/dashboard data (7 AM [C360-F01] SLA).</p>
+      <p class="note"><strong>Why this is marked pending rather than decided.</strong> The entire case for two paths is that batch is materially cheaper for the marketing data. No budget or unit-cost target was given [C360-U04], so that saving is <em>assumed, not measured</em> &mdash; while the duplicate-path reconciliation cost is certain. On the stated evidence the honest output is a decision to <em>run a comparison</em>, not a decision to build a hybrid.</p>
+      <p><strong>Validation required before this becomes a decision.</strong> Prototype one representative source both ways &mdash; a single unified incremental path, and split batch/streaming paths. Compare infrastructure cost, operational effort, reconciliation defects, and the test surface for a schema change. Adopt the hybrid <em>only</em> if the measured saving exceeds the duplicated engineering and reconciliation cost.</p>
       <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is a streaming/micro-batch ingestion path sustaining the ≤15 min [C360-F03] SLA alongside a batch path for the 7 AM [C360-F01] SLA.<br/>
       • <em>Open-source / portable:</em> Apache Kafka or Apache Pulsar + Apache Flink (streaming-native) or Spark Structured Streaming; Airflow or Dagster for batch orchestration.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Auto Loader + Structured Streaming + Workflows), Snowflake (Snowpipe Streaming + Dynamic Tables + Tasks), Confluent Cloud.<br/>
@@ -410,12 +415,12 @@ graph LR
       <p><strong>What the chosen approach gains.</strong> It avoids paying streaming cost and streaming operational burden for the marketing data, whose stated tolerance is "several hours" [C360-F02]. Matching spend to the actual requirement, rather than to the tightest one, is the stated reason.</p>
       <p><strong>Reversal condition.</strong> Revisit this and collapse to a single incremental path if (a) the measured cost gap between the two designs is small relative to the engineering cost of maintaining two paths, (b) reconciliation defects between the batch and streaming views appear in practice, or (c) the marketing tolerance tightens, which would erase the reason for a separate batch path.</p>
       <p><strong>Unresolved fact that could change this choice.</strong> No cost ceiling or unit-cost target was given [C360-U04], and no per-consumer volume figures were given. The whole justification rests on the batch path being materially cheaper, and that has not been measured. If it is not, this decision inverts.</p>
-      <p class="tradeoff">Trade-off: two pipelines, two failure modes and a real reconciliation burden, in exchange for not paying real-time cost on data whose stated tolerance is several hours [C360-F02]. This trade is only correct if the cost gap is real — see the unresolved fact above.</p>
+      <p class="tradeoff">Trade-off: two pipelines, two failure modes and a real reconciliation burden, in exchange for not paying real-time cost on data whose stated tolerance is several hours [C360-F02]. <strong>This trade is unproven.</strong> It is recorded as a hypothesis to be tested by the spike above, not as a settled architecture. The diagram shows the provisional topology and should not be read as final.</p>
     </div>
 
     <div class="decision">
       <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
-      <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
+      <p><strong>Chosen approach.</strong> Build a decoupled golden-record and identity-resolution layer with explicit survivorship rules, operated separately from source ingestion so match rules can change without rebuilding pipelines.</p>
       <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M [C360-F11]+ customers and 4+ systems [C360-F13], with the ability to reprocess history when rules change.<br/>
       • <em>Open-source / portable:</em> Zingg (ML-based entity resolution) or Splink (probabilistic record linkage) running on Spark.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Spark ML matching pipelines + Delta time travel for reprocessing), Snowflake (Snowpark-based matching).<br/>
@@ -425,30 +430,37 @@ graph LR
       <p><strong>Rejected alternative.</strong> Warehouse-native matching: resolve identity with SQL rules inside the analytics platform, as part of the transformation layer, with no separate service.</p>
       <p><strong>Why the rejected alternative is genuinely viable.</strong> It is far cheaper to build, uses skills the team already has, and for 4 source systems [C360-F13] the rule set may be small enough to be tractable. Many organisations run this successfully for years. It is the correct choice if match logic stays simple.</p>
       <p><strong>What the chosen approach sacrifices.</strong> Significant upfront build before any business value is visible, a new component to operate, and the risk of over-engineering if the match problem turns out to be easy. It also needs stewardship workflow and survivorship ownership that the scenario never mentions.</p>
-      <p><strong>What the chosen approach gains.</strong> Match decisions become inspectable and replayable, which matters because the data contains PII [C360-F04] under controlled and auditable access [C360-F08]. It also decouples match-rule changes from pipeline changes, so rules can be reprocessed against history without rebuilding ingestion.</p>
+      <p><strong>What is gained.</strong> Match decisions become inspectable and replayable across 20M [C360-F11] customers and 4 source systems [C360-F13], which is what makes the controlled and auditable access [C360-F08] required over PII [C360-F04] enforceable at the point where records are merged rather than only at the point where they are read.</p>
       <p><strong>Reversal condition.</strong> Revisit this if a pilot shows warehouse-native rules reach acceptable match accuracy on real data, or if no owner can be found for stewardship — an identity service without a steward degrades into an unmaintained black box, which is worse than SQL rules.</p>
       <p><strong>Unresolved fact that could change this choice.</strong> No target match accuracy and no tolerance for false merges were given [C360-U08]. A false merge of two customers is a privacy incident, not just a data defect, and the acceptable rate drives whether a probabilistic service is justified at all. The claim that this decision is "near-irreversible" should be treated as a hypothesis until that is known.</p>
       <p class="tradeoff">Trade-off: upfront build cost and a new operational component, in exchange for auditable, replayable match decisions over PII [C360-F04]. Capture as an <strong>ADR</strong>, and store the golden record in an open table format (Iceberg/Delta) so the most expensive-to-change asset is not locked to one engine.</p>
     </div>
 
     <div class="decision">
-      <h4>Decision 3 — Standard Connector Framework with Centralized Access Control</h4>
-      <p>Schema-on-write connector standard plus centralized, attribute-level access control &amp; audit logging (not bolted on per source).</p>
-      <p><strong>Technology options:</strong> the capability required is a repeatable source-onboarding path meeting the ≤2-week SLA, with PII policy enforced centrally rather than per source.<br/>
-      • <em>Open-source / portable:</em> Airbyte (OSS) or Meltano for connectors; Open Policy Agent (OPA) or Apache Ranger for centralized policy; OpenMetadata or DataHub for catalog/lineage.<br/>
-      • <em>Platform / lakehouse:</em> Databricks Unity Catalog (tag-based ABAC, row filters, column masks) or Snowflake Horizon (dynamic masking, row access policies, tag-based policies).<br/>
-      • <em>Commercial:</em> Fivetran/Matillion for connectors; Immuta or Privacera for policy enforcement; Collibra/Alation/Atlan for governance.<br/>
-      • <em>Hyperscaler-native:</em> Microsoft Purview + ADF, Google Dataplex + Data Fusion, or AWS Lake Formation + Glue.<br/>
-      <em>Selection driver:</em> prefer tag/attribute-based policy that scales as 2–4 new sources [C360-F06] arrive per year; per-table grant models tend to drift into audit gaps.</p>
-      <p class="note"><strong>Note on scope.</strong> An earlier revision bundled the connector standard and the access-control architecture into one decision. They are <em>separate</em> decisions with different alternatives, different failure modes and different reversibility — a connector framework can be swapped in weeks, an authorisation model cannot. They are split below.</p>
-      <p><strong>3a. Connector standard — rejected alternative.</strong> Hand-built per-source pipelines, written to fit each source exactly.</p>
-      <p><strong>Why that alternative is genuinely viable.</strong> With only 4 source systems [C360-F13], bespoke pipelines are faster to first value and avoid fighting a framework's abstractions when a source is awkward. The framework only pays off because of the stated growth of 2–4 new sources [C360-F06] per year; at a fixed 4 sources [C360-F13] it would be over-engineering.</p>
-      <p><strong>Sacrificed.</strong> Flexibility per source, plus a dependency on the framework supporting each future connector. <strong>Gained.</strong> A repeatable onboarding path, which is what makes the ≤2 weeks [C360-F07] SLA achievable as sources arrive. <strong>Reversal condition.</strong> Revisit if the source growth rate does not materialise, or if two consecutive onboardings need framework workarounds that cost more than a bespoke pipeline.</p>
-      <p><strong>3b. Access control — rejected alternative.</strong> Per-table grants managed in the warehouse, the default in most platforms.</p>
-      <p><strong>Why that alternative is genuinely viable.</strong> It is simple, universally understood, needs no extra component, and is perfectly adequate when the number of tables and roles is small and stable.</p>
-      <p><strong>Sacrificed.</strong> Simplicity, and a hard dependency on tags being applied correctly — tag-based policy fails open if classification is missed, whereas per-table grants fail closed. <em>That is a real risk this design accepts.</em> <strong>Gained.</strong> Policy that scales with sources rather than with tables, supporting controlled and auditable access [C360-F08] over PII [C360-F04] without per-source rework. <strong>Reversal condition.</strong> Revisit if classification coverage cannot be automated and audited, because unclassified PII under an attribute-based model is less safe than under explicit grants.</p>
-      <p><strong>Unresolved fact affecting both.</strong> The applicable compliance regime and data residency rules [C360-U05], and whether disruption to existing pipelines is acceptable during onboarding [C360-U03]. Either could constrain the connector and policy choice.</p>
-      <p class="tradeoff">Trade-off: more upfront design cost and a dependency on correct data classification, in exchange for a ≤2 weeks [C360-F07] onboarding path and PII governance that scales with source count. Centralised policy (OPA) maximises portability; platform-native enforcement (Unity Catalog / Horizon) is simpler but is re-implemented if the platform changes.</p>
+      <h4>Decision 3 — Standard Connector Framework for Source Onboarding</h4>
+      <p class="note"><strong>Note on scope.</strong> An earlier revision bundled the connector standard together with the access-control architecture as a single "Decision 3". That was wrong: they have different alternatives, different failure modes and very different reversibility &mdash; a connector framework can be swapped in weeks, an authorisation model cannot. They are now two independent decision records, so they can be accepted, rejected or superseded separately.</p>
+      <p><strong>Chosen approach.</strong> Adopt a single schema-on-write connector framework as the standard path for onboarding every new source, rather than writing a bespoke pipeline per source.</p>
+      <p><strong>Rejected alternative.</strong> Hand-built per-source pipelines, each written to fit the quirks of its own source exactly, with no shared framework.</p>
+      <p><strong>Why that alternative is genuinely viable.</strong> With only 4 source systems [C360-F13] today, bespoke pipelines reach first value faster and never force an awkward source into a framework's abstractions. This is the correct choice at a fixed source count, and many teams run it successfully for years.</p>
+      <p><strong>What is sacrificed.</strong> Per-source flexibility, plus a hard dependency on the framework supporting each future connector; an unsupported source becomes an exception that undermines the standard.</p>
+      <p><strong>What is gained.</strong> A repeatable onboarding path, which is what makes the standard onboarding SLA of 2 weeks [C360-F07] achievable as new sources arrive at 2&ndash;4 new sources [C360-F06] per year rather than a per-source negotiation.</p>
+      <p><strong>Reversal condition.</strong> Revisit this decision if the stated source growth rate does not materialise, or if two consecutive onboardings require framework workarounds costing more than a bespoke pipeline would have.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> Whether disruption to existing pipelines is acceptable during onboarding was never stated [C360-U03]. If no disruption is tolerable, the migration path to a shared framework becomes materially more expensive than this decision assumes.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Airbyte (OSS) or Meltano. <em>Platform / lakehouse:</em> Databricks Auto Loader, Snowflake Snowpipe. <em>Commercial:</em> Fivetran, Matillion. <em>Hyperscaler-native:</em> Azure Data Factory, Google Cloud Data Fusion, AWS Glue.</p>
+      <p class="tradeoff">Trade-off: upfront framework design cost and reduced per-source flexibility, in exchange for a repeatable path that makes the 2 weeks [C360-F07] onboarding SLA a property of the system rather than a per-source effort.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 4 — Centralised Attribute-Based Access Control and Audit Logging</h4>
+      <p><strong>Chosen approach.</strong> Adopt centralised, attribute/tag-based access control with audit logging applied across the platform, rather than access rules attached per source or per table.</p>
+      <p><strong>Rejected alternative.</strong> Per-table grants managed natively in the warehouse, which is the default model in most data platforms and requires no additional component.</p>
+      <p><strong>Why that alternative is genuinely viable.</strong> It is simple, universally understood by data teams, introduces no new infrastructure, and is entirely adequate when the number of tables and roles is small and stable. It is not a straw man; it is what most organisations actually run.</p>
+      <p><strong>What is sacrificed.</strong> Simplicity, and a hard dependency on classification being complete and timely. <em>Correction to an earlier revision:</em> this report previously claimed tag-based policy "fails open" while per-table grants "fail closed". That is not inherent to either model &mdash; ABAC can and must deny access to unclassified assets, and per-table grants can over-expose through inherited roles or permissive defaults. The genuine sacrifice is the dependency on classification coverage and on policy evaluation being correct, so this design <strong>requires deny-by-default for unclassified assets</strong> as an explicit condition of adoption.</p>
+      <p><strong>What is gained.</strong> Policy that scales with sources rather than with tables, which is what sustains the controlled and auditable access [C360-F08] required over data containing PII [C360-F04] as new sources arrive, without per-source security rework.</p>
+      <p><strong>Reversal condition.</strong> Revisit this decision if classification coverage cannot be automated and audited, because unclassified PII under an attribute-based model that is not deny-by-default is less safe than explicit per-table grants.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The applicable compliance regime and data residency rules were never stated [C360-U05]. A regime with strict residency or right-to-erasure obligations could dictate the enforcement model outright and override this comparison.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Open Policy Agent or Apache Ranger; OpenMetadata or DataHub for catalog and lineage. <em>Platform / lakehouse:</em> Databricks Unity Catalog (tag-based ABAC, row filters, column masks) or Snowflake Horizon (dynamic masking, row access policies). <em>Commercial:</em> Immuta, Privacera, Collibra, Alation, Atlan. <em>Hyperscaler-native:</em> Microsoft Purview, Google Dataplex, AWS Lake Formation.</p>
+      <p class="tradeoff">Trade-off: an additional policy component and a dependency on correct, complete data classification, in exchange for PII [C360-F04] governance that scales with source count instead of table count. Centralised policy (OPA) maximises portability across engines; platform-native enforcement is simpler but is re-implemented if the platform changes.</p>
     </div>
 
     <h3>Definition-of-Done Self-Audit (v2)</h3>

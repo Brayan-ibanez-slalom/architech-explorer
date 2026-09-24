@@ -55,6 +55,44 @@ MUST_ALLOW = [
 ]
 
 
+DECISION_ATTACKS = [
+    ("empty field labels",
+     "<h4>Decision 1 - P</h4><p>Rejected alternative. Instead of.</p>"
+     "<p>Why viable. It is viable.</p><p>Sacrifice. Sacrifice.</p>"
+     "<p>Gain. Gain.</p><p>Reversal condition. Revisit this.</p>"),
+    ("negated fields ('there is no rejected alternative')",
+     "<h4>Decision 1 - P</h4><p>There is no rejected alternative. Nothing is "
+     "viable. The choice makes no sacrifice and provides no gain. Never "
+     "revisit this decision.</p>"),
+    ("fields not separately identifiable",
+     "<h4>Decision 1 - P</h4><p>Instead of option A, option B is viable; "
+     "sacrifice exists; gain exists; revisit this.</p>"),
+    ("substantive-looking nonsense",
+     "<h4>Decision 1 - P</h4><p>Rejected alternative: the moon. It is viable "
+     "because cheese. Sacrifice: truth. Gain: vibes. Revisit this if Tuesday.</p>"),
+    ("missing chosen approach and unresolved fact",
+     "<h4>Decision 1 - P</h4><p>Rejected alternative is a single unified path "
+     "which many teams run successfully today for years on end. Why that "
+     "alternative is genuinely viable: it removes reconciliation entirely and "
+     "uses skills the team already has in place. What is sacrificed: quite a "
+     "lot of operational simplicity across the whole estate. What is gained: "
+     "lower cost across the marketing path over time. Reversal condition: "
+     "revisit this if the measured cost gap turns out to be small.</p>"),
+]
+
+
+def run_decisions(html):
+    fd, path = tempfile.mkstemp(suffix=".html")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(html)
+        return subprocess.run(
+            [sys.executable, os.path.join(HERE, "check_decisions.py"), path],
+            capture_output=True).returncode
+    finally:
+        os.unlink(path)
+
+
 def run(html, scenario):
     fd, path = tempfile.mkstemp(suffix=".html")
     try:
@@ -78,7 +116,12 @@ def main():
         print(f"  {'ok  ' if good else 'FAIL'} allow  {name}")
         bad += 0 if good else 1
 
-    total = len(MUST_BLOCK) + len(MUST_ALLOW)
+    for name, html in DECISION_ATTACKS:
+        good = run_decisions(html) != 0
+        print(f"  {'ok  ' if good else 'FAIL'} block  decision gate: {name}")
+        bad += 0 if good else 1
+
+    total = len(MUST_BLOCK) + len(MUST_ALLOW) + len(DECISION_ATTACKS)
     print(f"\n{total - bad}/{total} cases correct")
     if bad:
         print("REGRESSION: the gate no longer behaves as verified.")

@@ -135,7 +135,7 @@ prompt) submits a new scenario:
    - 2+ Quality-Attribute Scenarios (Source / Stimulus / Environment / Artifact / Response / Response Measure)
    - 3 ASRs (Architecturally Significant Requirements), explaining *why* each is architecturally significant
    - A Utility Tree (quality attribute → scenario → priority rating)
-   - 3 Architecture Decisions, each with an explicit trade-off
+   - **At least 3** Architecture Decisions, each with an explicit trade-off. Do not force independent choices into a fixed count &mdash; see the bundling rule below. If splitting a bundled decision yields four records, produce four.
    - Recommended tools/technology patterns per decision — options from **2–3 different ecosystems** (hyperscaler / platform vendor / open-source), justified by trade-off, never by trend or familiarity
    - A **Governance & Security Recommendations** section (classification, access control, PII protection, auditability, lineage/contracts, quality & quarantine)
    - A Cost-of-Change assessment for the key decisions (reversible / partially reversible / near-irreversible), including governance and lock-in implications
@@ -174,8 +174,16 @@ Two rules that follow from this:
 
 1. **Do not bundle independent decisions.** If two choices have different
    alternatives, different failure modes, or different reversibility, they are
-   two decisions. A connector framework can be swapped in weeks; an
-   authorisation model cannot.
+   two decisions, each with its own heading and its own record. Sub-labelling
+   them "3a" and "3b" inside one block is not a split: they must be separately
+   acceptable, rejectable and supersedable. A connector framework can be
+   swapped in weeks; an authorisation model cannot.
+   *This rule overrides the decision count.* A quota is not a reason to bundle.
+3. **If the evidence does not support a choice, do not make one.** Mark the
+   record **PENDING VALIDATION**, state the comparison that would settle it,
+   and say what must be measured. A decision resting on an unmeasured
+   assumption, presented as settled, is the failure this repository exists to
+   prevent - it is the same error as inventing a number.
 2. **A rejection must be justified by a measurable property, not by style.**
    "Batch cannot meet this" is an assertion. "A micro-batch trigger interval
    sets a latency floor roughly equal to the interval, so meeting a 200ms p95

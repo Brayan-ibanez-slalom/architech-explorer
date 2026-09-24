@@ -153,10 +153,10 @@ scenarios:
       - id: RIOT-F07
         value: "device count grows with expansion to new regions"
         quote: "Device count is expected to grow as the platform expands to new regions"
-    teaching_examples:
       - id: RIOT-F08
         value: "team has strong batch experience but limited streaming experience"
         quote: "The delivery team has strong batch-processing experience but limited streaming experience"
+    teaching_examples:
       - id: RIOT-X01
         value: "zero event loss"
         quote: "Example measure: p95 ingestion latency < 200ms with zero event loss."
