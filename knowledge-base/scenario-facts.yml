@@ -27,6 +27,7 @@ scenarios:
     facts:
       - id: C360-F01
         value: "dashboards ready by 07:00"
+        subject: "dashboard|morning|ready|report|batch|sla|business hours|daily|deadline|bounded"
         matches: "7[:.]?0?0?\s*(AM|am)?"
         quote: "Daily dashboards must be ready by 7:00 AM"
       - id: C360-F02
@@ -36,6 +37,7 @@ scenarios:
         note: "Deliberately imprecise in the source. Do NOT convert to a number."
       - id: C360-F03
         value: "Customer Service data within 15 minutes"
+        subject: "freshness|latency|service|sla|within|updated|refresh|propagat|pipeline|tolerance|tiered|bounded"
         matches: "15\s*(minutes?|min)"
         quote: "Customer Service interactions available within 15 minutes"
         note: "A latency bound ONLY. No attainment percentile is given."
@@ -52,6 +54,7 @@ scenarios:
         quote: "2-4 new sources/year expected"
       - id: C360-F07
         value: "a standard source onboarded within 2 weeks"
+        subject: "onboard|source|integrat|ingest|new source|sla"
         matches: "2\s*(weeks?|wks?)"
         quote: "a standard source should be onboarded within 2 weeks"
       - id: C360-F08
@@ -59,6 +62,7 @@ scenarios:
         quote: "requiring controlled and auditable access"
       - id: C360-F09
         value: "first production release within 4 months"
+        subject: "release|launch|production|go live|delivery|timeline|milestone|bounded"
         matches: "4\s*months?"
         quote: "First production release required within 4 months"
       - id: C360-F10
@@ -84,6 +88,8 @@ scenarios:
       - id: C360-F15
         value: "4 fragmented sources: e-commerce, loyalty, support tickets, marketing"
         quote: "Customer information is fragmented across: E-commerce orders, Loyalty program activity, Customer support tickets, Marketing interactions"
+        verbatim: false
+        note: "Bullet list joined into one line. All 14 distinctive tokens verified present in the source; the colon and comma joins are editorial, not quoted punctuation. Every other entry in this manifest is exact verbatim."
       - id: C360-F16
         value: "teams spend significant time reconciling inconsistent customer information"
         quote: "Business teams currently spend significant time reconciling inconsistent customer information across systems."
@@ -125,10 +131,12 @@ scenarios:
         quote: "50K events/sec peak ingestion bursts during business hours"
       - id: RIOT-F03
         value: "p95 ingestion latency < 200ms"
+        subject: "latency|ingest|p95|peak"
         matches: "(200\s*ms|p95)"
         quote: "p95 ingestion latency < 200ms during peak load"
       - id: RIOT-F04
         value: "recovery from single-AZ failure in < 30 sec"
+        subject: "recover|failover|availability zone|outage|restore|rto"
         matches: "30\s*(sec|seconds?)"
         quote: "Recovery from a single availability-zone failure in <30 sec"
         note: "A RECOVERY TIME only. No durability/data-loss target is given."

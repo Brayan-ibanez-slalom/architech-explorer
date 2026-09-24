@@ -69,7 +69,8 @@ def load_manifest(path):
             if re.match(r"^  - id:", line):
                 cur = st.split("id:", 1)[1].strip()
                 scenarios[cur] = {"facts": set(), "examples": set(),
-                                  "unknowns": set(), "matches": {}}
+                                  "unknowns": set(), "matches": {},
+                                  "subjects": {}}
                 section = None
             elif st in ("facts:", "teaching_examples:", "unknowns:"):
                 section = {"facts:": "facts", "teaching_examples:": "examples",
@@ -81,6 +82,16 @@ def load_manifest(path):
                 pat = st.split("matches:", 1)[1].strip().strip('"').strip("'")
                 if pat:
                     scenarios[cur]["matches"][fid] = pat
+            elif st.startswith("subject:") and cur and fid:
+                # Optional. Guards against semantic laundering: a red team showed
+                # "Retention period is 15 minutes [C360-F03]" passed, because F03's
+                # pattern matches "15 min" even though F03 is a FRESHNESS SLA, not
+                # a retention policy. At least one subject term must appear near
+                # the value for the citation to count.
+                subj = st.split("subject:", 1)[1].strip().strip('"').strip("'")
+                if subj:
+                    scenarios[cur]["subjects"][fid] = [
+                        w.strip().lower() for w in subj.split("|") if w.strip()]
     if not scenarios:
         print("ERROR: manifest parsed but contained no scenarios", file=sys.stderr)
         sys.exit(2)
@@ -110,10 +121,22 @@ VALUE_RE = re.compile(
         \b\d+\s?x\b                                     |  # 3x growth
         \b\d+(?:\.\d+)?\s?(?:[KMGTP]i?B|[KMGT]B/s|GB/s|MB/s|TB)\b |  # 2 GB/s, 5 TB
         \bwithin\s+\d+\s+\w+                            |  # within 2 years
-        \b\d+\s+(?:engineers?|people|FTEs?|staff|developers?|analysts?|teams?) |
+        \b\d+\s+(?:engineers?|FTEs?|developers?|analysts?)\b |
         \b\d+\s+(?:source\s+systems?|sources?|systems?|regions?|zones?|replicas?|nodes?|clusters?)\b |
-        \bQ[1-4]\s?(?:20\d\d)?\b                        |  # Q3 2026
-        \b20\d\d\b                                         # bare years
+        # --- round-3 red team: these carry requirement weight and were invisible ---
+        \b\d+(?:\.\d+)?\s?[KMB]\b                        |  # 20M customers, 5M/day
+        (?<![-\u2013\u2014/])\b\d+\s?[KMB]?\s*\w*\s*/\s*(?:day|week|month|year|yr) | # 5M interactions/day
+        (?<![\d:.])\d{1,2}[:.]\d{2}\s*(?:AM|PM)?           |  # 07:00, 7:00 AM
+        (?<![\d:.\s]\s)(?<![\d:.])\b\d{1,2}\s*(?:AM|PM)\b |  # 7 AM (not the "00" of 7:00 AM)
+        # "Customer 360 Store" is a product name, not a count of 360 stores.
+        (?<!Customer\s)(?<!customer\s)\b\d+\s+(?:stores?|sites?|branches?|devices?|customers?|users?|tenants?)\b |
+        \b(?:ninety|eighty|seventy|sixty|fifty|forty|thirty|twenty|ten|five|three|two|one)
+          (?:[\s-](?:nine|eight|seven|six|five|four|three|two|one))?
+          [\s-]?(?:percent|per\s?cent)\b                  |  # ninety-nine percent
+        \bzero\s+(?:tolerance|latency|lag)\b
+        # NOTE: bare years and "Q3 2026" were REMOVED. They fired on copyright
+        # footers and changelogs, producing false positives. A gate that cries
+        # wolf trains people to override it, which is worse than a gap.
     )""",
     re.VERBOSE | re.IGNORECASE,
 )
@@ -121,7 +144,10 @@ VALUE_RE = re.compile(
 CITE_RE = re.compile(r"\b([A-Z0-9]{3,6}-(?:F|U|X)\d{2})\b")
 
 # How far after a value we look for its citation.
-CITE_WINDOW = 40  # citation must sit close after the value, not anywhere in the sentence
+CITE_WINDOW = 40
+
+# How far around a value we look for the cited fact's subject terms.
+SUBJ_WINDOW = 90  # citation must sit close after the value, not anywhere in the sentence
 
 # Phrases that scope a value as explicitly unsourced rather than asserted.
 OPENQ_RE = re.compile(r"open question|not specified|not given|unknown|to be confirmed|\bTBD\b", re.IGNORECASE)
@@ -180,6 +206,7 @@ def main():
         examples = scenarios[sid]["examples"]
         unknowns = scenarios[sid]["unknowns"]
         patterns = scenarios[sid].get("matches", {})
+        subjects = scenarios[sid].get("subjects", {})
 
         # Sentence splitting loses section context, so locate the Open Questions
         # region by document offset and treat everything after it as open-question
@@ -246,6 +273,35 @@ def main():
                                   f"{cid} does not support this value "
                                   f"(expects /{pat}/)"))
                     continue
+
+                subj = subjects.get(cid)
+                if subj:
+                    lo = max(0, m.start() - SUBJ_WINDOW)
+                    raw_around = sent[lo:m.end() + SUBJ_WINDOW]
+                    # Normalise hyphens so "availability-zone" matches
+                    # "availability zone", and collapse whitespace. Keep the RAW
+                    # window too: normalising turns "C360-F09" into "C360 F09",
+                    # which silently broke enumeration detection below.
+                    around = re.sub(r"[\s\u2010-\u2015/_-]+", " ", raw_around.lower())
+                    # A subject check needs a subject to read. Terse diagram
+                    # labels ("Hours vs 15min | 7AM") carry no prose, so applying
+                    # it there produces false alarms - and a gate that cries wolf
+                    # gets overridden, which is worse than the gap it closes.
+                    # Contexts where proximity subject-matching cannot work.
+                    # In all three the per-value pattern match has ALREADY run,
+                    # so the number is still tied to a fact; only the weaker
+                    # subject heuristic is skipped.
+                    terse = len(re.findall(r"[a-z]{3,}", around)) < 6
+                    diagram = ("-->" in sent or '["' in sent or "---" in sent)
+                    enumeration = len(CITE_RE.findall(raw_around)) >= 3
+                    if terse or diagram or enumeration:
+                        ok += 1
+                        continue
+                    if not any(term in around for term in subj):
+                        fails.append((sent, [val],
+                                      f"{cid} matches the number but not the subject "
+                                      f"(expected one of: {', '.join(subj)})"))
+                        continue
 
                 ok += 1
 

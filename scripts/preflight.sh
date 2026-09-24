@@ -16,6 +16,14 @@
 
 set -uo pipefail
 
+# Secure scratch dir. Previously this script wrote to predictable /tmp/_cit.$$
+# paths, which a red team flagged as a symlink/pre-creation hazard on a shared
+# machine. mktemp -d is unpredictable and removed on exit.
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/preflight.XXXXXXXX")"
+cleanup() { rm -rf "$WORK"; }
+trap cleanup EXIT INT TERM
+
+
 RED=$'\033[0;31m'; GRN=$'\033[0;32m'; YEL=$'\033[0;33m'; BLU=$'\033[0;34m'; RST=$'\033[0m'
 FAIL=0
 WARN=0
@@ -71,18 +79,25 @@ echo "Pre-flight validation for: ${FILES[*]}"
 # this, the manifest would be relocated self-attestation.
 # ---------------------------------------------------------------------------
 head_ "0. Fact manifest integrity"
-if python3 "$(dirname "$0")/verify_manifest.py" >/tmp/_mf.$$ 2>&1; then
-  pass "$(tail -1 /tmp/_mf.$$)"
+if python3 "$(dirname "$0")/verify_manifest.py" >"$WORK/mf.out" 2>&1; then
+  pass "$(tail -1 "$WORK/mf.out")"
 else
   MF_RC=$?
-  grep -E '^  ✗|^      ' /tmp/_mf.$$ || cat /tmp/_mf.$$
+  grep -E '^  ✗|^      ' "$WORK/mf.out" || cat "$WORK/mf.out"
   if [ "$MF_RC" -eq 2 ]; then
     warn "manifest could NOT be verified (see above) — treat results as unproven"
   else
     fail "fact manifest contains quote(s) not present in the source document"
   fi
 fi
-rm -f /tmp/_mf.$$
+
+head_ "0b. Adversarial regression suite"
+if python3 "$(dirname "$0")/test_gate.py" >"$WORK/tg.out" 2>&1; then
+  pass "$(grep -o '[0-9]*/[0-9]* cases correct' "$WORK/tg.out") — gate behaves as verified"
+else
+  fail "adversarial regression suite FAILED — the gate no longer blocks known attacks"
+  grep -E '^  FAIL' "$WORK/tg.out" || true
+fi
 
 for f in "${FILES[@]}"; do
   [ -f "$f" ] || { fail "$f does not exist"; continue; }
@@ -186,15 +201,14 @@ for f in "${FILES[@]}"; do
 
   # -------------------------------------------------------------------------
   head_ "5. Source citations (every value must trace to the fact manifest)"
-  if python3 "$(dirname "$0")/check_citations.py" "$f" >/tmp/_cit.$$ 2>&1; then
-    pass "$(grep -o 'cited: [0-9]*' /tmp/_cit.$$ | head -1) — all values traced"
+  if python3 "$(dirname "$0")/check_citations.py" "$f" >"$WORK/cit.out" 2>&1; then
+    pass "$(grep -o 'cited: [0-9]*' "$WORK/cit.out" | head -1) — all values traced"
   else
-    grep -E '^  ✗|^      (values|text):' /tmp/_cit.$$ || true
+    grep -E '^  ✗|^      (values|text):' "$WORK/cit.out" || true
     fail "uncited requirement values — see above"
   fi
-  rm -f /tmp/_cit.$$
-
-  head_ "5. HTML well-formedness"
+  
+  head_ "6. HTML well-formedness"
   python3 - "$f" <<'PY'
 import sys
 from html.parser import HTMLParser

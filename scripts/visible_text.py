@@ -15,6 +15,7 @@ Includes: Mermaid diagram bodies. Diagrams state requirements, and a fabricated
 """
 import re
 import sys
+import unicodedata
 from html.parser import HTMLParser
 
 HIDDEN_TAGS = {"script", "style", "template", "noscript"}
@@ -105,6 +106,37 @@ HIDING_CSS = re.compile(
 )
 
 
+CONTENT_CSS = re.compile(r"content\s*:\s*([\"'])(.*?)\1", re.IGNORECASE | re.DOTALL)
+
+
+def generated_content(raw):
+    """CSS ::before/::after `content:` renders to the reader but is not in the DOM
+    text. A red team used `.fab::before{content:"99% availability"}` to show a
+    fabricated number to a human while staying invisible to the gate. Treat it
+    as visible text."""
+    out = []
+    for block in re.findall(r"(?is)<style.*?>(.*?)</style>", raw):
+        for _, val in CONTENT_CSS.findall(block):
+            val = val.strip()
+            if val and val not in ("", " ", "\\201C", "\\201D"):
+                out.append(val)
+    return out
+
+
+# Characters that let a value render normally to a human while defeating naive
+# pattern matching: bidi overrides, zero-width joiners, soft hyphens, BOM.
+INVISIBLE = dict.fromkeys(map(ord,
+    "\u200b\u200c\u200d\u2060\ufeff\u00ad"
+    "\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"), None)
+
+
+def normalize_text(t):
+    """NFKC folds full-width digits and symbols to ASCII, so U+FF19 U+FF05
+    ("９％") is seen as "9%". Invisible/bidi characters are stripped
+    outright rather than preserved."""
+    return unicodedata.normalize("NFKC", t.translate(INVISIBLE))
+
+
 def hiding_selectors(raw):
     """Collect class/id selectors whose rules hide content."""
     classes, ids = set(), set()
@@ -125,7 +157,8 @@ def extract(path):
     classes, ids = hiding_selectors(raw)
     p = VisibleText(hidden_classes=classes, hidden_ids=ids)
     p.feed(raw)
-    return "".join(p.parts)
+    parts = p.parts + ["\n" + c for c in generated_content(raw)]
+    return normalize_text("".join(parts))
 
 
 if __name__ == "__main__":
