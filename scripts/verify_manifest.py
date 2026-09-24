@@ -92,10 +92,44 @@ def parse_quotes(path):
     return out
 
 
+def check_manifest_is_real_yaml():
+    """The manifest is read by a hand-rolled parser in this repo, which is
+    tolerant. For 17 facts it was tolerating a file that was NOT valid YAML:
+    `matches: "140\s*stores?"` is an illegal escape in a double-quoted YAML
+    scalar, so any standard YAML loader raised a hard error on it.
+
+    That mattered for two reasons. Anyone reaching for a YAML library - the
+    obvious next step for anyone extending this - hit a crash in a file the
+    repo reported as verified. And the meaning of a fact could differ between
+    the bespoke parser and a real one, which is intolerable in the file that
+    defines what counts as true.
+
+    Patterns are now single-quoted, where YAML treats backslashes literally.
+    This check keeps it that way.
+    """
+    try:
+        import yaml
+    except ImportError:
+        print("PyYAML not installed - cannot confirm the manifest is valid YAML.")
+        print("Refusing to report a pass on a check that did not run.")
+        sys.exit(2)
+    try:
+        with open(MANIFEST, encoding="utf-8") as fh:
+            yaml.safe_load(fh)
+    except yaml.YAMLError as exc:
+        print(f"MANIFEST IS NOT VALID YAML: {exc}", file=sys.stderr)
+        print("Regex patterns must use SINGLE quotes so backslashes stay literal.",
+              file=sys.stderr)
+        sys.exit(1)
+    print("Manifest parses under a real YAML loader, not just the local parser.")
+
+
 def main():
     if not os.path.exists(MANIFEST):
         print(f"ERROR: manifest not found: {MANIFEST}", file=sys.stderr)
         sys.exit(2)
+
+    check_manifest_is_real_yaml()
 
     source = load_source_text()
     entries = parse_quotes(MANIFEST)

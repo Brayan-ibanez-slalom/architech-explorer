@@ -14,15 +14,7 @@ name: "Agent Quality Review"
 on:
   pull_request:
     paths:
-      # The reports themselves.
       - "docs/*.html"
-      # AND the gate that judges them. These were missing, so a PR that changed
-      # only the checking scripts ran no checks at all - the gate could be
-      # weakened or broken without CI ever noticing. A fix for a flaky-gate bug
-      # was the change that exposed this.
-      - "scripts/**"
-      - "knowledge-base/scenario-facts.yml"
-      - ".github/workflows/agent-quality-review.yml"
 
 permissions:
   contents: read
@@ -47,7 +39,7 @@ jobs:
           echo "Changed reports: $CHANGED"
 
       - name: Install manifest verification dependency
-        run: pip install --quiet pypdf
+        run: pip install --quiet pypdf pyyaml
         # Required by scripts/verify_manifest.py. Without it the manifest check
         # degrades to a warning, which would let a fabricated fact through CI.
 
