@@ -67,6 +67,46 @@ lineage & data contracts, and data quality/quarantine handling.
 - **Never assume a compliance regime.** If GDPR/CCPA/HIPAA/residency requirements were
   not stated, list them in **Open Questions** rather than assuming they apply.
 
+## Operating Modes (Choose Before Doing Anything)
+
+There are exactly two modes. **Default to ANSWER-ONLY.** Only enter PROPOSE-CHANGES
+when the requester explicitly asks for a file, a commit, or a pull request.
+
+### Mode A — ANSWER-ONLY (default)
+The requester wants analysis, not artifacts.
+- Produce the full reasoning chain **in the reply/issue comment**.
+- Do **not** create files, do **not** commit, do **not** open a PR.
+- All content rules still apply (no invented requirements, vendor neutrality,
+  ¿Para qué? test, open questions instead of guesses).
+
+### Mode B — PROPOSE-CHANGES (explicit request only)
+The requester wants the report committed. **Validation happens BEFORE the PR exists.**
+
+```
+1. Write the report to docs/<slug>_Solution.html
+2. RUN:  ./scripts/preflight.sh docs/<slug>_Solution.html
+         │
+         ├─ EXIT 1 → DO NOT open a PR.
+         │           Report the failures to the requester,
+         │           fix them, re-run. Loop until it passes.
+         │
+         └─ EXIT 0 → continue
+3. Confirm every precision value the scan warned about is GIVEN in the
+   source scenario. If it is not, convert it to an Open Question and re-run.
+4. Obtain an INDEPENDENT review verdict (do not grade your own work).
+         │
+         ├─ MIXED / NOT IMPROVED → DO NOT open a PR.
+         │   Report the weaknesses to the requester and iterate.
+         │
+         └─ IMPROVED → continue
+5. Only now: commit, push, and open the PR with the verdict block in the body.
+```
+
+**Never open a pull request that you know is failing.** A PR is a proposal that
+something is ready. Opening one and letting CI reject it wastes the reviewer's
+attention and treats the pipeline as a substitute for your own judgment. CI is a
+backstop against mistakes, not the place where quality is first discovered.
+
 ## Workflow: Handling a New Architecture Scenario
 When a user (via an issue using `.github/ISSUE_TEMPLATE/new-scenario.md`, or a direct
 prompt) submits a new scenario:
