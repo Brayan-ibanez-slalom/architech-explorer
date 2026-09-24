@@ -3,15 +3,15 @@
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
 3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj
 4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
-5 0 obj << /Length 1761 >> stream
+5 0 obj << /Length 2247 >> stream
 BT
 /F1 11 Tf
 54 770 Td
-(Verdant Grocers ? Near-Real-Time Inventory Visibility \(Phase 1 of a controlled test\)) Tj
+(Verdant Grocers ? Near-Real-Time Inventory Visibility \(Controlled Test Source\)) Tj
 0 -14 Td
 () Tj
 0 -14 Td
-(Scenario) Tj
+(Original scenario) Tj
 0 -14 Td
 () Tj
 0 -14 Td
@@ -55,15 +55,27 @@ BT
 0 -14 Td
 () Tj
 0 -14 Td
-(What is deliberately not stated) Tj
+(Phase 2 additions from PR comment 5818993306) Tj
 0 -14 Td
 () Tj
 0 -14 Td
-(1. How much event loss, if any, is acceptable during an outage.) Tj
+(- Zero basket-event loss is required.) Tj
 0 -14 Td
-(2. Any budget or cost ceiling.) Tj
+(- Finance reconciles store sales against this event stream, and a missing basket is a) Tj
 0 -14 Td
-(3. Any regulatory or compliance regime that applies.) Tj
+(missing sale on the books.) Tj
+0 -14 Td
+(- A gap must be recoverable, not merely detected.) Tj
+0 -14 Td
+(- A cloud run-rate ceiling of USD 8,000 per month for the new platform, excluding the) Tj
+0 -14 Td
+(existing overnight warehouse, which is budgeted separately.) Tj
+0 -14 Td
+(- PCI DSS applies to the POS transaction stream.) Tj
+0 -14 Td
+(- Cardholder data must never land in the analytics platform; it has to be removed or) Tj
+0 -14 Td
+(tokenised before the events leave the store network.) Tj
 ET
 endstream
 endobj
@@ -77,5 +89,5 @@ xref
 0000000311 00000 n 
 trailer << /Size 6 /Root 1 0 R >>
 startxref
-2124
+2610
 %%EOF
