@@ -91,6 +91,23 @@ else
   fi
 fi
 
+head_ "0a. Source provenance (is the evidence really the evidence?)"
+# A generated report once added a PDF it had authored itself, which the manifest
+# verifier then accepted as the source for its own quotes. Scoping sources per
+# scenario stops one file vouching for another; this step stops a file vouching
+# for itself, by re-fetching the upstream GitHub issue and comparing hashes.
+if python3 "$(dirname "$0")/verify_provenance.py" >"$WORK/pv.out" 2>&1; then
+  pass "$(tail -1 "$WORK/pv.out")"
+else
+  PV_RC=$?
+  cat "$WORK/pv.out"
+  if [ "$PV_RC" -eq 2 ]; then
+    warn "provenance could NOT be re-checked against upstream — unproven, not passed"
+  else
+    fail "a captured source does not match upstream or its pinned hash"
+  fi
+fi
+
 head_ "0b. Adversarial regression suite"
 if python3 "$(dirname "$0")/test_gate.py" >"$WORK/tg.out" 2>&1; then
   pass "$(grep -o '[0-9]*/[0-9]* cases correct' "$WORK/tg.out") — gate behaves as verified"

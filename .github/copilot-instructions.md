@@ -281,6 +281,28 @@ report labelled "(given)" as though Scenario A required it. It does not. Durabil
 and latency are different requirements, and inventing one changes the replication
 design and its cost.
 
+**Every scenario MUST declare where its facts come from.** Add a `source_files:`
+list naming the exact file(s) its quotes are checked against, and nothing else:
+
+```yaml
+- id: my-scenario
+  source: "GitHub issue #12"
+  source_files:
+    - "sources/my-scenario.source.txt"
+  source_issue: 12
+  source_comments: [123456789]
+```
+
+A scenario without `source_files:` fails verification with exit 2. This is not
+bureaucracy. The verifier used to check every scenario against every document in
+`knowledge-base/`, so a generated report was able to add a PDF it had written
+itself and have its own quotes "verified" against it. **Do not author the
+document your facts are checked against.** For a scenario that comes from a
+GitHub issue, capture the issue verbatim under `knowledge-base/sources/`, pin its
+sha256 in `knowledge-base/provenance.lock`, and let
+`scripts/verify_provenance.py` re-fetch the issue and confirm the capture still
+matches upstream.
+
 **If a scenario has no manifest entry yet, create one first** — extract the facts
 with verbatim quotes before writing any analysis. Do not write the report and
 back-fill citations to match it; that reverses the dependency and defeats the point.

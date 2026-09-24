@@ -24,6 +24,9 @@ scenarios:
   - id: customer-360
     name: "Customer 360 Capstone"
     source: "TF1 deck, slide 23 (knowledge-base/TF1_*.pdf); see tf1-course-notes.md"
+    source_files:
+      - "TF1_architectural-foundations-quality-attributes_instructor_slalom.pdf"
+      - "tf1-course-notes.md"
     facts:
       - id: C360-F01
         value: "dashboards ready by 07:00"
@@ -122,6 +125,9 @@ scenarios:
   - id: retail-iot
     name: "Scenario A - Retail IoT Monitoring Platform"
     source: "TF1 deck; see tf1-course-notes.md lines ~126-144"
+    source_files:
+      - "TF1_architectural-foundations-quality-attributes_instructor_slalom.pdf"
+      - "tf1-course-notes.md"
     facts:
       - id: RIOT-F01
         value: "500 stores with IoT devices"
@@ -183,7 +189,14 @@ scenarios:
   # =========================================================================
   - id: verdant-grocers
     name: "Verdant Grocers - Near-Real-Time Inventory Visibility"
-    source: "GitHub issue #8 + PR comments 5818993306 and 5820970476 source artifact: knowledge-base/VerdantGrocers_Issue8_Source.pdf"
+    source: "GitHub issue #8 + PR comments 5818993306 and 5820970476"
+    # Quotes for this scenario are verified ONLY against the file below, which is
+    # a verbatim capture of the GitHub issue and comments. Its hash is pinned in
+    # knowledge-base/provenance.lock and re-checked against the live GitHub API.
+    source_files:
+      - "sources/verdant-grocers.source.txt"
+    source_issue: 8
+    source_comments: [5818993306, 5820970476]
     facts:
       - id: VGI-F01
         value: "140 stores"

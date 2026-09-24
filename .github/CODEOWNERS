@@ -1,0 +1,10 @@
+# Requesting review is not the same as requiring it, but it puts the right
+# files in front of a human automatically.
+#
+# The scripts below decide what the repository will accept as true. A change
+# here can weaken every other check at once, silently, which is exactly what
+# happened when a workflow file was copied from a stale branch and quietly
+# reverted a fix.
+/scripts/                      @Brayan-ibanez-slalom
+/knowledge-base/               @Brayan-ibanez-slalom
+/.github/                      @Brayan-ibanez-slalom

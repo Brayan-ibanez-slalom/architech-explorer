@@ -45,11 +45,51 @@ def normalize(s):
     return s.strip().lower()
 
 
-def load_source_text():
-    pdfs = [f for f in os.listdir(KB) if f.lower().endswith(".pdf")]
-    if not pdfs:
-        print("ERROR: no source PDF found in knowledge-base/", file=sys.stderr)
-        sys.exit(2)
+def load_sources_per_scenario():
+    """Return {scenario_id: normalized source text}.
+
+    This used to concatenate EVERY pdf in knowledge-base/ into one blob that all
+    scenarios were checked against. That meant any file dropped into the folder
+    became a trusted source for every scenario at once - and a generated report
+    did exactly that, adding a pdf it had authored itself, which the verifier
+    then treated as evidence. An author supplying the document its own quotes
+    are checked against is not verification, it is a loop.
+
+    Each scenario now declares `source_files:` and is checked ONLY against those.
+    A scenario with no declared sources is an error, not a pass.
+    """
+    import yaml
+    with open(MANIFEST, encoding="utf-8") as fh:
+        doc = yaml.safe_load(fh)
+
+    out = {}
+    for scen in doc.get("scenarios", []):
+        sid = scen.get("id")
+        files = scen.get("source_files")
+        if not files:
+            print(f"ERROR: scenario '{sid}' declares no source_files. Refusing to "
+                  f"verify its quotes against an unscoped blob.", file=sys.stderr)
+            sys.exit(2)
+        chunks = []
+        for rel in files:
+            path = os.path.join(KB, rel)
+            if not os.path.exists(path):
+                print(f"ERROR: source file missing for '{sid}': {rel}", file=sys.stderr)
+                sys.exit(2)
+            chunks.append(read_source_file(path))
+        out[sid] = normalize("\n".join(chunks))
+    return out
+
+
+def read_source_file(path):
+    if path.lower().endswith(".pdf"):
+        return read_pdf(path)
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def read_pdf(path):
+    pdfs = [path]
     try:
         from pypdf import PdfReader
     except ImportError:
@@ -61,14 +101,10 @@ def load_source_text():
 
     chunks = []
     for name in pdfs:
-        reader = PdfReader(os.path.join(KB, name))
+        reader = PdfReader(name)
         for page in reader.pages:
             chunks.append(page.extract_text() or "")
-    # Also allow quotes sourced from the curated notes.
-    notes = os.path.join(KB, "tf1-course-notes.md")
-    if os.path.exists(notes):
-        chunks.append(open(notes, encoding="utf-8").read())
-    return normalize("\n".join(chunks))
+    return "\n".join(chunks)
 
 
 def parse_quotes(path):
@@ -131,7 +167,7 @@ def main():
 
     check_manifest_is_real_yaml()
 
-    source = load_source_text()
+    sources = load_sources_per_scenario()
     entries = parse_quotes(MANIFEST)
     if not entries:
         print("ERROR: no quotes parsed from the manifest — refusing to pass.",
@@ -140,6 +176,10 @@ def main():
 
     missing = []
     for scen, fid, section, quote in entries:
+        source = sources.get(scen)
+        if source is None:
+            missing.append((scen, fid, section, quote, "no declared source for scenario"))
+            continue
         if normalize(quote) in source:
             continue
         # Fall back to a token-overlap check: PDF extraction mangles bullet joins,
