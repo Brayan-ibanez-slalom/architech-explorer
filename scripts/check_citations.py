@@ -132,6 +132,18 @@ VALUE_RE = re.compile(
         (?<![\d:.\s]\s)(?<![\d:.])\b\d{1,2}\s*(?:AM|PM)\b |  # 7 AM (not the "00" of 7:00 AM)
         # "Customer 360 Store" is a product name, not a count of 360 stores.
         (?<!Customer\s)(?<!customer\s)\b\d+\s+(?:stores?|sites?|branches?|devices?|customers?|users?|tenants?)\b |
+        # --- live-agent-test finding: comma-grouped magnitudes were INVISIBLE ---
+        # A generated report stated "900,000 basket events per day" five times and
+        # the detector never saw it. A probe adding "4,200,000 basket events per
+        # day", "18,000 concurrent store sessions" and "250,000 SKU records" -- all
+        # fabricated -- passed with ZERO violations. Comma grouping is the single
+        # most common way to write a capacity figure, and it was the one shape the
+        # grammar had no rule for.
+        \b\d{1,3}(?:,\d{3})+\b                           |  # 900,000 / 4,200,000
+        # Bare integers of five digits or more. Deliberately 5+, not 4+: a 4-digit
+        # bare number is usually a year, and firing on copyright footers is the
+        # false-positive failure that got bare years removed below.
+        \b\d{5,}\b                                       |
         \b(?:ninety|eighty|seventy|sixty|fifty|forty|thirty|twenty|ten|five|three|two|one)
           (?:[\s-](?:nine|eight|seven|six|five|four|three|two|one))?
           [\s-]?(?:percent|per\s?cent)\b                  |  # ninety-nine percent

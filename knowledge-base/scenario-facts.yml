@@ -28,17 +28,17 @@ scenarios:
       - id: C360-F01
         value: "dashboards ready by 07:00"
         subject: "dashboard|morning|ready|report|batch|sla|business hours|daily|deadline|bounded"
-        matches: "7[:.]?0?0?\s*(AM|am)?"
+        matches: '7[:.]?0?0?\s*(AM|am)?'
         quote: "Daily dashboards must be ready by 7:00 AM"
       - id: C360-F02
         value: "Marketing tolerates several hours of latency"
-        matches: "(several\s+)?hours?"
+        matches: '(several\s+)?hours?'
         quote: "Marketing data can tolerate several hours of latency"
         note: "Deliberately imprecise in the source. Do NOT convert to a number."
       - id: C360-F03
         value: "Customer Service data within 15 minutes"
         subject: "freshness|latency|service|sla|within|updated|refresh|propagat|pipeline|tolerance|tiered|bounded"
-        matches: "15\s*(minutes?|min)"
+        matches: '15\s*(minutes?|min)'
         quote: "Customer Service interactions available within 15 minutes"
         note: "A latency bound ONLY. No attainment percentile is given."
       - id: C360-F04
@@ -46,16 +46,16 @@ scenarios:
         quote: "Customer data contains PII and sensitive information"
       - id: C360-F05
         value: "3x interaction growth within 2 years"
-        matches: "(3x|3\s*times|2\s*years?)"
+        matches: '(3x|3\s*times|2\s*years?)'
         quote: "Customer interactions expected to grow 3x within 2 years"
       - id: C360-F06
         value: "2-4 new sources per year"
-        matches: "2\s*[-–—]\s*4"
+        matches: '2\s*[-–—]\s*4'
         quote: "2-4 new sources/year expected"
       - id: C360-F07
         value: "a standard source onboarded within 2 weeks"
         subject: "onboard|source|integrat|ingest|new source|sla"
-        matches: "2\s*(weeks?|wks?)"
+        matches: '2\s*(weeks?|wks?)'
         quote: "a standard source should be onboarded within 2 weeks"
       - id: C360-F08
         value: "controlled and auditable access required"
@@ -63,7 +63,7 @@ scenarios:
       - id: C360-F09
         value: "first production release within 4 months"
         subject: "release|launch|production|go live|delivery|timeline|milestone|bounded"
-        matches: "4\s*months?"
+        matches: '4\s*months?'
         quote: "First production release required within 4 months"
       - id: C360-F10
         value: "costs must remain observable as usage grows"
@@ -79,11 +79,11 @@ scenarios:
         quote: "5M interactions/day"
       - id: C360-F13
         value: "4 initial source systems"
-        matches: "4\+?\s*(initial\s*)?(source\s*)?(systems?|sources?)"
+        matches: '4\+?\s*(initial\s*)?(source\s*)?(systems?|sources?)'
         quote: "4 initial source systems"
       - id: C360-F14
         value: "3 years of historical data"
-        matches: "3\s*years?"
+        matches: '3\s*years?'
         quote: "3 years of historical data"
       - id: C360-F15
         value: "4 fragmented sources: e-commerce, loyalty, support tickets, marketing"
@@ -95,7 +95,7 @@ scenarios:
         quote: "Business teams currently spend significant time reconciling inconsistent customer information across systems."
       - id: C360-F18
         value: "interactions expected to grow 3x within 2 years"
-        matches: "3\s*[x×]|within\s*2\s*years?"
+        matches: '3\s*[x×]|within\s*2\s*years?'
         quote: "Customer interactions expected to grow 3x within 2 years"
       - id: C360-F17
         value: "Data Science needs reliable historical data for churn and propensity models"
@@ -125,26 +125,26 @@ scenarios:
     facts:
       - id: RIOT-F01
         value: "500 stores with IoT devices"
-        matches: "500\s*stores?"
+        matches: '500\s*stores?'
         quote: "A retail company operates 500 stores with IoT devices generating continuous telemetry"
       - id: RIOT-F02
         value: "50K events/sec peak"
-        matches: "50K\s*events?"
+        matches: '50K\s*events?'
         quote: "50K events/sec peak ingestion bursts during business hours"
       - id: RIOT-F03
         value: "p95 ingestion latency < 200ms"
         subject: "latency|ingest|p95|peak"
-        matches: "(200\s*ms|p95)"
+        matches: '(200\s*ms|p95)'
         quote: "p95 ingestion latency < 200ms during peak load"
       - id: RIOT-F04
         value: "recovery from single-AZ failure in < 30 sec"
         subject: "recover|failover|availability zone|outage|restore|rto"
-        matches: "30\s*(sec|seconds?)"
+        matches: '30\s*(sec|seconds?)'
         quote: "Recovery from a single availability-zone failure in <30 sec"
         note: "A RECOVERY TIME only. No durability/data-loss target is given."
       - id: RIOT-F05
         value: "deploy a new event schema without pipeline downtime, < 1 day"
-        matches: "(1\s*day|downtime)"
+        matches: '(1\s*day|downtime)'
         quote: "Deploy a new event schema without pipeline downtime, <1 day"
         note: "'without pipeline downtime' IS given here and may be stated."
       - id: RIOT-F06

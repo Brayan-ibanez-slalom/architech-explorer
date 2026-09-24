@@ -114,14 +114,30 @@ for f in "${FILES[@]}"; do
 
   # Visible text only. Keyword-stuffed HTML comments and display:none blocks
   # previously satisfied every check while the prose contained no analysis.
-  PROSE=$(python3 "$(dirname "$0")/visible_text.py" "$f")
+  # Extract to a FILE, not a shell variable. Every check below used to pipe the
+  # variable in with `printf '%s' "$PROSE" | grep ...`. When grep matched early it
+  # exited and killed printf with SIGPIPE, and on CI that intermittently truncated
+  # the stream for LATER checks in the same loop: identical commits alternated
+  # between pass and fail, with sections that demonstrably exist reported missing.
+  # A flaky gate is worse than no gate, because it teaches people to re-run it
+  # until it goes green. grep reading a file cannot race.
+  PROSE_FILE="$WORK/prose.$$.txt"
+  if ! python3 "$(dirname "$0")/visible_text.py" "$f" > "$PROSE_FILE"; then
+    echo "extraction failed for $f — result indeterminate, not a pass"; exit 2
+  fi
+  PROSE_BYTES=$(wc -c < "$PROSE_FILE" | tr -d ' ')
+  if [ "$PROSE_BYTES" -lt 2000 ]; then
+    echo "only $PROSE_BYTES bytes of visible text extracted from $f — too little to"
+    echo "have checked anything. Treating as INDETERMINATE (exit 2), not a pass."
+    exit 2
+  fi
 
   # -------------------------------------------------------------------------
   head_ "1. Required reasoning-chain sections"
   for term in "Objectives" "Constraints" "Functional" "Quality" "ASR" \
               "Utility Tree" "Decision" "Trade-off" "Cost of Change" \
               "Open Questions" "Governance"; do
-    if printf '%s' "$PROSE" | grep -qi "$term"; then pass "section present: $term"
+    if grep -qi "$term" "$PROSE_FILE"; then pass "section present: $term"
     else fail "missing required section: $term"; fi
   done
 
@@ -134,7 +150,7 @@ for f in "${FILES[@]}"; do
   # version of this script excluded diagrams as "noise". Diagrams state requirements,
   # so they must be scanned. CSS percentages are excluded via the style strip.
 
-  HITS=$(printf '%s' "$PROSE" | grep -oiE '[0-9]+(\.[0-9]+)?%|p9[059]\b|zero (downtime|disruption|data loss)|99\.[0-9]+' | sort -u || true)
+  HITS=$(grep -oiE '[0-9]+(\.[0-9]+)?%|p9[059]\b|zero (downtime|disruption|data loss)|99\.[0-9]+' "$PROSE_FILE" | sort -u || true)
   if [ -z "$HITS" ]; then
     pass "no high-risk precision values in prose"
   else
@@ -155,17 +171,16 @@ for f in "${FILES[@]}"; do
       fail "unmarked absolute claim — add (given) or (assumption), or move to Open Questions:"
       echo "          $(printf '%s' "$line" | sed -e 's/^ *//' | cut -c1-110)"
     fi
-  done < <(printf '%s' "$PROSE" \
-            | sed -e 's/<[^>]*>/ /g' -e 's/&[a-z]*;/ /g' \
+  done < <(sed -e 's/<[^>]*>/ /g' -e 's/&[a-z]*;/ /g' "$PROSE_FILE" \
             | tr '\n' ' ' \
             | grep -oiE '[^.!?]*zero (downtime|disruption|data loss|event loss)[^.!?]*' || true)
 
   # -------------------------------------------------------------------------
   head_ "3. Vendor balance (guards against single-cloud bias)"
-  AWS=$(printf '%s' "$PROSE" | grep -oiE 'aws|amazon|kinesis|redshift' | wc -l | tr -d ' ')
-  AZ=$(printf '%s' "$PROSE" | grep -oiE 'azure|synapse|fabric' | wc -l | tr -d ' ')
-  GCP=$(printf '%s' "$PROSE" | grep -oiE 'google cloud|gcp|bigquery|dataflow' | wc -l | tr -d ' ')
-  OSS=$(printf '%s' "$PROSE" | grep -oiE 'kafka|flink|spark|airflow|dagster|iceberg|delta lake|hudi|opa|airbyte|dbt|openlineage|openmetadata' | wc -l | tr -d ' ')
+  AWS=$(grep -oiE 'aws|amazon|kinesis|redshift' "$PROSE_FILE" | wc -l | tr -d ' ')
+  AZ=$(grep -oiE 'azure|synapse|fabric' "$PROSE_FILE" | wc -l | tr -d ' ')
+  GCP=$(grep -oiE 'google cloud|gcp|bigquery|dataflow' "$PROSE_FILE" | wc -l | tr -d ' ')
+  OSS=$(grep -oiE 'kafka|flink|spark|airflow|dagster|iceberg|delta lake|hudi|opa|airbyte|dbt|openlineage|openmetadata' "$PROSE_FILE" | wc -l | tr -d ' ')
   echo "        AWS:$AWS  Azure:$AZ  GCP:$GCP  OSS:$OSS"
 
   TOTAL=$((AWS+AZ+GCP))
@@ -174,27 +189,33 @@ for f in "${FILES[@]}"; do
   else
     pass "open-source options present ($OSS mentions)"
   fi
+  # Demoted from blocking to a WARNING on the recommendation of two independent
+  # reviewers, made twice. Their argument: mention-share is not evidence of
+  # neutrality. A balanced count can be reached by padding a report with product
+  # names nobody intends to use, while a genuinely reasoned single-cloud design
+  # — correct when the client has a stated platform commitment — would fail.
+  # The signal is still worth surfacing, so it is reported, not enforced.
   if [ "$TOTAL" -gt 6 ]; then
+    SKEW=0
     for pair in "AWS:$AWS" "Azure:$AZ" "GCP:$GCP"; do
       n=${pair#*:}; v=${pair%%:*}
       if [ $((n*100/TOTAL)) -gt 60 ]; then
-        fail "$v is $((n*100/TOTAL))% of hyperscaler mentions (limit 60%) — rebalance"
+        warn "$v is $((n*100/TOTAL))% of hyperscaler mentions — check this reflects a stated platform constraint, not familiarity bias"
+        SKEW=1
       fi
     done
-    # Compare against this file's starting count, not the global one — otherwise a
-    # failure in an earlier file suppresses this file's pass message.
-    [ "$FAIL" -eq "$FILEFAIL_START" ] && pass "no single hyperscaler exceeds 60% of mentions"
+    [ "$SKEW" -eq 0 ] && pass "no single hyperscaler exceeds 60% of mentions"
   else
     pass "too few vendor mentions to skew ($TOTAL)"
   fi
 
   # -------------------------------------------------------------------------
   head_ "4. Structural depth"
-  SCEN=$(printf '%s' "$PROSE" | grep -oi "Response Measure" | wc -l | tr -d ' ')
+  SCEN=$(grep -oi "Response Measure" "$PROSE_FILE" | wc -l | tr -d ' ')
   [ "${SCEN:-0}" -ge 2 ] && pass "$SCEN quality-attribute scenarios (min 2)" \
                          || fail "only ${SCEN:-0} quality-attribute scenario(s); minimum is 2"
 
-  printf '%s' "$PROSE" | grep -qi "Para qu" && pass "'¿Para qué?' purpose mapping present" \
+  grep -qi "Para qu" "$PROSE_FILE" && pass "'¿Para qué?' purpose mapping present" \
                           || fail "no '¿Para qué?' mapping — every decision must name its purpose"
 
   grep -qi "mermaid" "$f" && pass "diagrams present" || warn "no Mermaid diagrams found"
