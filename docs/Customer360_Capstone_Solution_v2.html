@@ -166,7 +166,7 @@
       <tr><td>Architecture decisions</td><td>Named as patterns only (e.g., "hybrid ingestion architecture")</td><td>Each decision now names <strong>concrete tool options</strong>, justified by the trade-off — not by popularity</td></tr>
       <tr><td>ASR justification</td><td>Implicit — shown only inside the diagram node</td><td>Explicit one-sentence justification for <em>why</em> each ASR is architecturally significant, written out in prose</td></tr>
       <tr><td>Framework grounding</td><td>None</td><td>Cites ATAM (utility tree), ADRs (decision persistence), and Well-Architected pillars where relevant</td></tr>
-      <tr><td><strong>Vendor neutrality</strong></td><td>AWS-skewed (bias audit: 11 AWS/Amazon/Kinesis mentions vs. 2 Azure, 1 GCP, 0 Databricks/Snowflake)</td><td>Every decision now offers options across <strong>open-source, platform/lakehouse, and hyperscaler</strong> ecosystems, selected by trade-off — plus an explicit "what platform are you on?" open question instead of assuming one</td></tr>
+      <tr><td><strong>Vendor neutrality</strong></td><td>AWS-skewed (repository-wide bias audit: 11 AWS/Amazon/Kinesis mentions across all files vs. 2 Azure, 1 GCP, 0 Databricks/Snowflake)</td><td>Every decision now offers options across <strong>open-source, platform/lakehouse, and hyperscaler</strong> ecosystems, selected by trade-off — plus an explicit "what platform are you on?" open question instead of assuming one</td></tr>
       <tr><td><strong>Governance &amp; security</strong></td><td>Mentioned only inside Decision 3 and one ASR</td><td>Dedicated <a href="#governance">Section 11</a> covering classification, ABAC access model, PII protection techniques, auditability, lineage, data contracts, quality/quarantine, plus anti-patterns</td></tr>
       <tr><td>Cost of Change coverage</td><td>Technical decisions only</td><td>Adds governance model and storage-format lock-in to the spectrum, with an explicit optionality recommendation (open table formats)</td></tr>
       <tr><td>Self-audit</td><td>Not shown</td><td>Definition-of-Done checklist run explicitly against this report (see end of section)</td></tr>
@@ -285,11 +285,11 @@ graph LR
         <h3>Quality Attributes (how well)</h3>
         <ul class="tick">
           <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM</li>
-          <li><strong>Latency (tiered):</strong> Marketing = hours; Service ≤ 15 min</li>
+          <li><strong>Latency (tiered):</strong> Marketing = "several hours" tolerance <em>(no precise bound given — see Open Questions)</em>; Service ≤ 15 min</li>
           <li><strong>Scalability:</strong> absorb 3× growth in 2 years</li>
           <li><strong>Modifiability:</strong> 2–4 new sources/yr, standard onboarding ≤ 2 weeks</li>
           <li><strong>Security:</strong> auditable, controlled PII access</li>
-          <li><strong>Cost efficiency:</strong> observable, non-linear cost growth</li>
+          <li><strong>Cost observability:</strong> infrastructure and processing costs must remain <em>observable</em> as usage grows <em>(no budget ceiling or unit-cost target given — see Open Questions)</em></li>
         </ul>
       </div>
     </div>
@@ -307,17 +307,17 @@ graph LR
       <tr><th>Environment</th><td>Normal business operations, peak hours</td></tr>
       <tr><th>Artifact</th><td>Customer 360 pipeline / serving layer</td></tr>
       <tr><th>Response</th><td>Interaction ingested, resolved to customer identity, made available</td></tr>
-      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes</strong>, 99% of the time</td></tr>
+      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes</strong>. <em>Attainment percentile (e.g. p95/p99) and measurement window were not specified — see Open Questions.</em></td></tr>
     </table>
 
     <h3>Scenario 2 — New Source Onboarding</h3>
     <table>
       <tr><th>Source</th><td>Data engineering team</td></tr>
       <tr><th>Stimulus</th><td>Request to onboard a new standard-format source</td></tr>
-      <tr><th>Environment</th><td>Ongoing production, zero downtime allowed</td></tr>
+      <tr><th>Environment</th><td>Ongoing production operation <em>(permitted disruption during onboarding was not specified — see Open Questions)</em></td></tr>
       <tr><th>Artifact</th><td>Ingestion / schema layer</td></tr>
       <tr><th>Response</th><td>New source integrated using standard connector pattern</td></tr>
-      <tr><th>Response Measure</th><td>Onboarded within <strong>≤ 2 weeks</strong>, zero disruption to existing pipelines</td></tr>
+      <tr><th>Response Measure</th><td>Onboarded and flowing into Customer 360 within <strong>≤ 2 weeks</strong> <em>(given). Acceptable impact on existing pipelines was not specified — see Open Questions.</em></td></tr>
     </table>
   </section>
 
@@ -332,7 +332,7 @@ graph TD
   R --> A3["ASR 3<br/>Auditable PII Access Under Extensibility"]
   A1 --> A1d["20M+ customers, 4+ sources,<br/>3x growth — trust depends on match accuracy"]
   A2 --> A2d["Hours vs 15min vs 7AM daily —<br/>forces layered ingestion/serving design"]
-  A3 --> A3d["Security must scale with new sources<br/>added every 2-4 weeks, no re-architecture"]
+  A3 --> A3d["Security must scale as 2-4 new sources<br/>are added per year, each within a 2-week SLA"]
   style R fill:#0b1f3a,color:#fff
   style A1 fill:#e0762b,color:#fff
   style A2 fill:#e0762b,color:#fff
@@ -341,7 +341,7 @@ graph TD
     <h3>Why Each ASR Is Architecturally Significant (explicit justification)</h3>
     <table>
       <tr><th>ASR</th><th>Justification</th></tr>
-      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 11).</td></tr>
+      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 12).</td></tr>
       <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours / 15 min / 7 AM) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
       <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
     </table>
@@ -435,8 +435,8 @@ graph LR
     <table>
       <tr><th>Checklist item</th><th>Status</th></tr>
       <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass</td></tr>
-      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass</td></tr>
-      <tr><td>Every quality requirement has a number/time bound</td><td>✅ Pass (7 AM, 15 min, 3×, 2 weeks, 4 months)</td></tr>
+      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass <em>(after correction)</em> — an independent review of the prior revision found fabricated values ("99% of the time", "zero downtime", "zero disruption", "non-linear cost growth"). All have been removed and converted into Open Questions.</td></tr>
+      <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM, ≤15 min, 3× within 2 years, ≤2 weeks, 4 months, 2–4 sources/year. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
       <tr><td>2+ full quality-attribute scenarios (6 fields each)</td><td>✅ Pass</td></tr>
       <tr><td>3 ASRs with explicit justification</td><td>✅ Pass — added in this v2 report</td></tr>
       <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
@@ -615,6 +615,10 @@ flowchart TB
         <li>Is <strong>right-to-erasure</strong> (customer data deletion) required? This must be answered before finalizing an append-only/immutable storage design, since it materially changes the storage architecture.</li>
         <li>Are <strong>customer-managed encryption keys (CMK/BYOK)</strong> required, or is provider-managed encryption acceptable?</li>
         <li>Should failed data-quality checks <strong>block</strong> the pipeline or <strong>alert only</strong>? This trades trust against hitting the 7:00 AM dashboard deadline.</li>
+        <li>What <strong>attainment percentile and measurement window</strong> apply to the 15-minute Customer Service SLA (e.g. p95 over a rolling day)? Only the bound was given, not the reliability target.</li>
+        <li>What is the precise <strong>latency tolerance for Marketing</strong> data? "Several hours" was given, which is not yet a measurable bound.</li>
+        <li>What level of <strong>disruption to existing pipelines is acceptable</strong> while onboarding a new source? The 2-week SLA was given; the permitted impact was not.</li>
+        <li>Is there a <strong>budget ceiling or unit-cost target</strong> (e.g. $/customer/month)? "Costs must remain observable" specifies visibility, not a threshold.</li>
       </ul>
     </div>
   </section>

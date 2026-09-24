@@ -1,10 +1,21 @@
 # Agent Quality Comparison — Before vs. After Instruction Refinement
 
-This document tests whether refining `.github/copilot-instructions.md` (adding the
-**Definition of Done** checklist and the **Handling Incomplete Input** rule) actually
-improves the quality of the agent's output. It compares how the agent would respond to
-the *same intentionally incomplete* scenario submission, under the original
-instructions vs. the refined ones.
+> ⚠️ **Status: reasoned argument, NOT an executed A/B test.**
+> This document was written by the same author as the instructions it evaluates,
+> and predicts how the agent *would* respond. It has not been validated by running
+> both instruction sets against a live agent and comparing real outputs.
+> Treat it as a design rationale, not as evidence.
+>
+> An independent review later confirmed the risk of this closed loop: reports that
+> self-certified as containing no invented requirements were found to contain several.
+> Real verification now runs through `.github/workflows/agent-quality-review.yml`,
+> which requires an **independent** agent verdict before a report PR can merge.
+
+This document argues that refining `.github/copilot-instructions.md` (adding the
+**Definition of Done** checklist and the **Handling Incomplete Input** rule) should
+improve the quality of the agent's output. It compares how the agent would be expected
+to respond to the *same intentionally incomplete* scenario submission, under the
+original instructions vs. the refined ones.
 
 ## Test Input (deliberately incomplete — mirrors a real user submitting a rushed issue)
 
