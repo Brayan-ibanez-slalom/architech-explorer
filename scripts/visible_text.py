@@ -13,42 +13,118 @@ elements with hidden / aria-hidden="true" / display:none / visibility:hidden.
 Includes: Mermaid diagram bodies. Diagrams state requirements, and a fabricated
 "99%" once survived a cleanup because an earlier script treated them as noise.
 """
+import re
 import sys
 from html.parser import HTMLParser
 
 HIDDEN_TAGS = {"script", "style", "template", "noscript"}
+VOID = {"meta", "br", "hr", "img", "link", "input", "source", "area",
+        "base", "col", "embed", "track", "wbr"}
+# Block-level boundaries must emit whitespace, otherwise adjacent table cells
+# concatenate ("within 1 day" + "Operational" -> "within 1 dayOperational"),
+# which corrupts both value detection and citation-adjacency windows.
+BLOCK = {"p", "div", "td", "th", "tr", "li", "ul", "ol", "table", "thead",
+         "tbody", "section", "article", "header", "footer", "br", "hr",
+         "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "dt", "dd"}
 
 
 class VisibleText(HTMLParser):
-    def __init__(self):
+    """Depth-tracked visibility.
+
+    Two bugs a red team found in the previous version:
+      1. Hidden state used a single counter decremented on ANY end tag, so
+         `<div style="display:none"><span>x</span>AFTER</div>` leaked "AFTER".
+         State is now a stack keyed to element depth.
+      2. Only inline style attributes were inspected, so a class defined in
+         <style> as .stealth{display:none} hid content from humans while the
+         gate still counted it. Class-based display:none/visibility:hidden
+         rules are now parsed from <style> blocks and honoured.
+    """
+
+    def __init__(self, hidden_classes=frozenset(), hidden_ids=frozenset()):
         super().__init__(convert_charrefs=True)
-        self.parts, self.skip, self.hidden = [], 0, 0
+        self.parts = []
+        self.stack = []          # one entry per open element: True if it hides
+        self.hidden_depth = 0
+        self.skip_depth = 0
+        self.hidden_classes = hidden_classes
+        self.hidden_ids = hidden_ids
+
+    def _hides(self, tag, a):
+        if tag in HIDDEN_TAGS:
+            return "skip"
+        style = (a.get("style") or "").replace(" ", "").lower()
+        if ("hidden" in a or a.get("aria-hidden") == "true"
+                or "display:none" in style or "visibility:hidden" in style
+                or "visibility:collapse" in style or "opacity:0" in style
+                or re.search(r"font-size:0(px|em|rem|%)?\b", style)):
+            return "hide"
+        classes = set((a.get("class") or "").split())
+        if classes & self.hidden_classes:
+            return "hide"
+        if a.get("id") and a["id"] in self.hidden_ids:
+            return "hide"
+        return None
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
-        if tag in HIDDEN_TAGS:
-            self.skip += 1
-            return
-        style = (a.get("style") or "").replace(" ", "").lower()
-        if "hidden" in a or a.get("aria-hidden") == "true" \
-           or "display:none" in style or "visibility:hidden" in style:
-            self.hidden += 1
+        state = self._hides(tag, a)
+        if tag in BLOCK:
+            self.parts.append("\n")
+        if tag in VOID:
+            return                      # void elements never open a scope
+        self.stack.append(state)
+        if state == "skip":
+            self.skip_depth += 1
+        elif state == "hide":
+            self.hidden_depth += 1
+
+    def handle_startendtag(self, tag, attrs):
+        return                          # self-closing: no scope
 
     def handle_endtag(self, tag):
-        if tag in HIDDEN_TAGS and self.skip:
-            self.skip -= 1
-        elif self.hidden:
-            self.hidden -= 1
+        if not self.stack:
+            return
+        if tag in BLOCK:
+            self.parts.append("\n")
+        state = self.stack.pop()
+        if state == "skip" and self.skip_depth:
+            self.skip_depth -= 1
+        elif state == "hide" and self.hidden_depth:
+            self.hidden_depth -= 1
 
     def handle_data(self, data):
-        if not self.skip and not self.hidden:
+        if not self.skip_depth and not self.hidden_depth:
             self.parts.append(data)
 
 
+HIDING_CSS = re.compile(
+    r"([^{}]+)\{[^}]*?(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse)"
+    r"|opacity\s*:\s*0(?!\.)|font-size\s*:\s*0)[^}]*\}",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def hiding_selectors(raw):
+    """Collect class/id selectors whose rules hide content."""
+    classes, ids = set(), set()
+    for block in re.findall(r"(?is)<style.*?>(.*?)</style>", raw):
+        for sel in HIDING_CSS.findall(block):
+            for part in sel.split(","):
+                part = part.strip()
+                for c in re.findall(r"\.([A-Za-z0-9_-]+)", part):
+                    classes.add(c)
+                for i in re.findall(r"#([A-Za-z0-9_-]+)", part):
+                    ids.add(i)
+    return classes, ids
+
+
 def extract(path):
-    p = VisibleText()
     with open(path, encoding="utf-8") as fh:
-        p.feed(fh.read())
+        raw = fh.read()
+    classes, ids = hiding_selectors(raw)
+    p = VisibleText(hidden_classes=classes, hidden_ids=ids)
+    p.feed(raw)
     return "".join(p.parts)
 
 

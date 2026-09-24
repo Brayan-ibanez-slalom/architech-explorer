@@ -65,6 +65,25 @@ fi
 
 echo "Pre-flight validation for: ${FILES[*]}"
 
+# ---------------------------------------------------------------------------
+# Manifest integrity, checked ONCE before any report is validated.
+# Citations are only meaningful if the facts they point at are real. Without
+# this, the manifest would be relocated self-attestation.
+# ---------------------------------------------------------------------------
+head_ "0. Fact manifest integrity"
+if python3 "$(dirname "$0")/verify_manifest.py" >/tmp/_mf.$$ 2>&1; then
+  pass "$(tail -1 /tmp/_mf.$$)"
+else
+  MF_RC=$?
+  grep -E '^  ✗|^      ' /tmp/_mf.$$ || cat /tmp/_mf.$$
+  if [ "$MF_RC" -eq 2 ]; then
+    warn "manifest could NOT be verified (see above) — treat results as unproven"
+  else
+    fail "fact manifest contains quote(s) not present in the source document"
+  fi
+fi
+rm -f /tmp/_mf.$$
+
 for f in "${FILES[@]}"; do
   [ -f "$f" ] || { fail "$f does not exist"; continue; }
 

@@ -141,7 +141,7 @@ graph LR
     <table>
       <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
       <tr><td>C1</td><td>Delivery team has strong batch-processing experience but limited streaming experience</td><td>Team skills / delivery risk</td></tr>
-      <tr><td>C2</td><td>New event schema versions must deploy without pipeline downtime, within 1 day</td><td>Operational / modifiability</td></tr>
+      <tr><td>C2</td><td>New event schema versions must deploy without pipeline downtime, within 1 day [RIOT-F05]</td><td>Operational / modifiability</td></tr>
       <tr><td>C3</td><td>Must recover from a single availability-zone failure in &lt;30 sec [RIOT-F04]</td><td>Availability</td></tr>
       <tr><td>C4</td><td>Device/store/customer/loyalty identifiers require controlled access</td><td>Security / compliance</td></tr>
     </table>
@@ -184,8 +184,8 @@ graph LR
       <tr><th>Stimulus</th><td>Burst of telemetry events during business hours</td></tr>
       <tr><th>Environment</th><td>Peak load conditions</td></tr>
       <tr><th>Artifact</th><td>Ingestion pipeline</td></tr>
-      <tr><th>Response</th><td>Events are validated and persisted without loss</td></tr>
-      <tr><th>Response Measure</th><td>Sustains <strong>50K events/sec [RIOT-F02]</strong> with p95 latency <strong>&lt; 200ms [RIOT-F03]</strong> at p95 [RIOT-F03]. <em>Durability target (tolerable event loss) was not specified in the scenario — see Open Questions [RIOT-U01].</em></td></tr>
+      <tr><th>Response</th><td>Events are validated and durably persisted. <em>The degree of durability under failure is not specified in the scenario — see [RIOT-U01].</em></td></tr>
+      <tr><th>Response Measure</th><td>Sustains <strong>50K events/sec [RIOT-F02]</strong> with p95 latency <strong>&lt; 200ms at p95 [RIOT-F03].</strong> <em>Durability target (tolerable event loss) was not specified in the scenario — see Open Questions [RIOT-U01].</em></td></tr>
     </table>
 
     <h3>Scenario 2 — Availability-Zone Failure</h3>
@@ -285,7 +285,7 @@ graph LR
     <div class="decision">
       <h4>Decision 3 — Multi-AZ Redundancy with Automated Failover</h4>
       <p>Design the ingestion and persistence tiers for multi-AZ redundancy with automated failover, rather than single-AZ deployment with manual recovery.</p>
-      <p><strong>Technology options:</strong> the capability required is automated failover within 30 sec [RIOT-F04]onds <em>(given)</em>; the tolerable data loss during that failover is an open question.<br/>
+      <p><strong>Technology options:</strong> the capability required is automated failover within 30 seconds [RIOT-F04]; the tolerable data loss during that failover is an open question.<br/>
       • <em>Open-source / portable:</em> Kafka with <code>min.insync.replicas</code> and rack-aware replica placement across zones; Apache Iceberg or Delta Lake on zone-redundant object storage for the persistence tier.<br/>
       • <em>Platform:</em> Databricks or Snowflake managed multi-AZ durability (failover handled by the platform).<br/>
       • <em>Hyperscaler-managed:</em> zone-redundant configurations of Azure Event Hubs, Google Cloud Pub/Sub (regional by default), or Amazon MSK multi-AZ.<br/>
@@ -406,7 +406,7 @@ flowchart TB
     <div class="gap-box">
       <ul>
         <li>What is the required <strong>retention period</strong> for raw telemetry events?</li>
-        <li>What <strong>data loss is tolerable during an AZ failover</strong>? The scenario gives a &lt;30 second [RIOT-F04] recovery target but no durability target — these are two different requirements, and assuming zero loss (an assumption, not given) would materially change the replication design and its cost.</li>
+        <li>What <strong>data loss is tolerable during an AZ failover</strong>? The scenario gives a &lt;30 second [RIOT-F04] recovery target but no durability target — these are two different requirements, and assuming zero loss is an unsourced inference, not specified in the scenario (an assumption, not given) would materially change the replication design and its cost.</li>
         <li>What is the specific <strong>access control policy</strong> (roles, masking rules) for device/store/customer/loyalty identifiers?</li>
         <li>Is there a <strong>budget ceiling</strong> for infrastructure as the platform expands to new regions?</li>
         <li>What is the target <strong>onboarding time for a new region/store cluster</strong> (analogous to a new-source SLA)?</li>

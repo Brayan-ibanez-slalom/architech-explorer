@@ -38,6 +38,11 @@ jobs:
           echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
           echo "Changed reports: $CHANGED"
 
+      - name: Install manifest verification dependency
+        run: pip install --quiet pypdf
+        # Required by scripts/verify_manifest.py. Without it the manifest check
+        # degrades to a warning, which would let a fabricated fact through CI.
+
       - name: Run the SAME gate developers run locally
         if: steps.detect.outputs.files != ''
         run: |

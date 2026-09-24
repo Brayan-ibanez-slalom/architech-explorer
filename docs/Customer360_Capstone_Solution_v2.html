@@ -287,7 +287,7 @@ graph LR
           <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM [C360-F01]</li>
           <li><strong>Latency (tiered):</strong> Marketing = "several hours" tolerance <em>(no precise bound given — see Open Questions)</em>; Service ≤ 15 min [C360-F03]</li>
           <li><strong>Scalability:</strong> absorb 3× growth in 2 years [C360-F05]</li>
-          <li><strong>Modifiability:</strong> 2–4 new sources/yr, standard onboarding ≤ 2 weeks [C360-F07]</li>
+          <li><strong>Modifiability:</strong> 2–4 new sources [C360-F06]/yr, standard onboarding ≤ 2 weeks [C360-F07]</li>
           <li><strong>Security:</strong> auditable, controlled PII access</li>
           <li><strong>Cost observability:</strong> infrastructure and processing costs must remain <em>observable</em> as usage grows <em>(no budget ceiling or unit-cost target given — see Open Questions)</em></li>
         </ul>
@@ -330,9 +330,9 @@ graph TD
   R["Customer 360 Platform"] --> A1["ASR 1<br/>Identity Resolution at Scale"]
   R --> A2["ASR 2<br/>Tiered Freshness Requirements"]
   R --> A3["ASR 3<br/>Auditable PII Access Under Extensibility"]
-  A1 --> A1d["20M [C360-F11]+ customers, 4+ sources,<br/>3x growth — trust depends on match accuracy"]
+  A1 --> A1d["20M [C360-F11]+ customers, 4+ sources [C360-F13],<br/>3x [C360-F18] growth — trust depends on match accuracy"]
   A2 --> A2d["Hours vs 15min [C360-F03] vs 7AM [C360-F01] daily —<br/>forces layered ingestion/serving design"]
-  A3 --> A3d["Security must scale as 2-4 new sources<br/>are added per year, each within a 2-week SLA"]
+  A3 --> A3d["Security must scale as 2-4 new sources [C360-F06]<br/>are added per year, each within a 2-week SLA"]
   style R fill:#0b1f3a,color:#fff
   style A1 fill:#e0762b,color:#fff
   style A2 fill:#e0762b,color:#fff
@@ -341,9 +341,9 @@ graph TD
     <h3>Why Each ASR Is Architecturally Significant (explicit justification)</h3>
     <table>
       <tr><th>ASR</th><th>Justification</th></tr>
-      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M [C360-F11]+ customers across 4+ systems; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 12).</td></tr>
-      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours / 15 min / 7 AM [C360-F01]) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
-      <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
+      <tr><td><strong>ASR 1 — Identity Resolution at Scale</strong></td><td>Every downstream objective (trusted view, analytics, DS models) depends on correctly matching 20M [C360-F11]+ customers across 4+ systems [C360-F13]; getting this wrong doesn't degrade one feature — it invalidates the platform's core value proposition, and the matching logic is expensive to change once sources depend on it (near-irreversible per <em>Cost of Change</em>, Section 12).</td></tr>
+      <tr><td><strong>ASR 2 — Tiered Freshness Requirements</strong></td><td>The same platform must satisfy three different latency SLAs (hours [C360-F02] / 15 min [C360-F03] / 7 AM [C360-F01]) simultaneously — this cannot be solved by picking one ingestion pattern, it forces a structural (layered) decision that touches every source and consumer, which is the definition of an ASR (per ATAM: quality attributes that force competing design responses).</td></tr>
+      <tr><td><strong>ASR 3 — Auditable PII Access Under Extensibility</strong></td><td>Security/audit requirements must hold even as 2–4 new sources [C360-F06] are added per year within a 2-week SLA — if access control is bolted on per-source instead of centralized, every future onboarding cycle re-opens compliance risk, so this requirement shapes the connector architecture itself, not just a feature within it.</td></tr>
     </table>
   </section>
 
@@ -359,7 +359,7 @@ graph LR
   U --> QA3["Security"]
   U --> QA4["Modifiability"]
 
-  QA1 --> S1["Absorb 3x interaction growth<br/>in 2 years [C360-F05] without re-arch<br/><b>(High, High)</b>"]
+  QA1 --> S1["Absorb 3x [C360-F18] interaction growth<br/>in 2 years [C360-F05] without re-arch<br/><b>(High, High)</b>"]
   QA2 --> S2["CS data available ≤15min [C360-F03]<br/><b>(High, Medium)</b>"]
   QA2 --> S3["Dashboards ready by 7:00 AM [C360-F01] daily<br/><b>(Medium, Low)</b>"]
   QA3 --> S4["PII access controlled & auditable<br/>across all sources<br/><b>(High, Medium)</b>"]
@@ -410,7 +410,7 @@ graph LR
     <div class="decision">
       <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
       <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
-      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M [C360-F11]+ customers and 4+ systems, with the ability to reprocess history when rules change.<br/>
+      <p><strong>Technology options:</strong> the capability required is explainable, auditable match/merge across 20M [C360-F11]+ customers and 4+ systems [C360-F13], with the ability to reprocess history when rules change.<br/>
       • <em>Open-source / portable:</em> Zingg (ML-based entity resolution) or Splink (probabilistic record linkage) running on Spark.<br/>
       • <em>Platform / lakehouse:</em> Databricks (Spark ML matching pipelines + Delta time travel for reprocessing), Snowflake (Snowpark-based matching).<br/>
       • <em>Commercial specialist:</em> Senzing, Informatica MDM, Reltio, Tamr.<br/>
@@ -427,7 +427,7 @@ graph LR
       • <em>Platform / lakehouse:</em> Databricks Unity Catalog (tag-based ABAC, row filters, column masks) or Snowflake Horizon (dynamic masking, row access policies, tag-based policies).<br/>
       • <em>Commercial:</em> Fivetran/Matillion for connectors; Immuta or Privacera for policy enforcement; Collibra/Alation/Atlan for governance.<br/>
       • <em>Hyperscaler-native:</em> Microsoft Purview + ADF, Google Dataplex + Data Fusion, or AWS Lake Formation + Glue.<br/>
-      <em>Selection driver:</em> prefer tag/attribute-based policy that scales as 2–4 new sources arrive per year; per-table grant models tend to drift into audit gaps.</p>
+      <em>Selection driver:</em> prefer tag/attribute-based policy that scales as 2–4 new sources [C360-F06] arrive per year; per-table grant models tend to drift into audit gaps.</p>
       <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale. Centralized policy engines (OPA) maximize portability across engines; platform-native enforcement (Unity Catalog / Horizon) is simpler but must be re-implemented if the platform changes.</p>
     </div>
 
@@ -435,8 +435,8 @@ graph LR
     <table>
       <tr><th>Checklist item</th><th>Status</th></tr>
       <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass</td></tr>
-      <tr><td>All constraints sourced from input, none invented</td><td>✅ Pass <em>(after two rounds of correction)</em> — a first independent review found fabricated values ("99% of the time", "zero downtime", "zero disruption", "non-linear cost growth") in the prose. A <strong>second</strong> review then found that "99%" had survived <em>inside the Utility Tree diagram</em>, while this very row claimed it had been removed. Both the value and the tooling blind spot that hid it are now fixed. <em>The lesson is recorded rather than hidden: a self-audit is evidence of intent, not of correctness.</em></td></tr>
-      <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM [C360-F01], ≤15 min [C360-F03], 3× within 2 years [C360-F05], ≤2 weeks [C360-F07], 4 months [C360-F09], 2–4 sources/year. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
+      <tr><td>All constraints sourced from input, none invented</td><td>⚠️ <strong>No unsupported constraint found in the currently detected citation classes.</strong> This is deliberately weaker than "none invented", because the checker has known limits: it validates that a cited fact supports the value, but manifest quotes are machine-verified against the source PDF only by text match, and bare integer counts are outside its detection grammar. Two prior revisions of this table claimed a clean pass while fabrications were present — the first in prose, the second hidden inside the Utility Tree diagram. <em>A self-audit is evidence of intent, not of correctness.</em></td></tr>
+      <tr><td>Every quality requirement has a number/time bound</td><td>⚠️ <strong>Partial — honest status</strong>. Bounded: 7 AM [C360-F01], ≤15 min [C360-F03], 3× within 2 years [C360-F05], ≤2 weeks [C360-F07], 4 months [C360-F09], 2–4 sources/year [C360-F06]. <em>Not bounded because no value was given:</em> Marketing "several hours" tolerance, and cost observability. Both are raised in Open Questions rather than invented.</td></tr>
       <tr><td>2+ full quality-attribute scenarios (6 fields each)</td><td>✅ Pass</td></tr>
       <tr><td>3 ASRs with explicit justification</td><td>✅ Pass — added in this v2 report</td></tr>
       <tr><td>Utility Tree with priority ratings</td><td>✅ Pass</td></tr>
@@ -545,7 +545,7 @@ flowchart TB
       <tr><td>Ownership &amp; stewardship</td><td>Assign a data owner per source domain (e-commerce, loyalty, support, marketing). Unowned sources become untrusted — which directly undermines objective O1 ("trusted view").</td></tr>
       <tr><td>Catalog &amp; discoverability</td><td>Register every dataset with business definitions, owner, freshness, and sensitivity tags. Without this, the "trusted customer view" fails at adoption even if the pipeline is technically correct.</td></tr>
       <tr><td>Lineage &amp; traceability</td><td>Capture column-level lineage source → transformation → consumption; prefer the open <strong>OpenLineage</strong> standard to preserve engine optionality. Required to answer "where did this number come from?" for leadership's daily metrics.</td></tr>
-      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems can change independently without breaking the 7 AM [C360-F01] dashboard SLA.</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Define explicit producer/consumer contracts with backward-compatible evolution, so the 4 source systems [C360-F13] can change independently without breaking the 7 AM [C360-F01] dashboard SLA.</td></tr>
       <tr><td>Data quality</td><td>Express expectations as measurable checks (completeness, uniqueness of customer keys, freshness). Decide explicitly whether a failed check <em>blocks</em> or <em>alerts</em> — a real trade-off between trust and availability against the 7 AM [C360-F01] deadline.</td></tr>
       <tr><td>Quarantine path</td><td>Route rejected/unresolvable records to a dead-letter store rather than dropping them silently — essential when identity resolution cannot confidently match a customer.</td></tr>
       <tr><td>Master data rules</td><td>Make survivorship rules (which source wins per attribute) explainable and auditable, and retain the ability to <strong>reprocess history</strong> when rules change — otherwise the matching logic becomes permanently frozen.</td></tr>
@@ -555,7 +555,7 @@ flowchart TB
     <h3>Security Recommendations</h3>
     <table>
       <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
-      <tr><td>Data classification</td><td>Classify at ingestion (Public / Internal / Confidential / Restricted-PII) and propagate classification as metadata through every layer. Attach policies to <strong>tags</strong>, not table names — this is what lets security scale as 2–4 new sources arrive per year.</td></tr>
+      <tr><td>Data classification</td><td>Classify at ingestion (Public / Internal / Confidential / Restricted-PII) and propagate classification as metadata through every layer. Attach policies to <strong>tags</strong>, not table names — this is what lets security scale as 2–4 new sources [C360-F06] arrive per year.</td></tr>
       <tr><td>Access control model</td><td>Prefer <strong>ABAC / tag-based</strong> policy over per-table RBAC grants. With continuous source growth, RBAC grant sprawl is the predictable failure mode. Enforce least privilege and purpose-based access.</td></tr>
       <tr><td>PII protection</td><td>Apply <em>dynamic masking</em> for Customer Service views that need the row but not the raw value; <em>tokenization</em> where referential integrity across systems is required without exposing values; <em>salted hashing</em> for join keys; encryption at rest and in transit as a non-negotiable baseline.</td></tr>
       <tr><td>Auditability</td><td>Log who accessed what, when, and for what purpose. Store audit logs <strong>separately from the data plane</strong> and make them tamper-evident — the scenario's "auditable access" wording makes this a hard requirement, not a nice-to-have.</td></tr>
