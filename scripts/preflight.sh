@@ -174,16 +174,22 @@ for f in "${FILES[@]}"; do
   else
     pass "open-source options present ($OSS mentions)"
   fi
+  # Demoted from blocking to a WARNING on the recommendation of two independent
+  # reviewers, made twice. Their argument: mention-share is not evidence of
+  # neutrality. A balanced count can be reached by padding a report with product
+  # names nobody intends to use, while a genuinely reasoned single-cloud design
+  # — correct when the client has a stated platform commitment — would fail.
+  # The signal is still worth surfacing, so it is reported, not enforced.
   if [ "$TOTAL" -gt 6 ]; then
+    SKEW=0
     for pair in "AWS:$AWS" "Azure:$AZ" "GCP:$GCP"; do
       n=${pair#*:}; v=${pair%%:*}
       if [ $((n*100/TOTAL)) -gt 60 ]; then
-        fail "$v is $((n*100/TOTAL))% of hyperscaler mentions (limit 60%) — rebalance"
+        warn "$v is $((n*100/TOTAL))% of hyperscaler mentions — check this reflects a stated platform constraint, not familiarity bias"
+        SKEW=1
       fi
     done
-    # Compare against this file's starting count, not the global one — otherwise a
-    # failure in an earlier file suppresses this file's pass message.
-    [ "$FAIL" -eq "$FILEFAIL_START" ] && pass "no single hyperscaler exceeds 60% of mentions"
+    [ "$SKEW" -eq 0 ] && pass "no single hyperscaler exceeds 60% of mentions"
   else
     pass "too few vendor mentions to skew ($TOTAL)"
   fi
