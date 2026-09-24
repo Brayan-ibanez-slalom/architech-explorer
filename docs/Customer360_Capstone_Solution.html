@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TF1 Recap & Customer 360 Capstone Solution</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a;
+    --blue:#1f5fa8;
+    --lightblue:#eaf2fb;
+    --accent:#e0762b;
+    --green:#2f9e5b;
+    --red:#c0392b;
+    --gray:#5b6470;
+    --bg:#f7f9fc;
+    --card:#ffffff;
+    --border:#dbe3ee;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:#1a2233;
+    line-height:1.55;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--blue));
+    color:#fff;
+    padding:48px 32px 36px;
+    text-align:center;
+  }
+  header h1{margin:0 0 8px;font-size:2.1rem;}
+  header p{margin:4px 0;opacity:.9;font-size:1rem;}
+  nav{
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:10;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px;
+    padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.05);
+  }
+  nav a{
+    color:var(--navy);text-decoration:none;font-size:.85rem;font-weight:600;
+    padding:8px 12px;border-radius:6px;
+  }
+  nav a:hover{background:var(--lightblue);}
+  main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+  section{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:28px 32px;
+    margin-bottom:28px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  h2{
+    color:var(--navy);
+    border-left:5px solid var(--accent);
+    padding-left:14px;
+    margin-top:0;
+    font-size:1.4rem;
+  }
+  h3{color:var(--blue);font-size:1.1rem;margin-top:28px;}
+  .badge{
+    display:inline-block;background:var(--lightblue);color:var(--blue);
+    font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;
+    margin-bottom:10px;letter-spacing:.03em;text-transform:uppercase;
+  }
+  table{width:100%;border-collapse:collapse;margin:14px 0 6px;font-size:.92rem;}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--navy);color:#fff;font-size:.85rem;}
+  tr:nth-child(even){background:#f9fbfd;}
+  .mermaid{
+    background:#fff;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+    margin:18px 0;
+    display:flex;justify-content:center;
+  }
+  ul.tick li{margin-bottom:6px;}
+  ul.tick li::marker{content:"✓  ";color:var(--green);font-weight:bold;}
+  .card-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:16px;margin:16px 0;
+  }
+  .mini-card{
+    background:var(--lightblue);border-radius:10px;padding:16px;border:1px solid #cfe0f5;
+  }
+  .mini-card h4{margin:0 0 6px;color:var(--navy);font-size:.95rem;}
+  .mini-card p{margin:0;font-size:.85rem;color:var(--gray);}
+  .decision{
+    border-left:4px solid var(--blue);background:#fff;padding:14px 18px;margin:14px 0;border-radius:6px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05);
+  }
+  .decision h4{margin:0 0 6px;color:var(--navy);}
+  .tradeoff{color:var(--accent);font-weight:600;}
+  .gap-box{
+    background:#fff6ec;border:1px solid #f0d3ad;border-radius:8px;padding:14px 18px;margin-top:10px;
+  }
+  .gap-box li{margin-bottom:6px;}
+  .cost-spectrum{width:100%;margin:24px 0;}
+  .cost-bar{
+    height:46px;border-radius:8px;
+    background:linear-gradient(90deg,#2f9e5b 0%, #e0c02b 50%, #c0392b 100%);
+    position:relative;
+  }
+  .cost-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--gray);}
+  .cost-points{position:relative;height:60px;margin-top:6px;}
+  .cost-point{
+    position:absolute;top:0;transform:translateX(-50%);
+    text-align:center;font-size:.78rem;width:150px;
+  }
+  .cost-point .dot{
+    width:12px;height:12px;border-radius:50%;background:var(--navy);margin:0 auto 4px;
+    border:2px solid #fff;box-shadow:0 0 0 2px var(--navy);
+  }
+  footer{
+    text-align:center;color:var(--gray);font-size:.8rem;padding:24px;
+  }
+  .flow-legend{font-size:.8rem;color:var(--gray);margin-top:6px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TF1 — Technical Foundations Recap</h1>
+  <p>Data Architect Academy · Slalom · Instructor: Iván Trebilcock</p>
+  <p><strong>Deliverable:</strong> Course Summary + Capstone Solution — Customer 360 Platform</p>
+</header>
+
+<nav>
+  <a href="#summary">Course Summary</a>
+  <a href="#chain">Reasoning Chain</a>
+  <a href="#capstone">Capstone Context</a>
+  <a href="#objectives">Objectives & Constraints</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#scenarios">QA Scenarios</a>
+  <a href="#asrs">ASRs</a>
+  <a href="#utility">Utility Tree</a>
+  <a href="#decisions">Decisions & Trade-offs</a>
+  <a href="#architecture">Architecture Diagram</a>
+  <a href="#cost">Cost of Change</a>
+  <a href="#gaps">Open Questions</a>
+</nav>
+
+<main>
+
+  <!-- COURSE SUMMARY -->
+  <section id="summary">
+    <span class="badge">Module Recap</span>
+    <h2>1. What the Course Teaches</h2>
+    <p>Architecture is <strong>justified decision-making under constraint</strong> — not a choice of trendy tools.
+    The module builds from <em>understanding</em> → <em>application</em> → <em>judgment</em>.</p>
+    <div class="card-grid">
+      <div class="mini-card"><h4>Understand</h4><p>Architecture = decisions & trade-offs. Functional vs. quality attributes. ASRs and cost of change.</p></div>
+      <div class="mini-card"><h4>Apply</h4><p>Identify objectives/constraints. Write measurable QA scenarios. Build a Utility Tree.</p></div>
+      <div class="mini-card"><h4>Evaluate</h4><p>Judge if a decision is justified. Spot hidden trade-offs. Facilitate the objectives → decisions chain.</p></div>
+    </div>
+    <h3>Key Takeaways</h3>
+    <ul class="tick">
+      <li>Start with the problem space, not the solution.</li>
+      <li>Quality attributes only matter when they are specific and measurable.</li>
+      <li>Not every requirement is architecturally significant — ASRs narrow the design space.</li>
+      <li>The harder a decision is to reverse, the more deliberate it must be.</li>
+      <li>Architecture must evolve: design upfront for critical capabilities, allow details to evolve, preserve optionality, reassess continuously.</li>
+    </ul>
+  </section>
+
+  <!-- REASONING CHAIN -->
+  <section id="chain">
+    <span class="badge">Core Framework</span>
+    <h2>2. The Reasoning Chain</h2>
+    <p>Every significant architectural decision must be traceable back to a business objective. Skipping a step breaks the justification.</p>
+    <div class="mermaid">
+graph LR
+  A["1 · Business Objectives"] --> B["2 · Constraints"]
+  B --> C["3 · Functional + Quality Requirements"]
+  C --> D["4 · ASRs"]
+  D --> E["5 · Decisions + Trade-offs"]
+  style A fill:#0b1f3a,color:#fff,stroke:#0b1f3a
+  style B fill:#1f5fa8,color:#fff,stroke:#1f5fa8
+  style C fill:#3a7bc8,color:#fff,stroke:#3a7bc8
+  style D fill:#e0762b,color:#fff,stroke:#e0762b
+  style E fill:#2f9e5b,color:#fff,stroke:#2f9e5b
+    </div>
+  </section>
+
+  <!-- CAPSTONE CONTEXT -->
+  <section id="capstone">
+    <span class="badge">Capstone Scenario</span>
+    <h2>3. Customer 360 — Business Context</h2>
+    <p>A retail company wants a Customer 360 capability combining customer data across systems, to support analytics, personalization, service, and future Data Science.</p>
+    <div class="two-col">
+      <div>
+        <h3>Fragmentation Sources</h3>
+        <ul class="tick">
+          <li>E-commerce orders</li>
+          <li>Loyalty program activity</li>
+          <li>Customer support tickets</li>
+          <li>Marketing interactions</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Current Scale</h3>
+        <ul class="tick">
+          <li>20M customers</li>
+          <li>5M interactions/day</li>
+          <li>4 initial source systems</li>
+          <li>3 years of historical data</li>
+          <li>3× interaction growth expected within 2 years</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECTIVES & CONSTRAINTS -->
+  <section id="objectives">
+    <span class="badge">Step 1 & 2</span>
+    <h2>4. Business Objectives & Constraints</h2>
+    <h3>Objectives</h3>
+    <table>
+      <tr><th>#</th><th>Objective</th></tr>
+      <tr><td>O1</td><td>Provide a trusted, unified view of the customer across fragmented systems, eliminating manual reconciliation.</td></tr>
+      <tr><td>O2</td><td>Enable daily trusted reporting for leadership and fast-turnaround insight for Customer Service.</td></tr>
+      <tr><td>O3</td><td>Support long-term analytics / Data Science use cases (churn, propensity) while onboarding new sources quickly.</td></tr>
+    </table>
+    <h3>Constraints</h3>
+    <table>
+      <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
+      <tr><td>C1</td><td>First production release within 4 months</td><td>Timeline</td></tr>
+      <tr><td>C2</td><td>Infra/processing cost must stay observable as usage grows</td><td>Budget</td></tr>
+      <tr><td>C3</td><td>Standard new source onboarded within 2 weeks</td><td>Delivery capacity</td></tr>
+      <tr><td>C4</td><td>Data contains PII — controlled, auditable access required</td><td>Regulatory / Security</td></tr>
+      <tr><td>C5</td><td>3× growth in interactions within 2 years</td><td>Scale</td></tr>
+    </table>
+  </section>
+
+  <!-- REQUIREMENTS -->
+  <section id="requirements">
+    <span class="badge">Step 3</span>
+    <h2>5. Functional & Quality Requirements</h2>
+    <div class="two-col">
+      <div>
+        <h3>Functional (what it must do)</h3>
+        <ul class="tick">
+          <li>Ingest data from multiple source systems</li>
+          <li>Validate & standardize incoming data</li>
+          <li>Resolve customer identity across systems</li>
+          <li>Preserve historical customer information</li>
+          <li>Expose trusted data to analytics/DS & apps</li>
+          <li>Protect sensitive information</li>
+          <li>Support new sources/attributes over time</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quality Attributes (how well)</h3>
+        <ul class="tick">
+          <li><strong>Timeliness:</strong> dashboards ready by 7:00 AM</li>
+          <li><strong>Latency (tiered):</strong> Marketing = hours; Service ≤ 15 min</li>
+          <li><strong>Scalability:</strong> absorb 3× growth in 2 years</li>
+          <li><strong>Modifiability:</strong> 2–4 new sources/yr, standard onboarding ≤ 2 weeks</li>
+          <li><strong>Security:</strong> auditable, controlled PII access</li>
+          <li><strong>Cost efficiency:</strong> observable, non-linear cost growth</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- QA SCENARIOS -->
+  <section id="scenarios">
+    <span class="badge">Step 3 → Measurable</span>
+    <h2>6. Quality-Attribute Scenarios</h2>
+
+    <h3>Scenario 1 — Timely Customer Service Data</h3>
+    <table>
+      <tr><th>Source</th><td>Customer support / e-commerce system</td></tr>
+      <tr><th>Stimulus</th><td>New customer interaction occurs</td></tr>
+      <tr><th>Environment</th><td>Normal business operations, peak hours</td></tr>
+      <tr><th>Artifact</th><td>Customer 360 pipeline / serving layer</td></tr>
+      <tr><th>Response</th><td>Interaction ingested, resolved to customer identity, made available</td></tr>
+      <tr><th>Response Measure</th><td>Available to Customer Service within <strong>15 minutes</strong>, 99% of the time</td></tr>
+    </table>
+
+    <h3>Scenario 2 — New Source Onboarding</h3>
+    <table>
+      <tr><th>Source</th><td>Data engineering team</td></tr>
+      <tr><th>Stimulus</th><td>Request to onboard a new standard-format source</td></tr>
+      <tr><th>Environment</th><td>Ongoing production, zero downtime allowed</td></tr>
+      <tr><th>Artifact</th><td>Ingestion / schema layer</td></tr>
+      <tr><th>Response</th><td>New source integrated using standard connector pattern</td></tr>
+      <tr><th>Response Measure</th><td>Onboarded within <strong>≤ 2 weeks</strong>, zero disruption to existing pipelines</td></tr>
+    </table>
+  </section>
+
+  <!-- ASRs -->
+  <section id="asrs">
+    <span class="badge">Step 4</span>
+    <h2>7. Architecturally Significant Requirements (ASRs)</h2>
+    <div class="mermaid">
+graph TD
+  R["Customer 360 Platform"] --> A1["ASR 1<br/>Identity Resolution at Scale"]
+  R --> A2["ASR 2<br/>Tiered Freshness Requirements"]
+  R --> A3["ASR 3<br/>Auditable PII Access Under Extensibility"]
+  A1 --> A1d["20M+ customers, 4+ sources,<br/>3x growth — trust depends on match accuracy"]
+  A2 --> A2d["Hours vs 15min vs 7AM daily —<br/>forces layered ingestion/serving design"]
+  A3 --> A3d["Security must scale with new sources<br/>added every 2-4 weeks, no re-architecture"]
+  style R fill:#0b1f3a,color:#fff
+  style A1 fill:#e0762b,color:#fff
+  style A2 fill:#e0762b,color:#fff
+  style A3 fill:#e0762b,color:#fff
+    </div>
+  </section>
+
+  <!-- UTILITY TREE -->
+  <section id="utility">
+    <span class="badge">Step 4 → Prioritization</span>
+    <h2>8. Utility Tree</h2>
+    <p>A Utility Tree doesn't say what to build — it says what cannot afford to be wrong. Priority = (Importance to business, Difficulty/Risk).</p>
+    <div class="mermaid">
+graph LR
+  U["Utility"] --> QA1["Scalability"]
+  U --> QA2["Availability / Latency"]
+  U --> QA3["Security"]
+  U --> QA4["Modifiability"]
+
+  QA1 --> S1["Absorb 3x interaction growth<br/>in 2 years without re-arch<br/><b>(High, High)</b>"]
+  QA2 --> S2["CS data available ≤15min, 99%<br/><b>(High, Medium)</b>"]
+  QA2 --> S3["Dashboards ready by 7:00 AM daily<br/><b>(Medium, Low)</b>"]
+  QA3 --> S4["PII access controlled & auditable<br/>across all sources<br/><b>(High, Medium)</b>"]
+  QA4 --> S5["New standard source onboarded<br/>in ≤2 weeks<br/><b>(Medium, Medium)</b>"]
+
+  style U fill:#0b1f3a,color:#fff
+  style QA1 fill:#1f5fa8,color:#fff
+  style QA2 fill:#1f5fa8,color:#fff
+  style QA3 fill:#1f5fa8,color:#fff
+  style QA4 fill:#1f5fa8,color:#fff
+  style S1 fill:#c0392b,color:#fff
+  style S4 fill:#c0392b,color:#fff
+  style S2 fill:#e0c02b,color:#1a2233
+  style S5 fill:#e0c02b,color:#1a2233
+  style S3 fill:#2f9e5b,color:#fff
+    </div>
+    <p class="flow-legend">🔴 Red = highest priority (high importance, high risk) &nbsp;|&nbsp; 🟡 Yellow = medium priority &nbsp;|&nbsp; 🟢 Green = lower priority</p>
+  </section>
+
+  <!-- DECISIONS -->
+  <section id="decisions">
+    <span class="badge">Step 5</span>
+    <h2>9. Architecture Decisions & Trade-offs</h2>
+
+    <div class="decision">
+      <h4>Decision 1 — Hybrid Ingestion Architecture</h4>
+      <p>Use micro-batch/streaming for Customer Service-facing events (≤15 min SLA) and standard batch for marketing/dashboard data (7 AM SLA).</p>
+      <p class="tradeoff">Trade-off: Higher operational complexity (two pipelines) vs. cheaply meeting divergent latency SLAs — avoids over-engineering everything to real-time.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 2 — Dedicated Identity Resolution Service</h4>
+      <p>Build a decoupled golden-record / identity-resolution layer with survivorship rules, separate from source ingestion.</p>
+      <p class="tradeoff">Trade-off: Upfront investment in matching logic vs. long-term trust and reduced rework; near-irreversible once adopted, so worth designing early.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 3 — Standard Connector Framework with Centralized Access Control</h4>
+      <p>Schema-on-write connector standard plus centralized, attribute-level access control & audit logging (not bolted on per source).</p>
+      <p class="tradeoff">Trade-off: More upfront design cost vs. hitting the ≤2-week onboarding SLA and consistent PII governance as sources scale.</p>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE DIAGRAM -->
+  <section id="architecture">
+    <span class="badge">Visualized Solution</span>
+    <h2>10. Proposed Architecture (High Level)</h2>
+    <div class="mermaid">
+flowchart TB
+  subgraph SRC["Source Systems"]
+    direction LR
+    S1["E-commerce"]
+    S2["Loyalty"]
+    S3["Support Tickets"]
+    S4["Marketing"]
+    S5["Future Sources<br/>(2-4/yr)"]
+  end
+
+  subgraph ING["Standard Connector Framework"]
+    direction TB
+    CN["Schema-on-write Connectors<br/>+ Validation & Standardization"]
+  end
+
+  subgraph SPEED["Speed Layer (streaming/micro-batch)"]
+    ST["Real-time events<br/>≤15 min SLA"]
+  end
+
+  subgraph BATCH["Batch Layer"]
+    BT["Nightly/Hourly batch<br/>7:00 AM dashboard SLA"]
+  end
+
+  subgraph IDR["Identity Resolution Service"]
+    IR["Golden Record / Survivorship Rules<br/>Cross-system Customer Match"]
+  end
+
+  subgraph GOV["Security & Governance"]
+    SEC["Centralized Access Control<br/>+ Audit Logging (PII)"]
+  end
+
+  subgraph SERVE["Trusted Customer 360 Store"]
+    C360["Unified Customer Profile<br/>+ Historical Data"]
+  end
+
+  subgraph CONS["Consumers"]
+    direction LR
+    D1["Dashboards / Leadership"]
+    D2["Customer Service Apps"]
+    D3["Marketing / Personalization"]
+    D4["Data Science / ML"]
+  end
+
+  SRC --> ING
+  ING --> SPEED
+  ING --> BATCH
+  SPEED --> IDR
+  BATCH --> IDR
+  IDR --> SEC
+  SEC --> SERVE
+  SERVE --> D1
+  SERVE --> D2
+  SERVE --> D3
+  SERVE --> D4
+
+  style SRC fill:#eaf2fb,stroke:#1f5fa8
+  style ING fill:#1f5fa8,color:#fff
+  style SPEED fill:#e0762b,color:#fff
+  style BATCH fill:#2f9e5b,color:#fff
+  style IDR fill:#0b1f3a,color:#fff
+  style GOV fill:#c0392b,color:#fff
+  style SERVE fill:#0b1f3a,color:#fff
+  style CONS fill:#eaf2fb,stroke:#1f5fa8
+    </div>
+  </section>
+
+  <!-- COST OF CHANGE -->
+  <section id="cost">
+    <span class="badge">Step 5 → Reflection</span>
+    <h2>11. Cost of Change — Where Do These Decisions Sit?</h2>
+    <p>The harder a decision is to reverse, the more intentional we should be about making it.</p>
+    <div class="cost-spectrum">
+      <div class="cost-bar"></div>
+      <div class="cost-labels">
+        <span>Reversible</span>
+        <span>Partially Reversible</span>
+        <span>Near-Irreversible</span>
+      </div>
+      <div class="cost-points">
+        <div class="cost-point" style="left:12%;"><div class="dot"></div>Dashboard layout, report formats</div>
+        <div class="cost-point" style="left:38%;"><div class="dot"></div>Choice of streaming tool for speed layer</div>
+        <div class="cost-point" style="left:62%;"><div class="dot"></div>Connector framework standard (Decision 3)</div>
+        <div class="cost-point" style="left:85%;"><div class="dot"></div>Identity resolution model / golden record schema (Decision 2)</div>
+      </div>
+    </div>
+    <p style="margin-top:44px;">Decision 2 (Identity Resolution) sits closest to <strong>near-irreversible</strong> — once source systems and downstream consumers depend on a given golden-record model, changing the matching/survivorship logic requires reprocessing history and re-validating trust. This justifies investing in it early and getting it right before scaling to more sources.</p>
+  </section>
+
+  <!-- GAPS -->
+  <section id="gaps">
+    <span class="badge">Do Not Invent Requirements</span>
+    <h2>12. Open Questions for the Stakeholder</h2>
+    <div class="gap-box">
+      <ul>
+        <li>What is the required <strong>data retention</strong> policy beyond the existing 3 years of history?</li>
+        <li>Is there a specific <strong>compliance regime</strong> (GDPR, CCPA, etc.) governing PII beyond "controlled and auditable"?</li>
+        <li>What is the acceptable <strong>identity-match accuracy / false-merge tolerance</strong> for customer resolution?</li>
+        <li>Is there a target/cap on <strong>infrastructure cost</strong> (e.g., $/customer/month), or is "observability" the only requirement?</li>
+        <li>Do Data Science workloads have their own <strong>latency/freshness SLA</strong>, or is daily batch acceptable?</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Generated from TF1 course material (Slalom Data Architect Academy) — Customer 360 Capstone Solution.
+</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>
