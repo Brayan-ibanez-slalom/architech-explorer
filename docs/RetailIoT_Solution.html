@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scenario A — Retail IoT Monitoring Platform Solution</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a; --blue:#1f5fa8; --lightblue:#eaf2fb; --accent:#e0762b;
+    --green:#2f9e5b; --red:#c0392b; --gray:#5b6470; --bg:#f7f9fc; --card:#ffffff; --border:#dbe3ee;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:#1a2233;line-height:1.55;}
+  header{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:48px 32px 36px;text-align:center;}
+  header h1{margin:0 0 8px;font-size:2.1rem;}
+  header p{margin:4px 0;opacity:.9;font-size:1rem;}
+  nav{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+  nav a{color:var(--navy);text-decoration:none;font-size:.85rem;font-weight:600;padding:8px 12px;border-radius:6px;}
+  nav a:hover{background:var(--lightblue);}
+  main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:28px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  h2{color:var(--navy);border-left:5px solid var(--accent);padding-left:14px;margin-top:0;font-size:1.4rem;}
+  h3{color:var(--blue);font-size:1.1rem;margin-top:28px;}
+  .badge{display:inline-block;background:var(--lightblue);color:var(--blue);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.03em;text-transform:uppercase;}
+  table{width:100%;border-collapse:collapse;margin:14px 0 6px;font-size:.92rem;}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--navy);color:#fff;font-size:.85rem;}
+  tr:nth-child(even){background:#f9fbfd;}
+  .mermaid{background:#fff;border:1px dashed var(--border);border-radius:8px;padding:16px;margin:18px 0;display:flex;justify-content:center;}
+  ul.tick li{margin-bottom:6px;}
+  ul.tick li::marker{content:"✓  ";color:var(--green);font-weight:bold;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:16px 0;}
+  .mini-card{background:var(--lightblue);border-radius:10px;padding:16px;border:1px solid #cfe0f5;}
+  .mini-card h4{margin:0 0 6px;color:var(--navy);font-size:.95rem;}
+  .mini-card p{margin:0;font-size:.85rem;color:var(--gray);}
+  .decision{border-left:4px solid var(--blue);background:#fff;padding:14px 18px;margin:14px 0;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .decision h4{margin:0 0 6px;color:var(--navy);}
+  .tradeoff{color:var(--accent);font-weight:600;}
+  .gap-box{background:#fff6ec;border:1px solid #f0d3ad;border-radius:8px;padding:14px 18px;margin-top:10px;}
+  .gap-box li{margin-bottom:6px;}
+  .cost-spectrum{width:100%;margin:24px 0;}
+  .cost-bar{height:46px;border-radius:8px;background:linear-gradient(90deg,#2f9e5b 0%, #e0c02b 50%, #c0392b 100%);position:relative;}
+  .cost-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--gray);}
+  .cost-points{position:relative;height:60px;margin-top:6px;}
+  .cost-point{position:absolute;top:0;transform:translateX(-50%);text-align:center;font-size:.78rem;width:150px;}
+  .cost-point .dot{width:12px;height:12px;border-radius:50%;background:var(--navy);margin:0 auto 4px;border:2px solid #fff;box-shadow:0 0 0 2px var(--navy);}
+  footer{text-align:center;color:var(--gray);font-size:.8rem;padding:24px;}
+  .flow-legend{font-size:.8rem;color:var(--gray);margin-top:6px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Scenario A — Retail IoT Monitoring Platform</h1>
+  <p>TF1 Worked Example · Data Architect Academy · Slalom</p>
+  <p><strong>Deliverable:</strong> Full Reasoning Chain — Objectives to Architecture Decisions</p>
+</header>
+
+<nav>
+  <a href="#context">Business Context</a>
+  <a href="#chain">Reasoning Chain</a>
+  <a href="#objectives">Objectives & Constraints</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#scenarios">QA Scenarios</a>
+  <a href="#asrs">ASRs</a>
+  <a href="#utility">Utility Tree</a>
+  <a href="#decisions">Decisions & Trade-offs</a>
+  <a href="#architecture">Architecture Diagram</a>
+  <a href="#cost">Cost of Change</a>
+  <a href="#gaps">Open Questions</a>
+  <a href="index.html">← All Reports</a>
+</nav>
+
+<main>
+
+  <section id="context">
+    <span class="badge">Scenario Context</span>
+    <h2>1. Business Context</h2>
+    <p>A retail company operates <strong>500 stores</strong> equipped with IoT devices that continuously generate telemetry events. Operations teams want to use this data to monitor store and device conditions, detect operational issues, and support near-real-time analytics. The company expects the number of connected devices to grow as the platform expands to new regions.</p>
+    <div class="two-col">
+      <div>
+        <h3>What the System Must Do</h3>
+        <ul class="tick">
+          <li>Receive telemetry events from devices across all stores</li>
+          <li>Validate incoming events</li>
+          <li>Persist accepted events for downstream processing</li>
+          <li>Make data available to analytics and operational applications</li>
+          <li>Support new versions of device event schemas over time</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Known Operating Conditions</h3>
+        <ul class="tick">
+          <li>50K events/sec peak ingestion bursts during business hours</li>
+          <li>p95 ingestion latency &lt; 200ms during peak load</li>
+          <li>Recovery from a single availability-zone failure in &lt;30 sec</li>
+          <li>Deploy a new event schema without pipeline downtime, &lt;1 day</li>
+        </ul>
+      </div>
+    </div>
+    <h3>Additional Context</h3>
+    <ul class="tick">
+      <li>Events may contain device, store, customer, or loyalty identifiers requiring controlled access</li>
+      <li>Device firmware evolves independently and may introduce new event schema versions</li>
+      <li>The delivery team has strong batch-processing experience but limited streaming experience</li>
+    </ul>
+  </section>
+
+  <section id="chain">
+    <span class="badge">Core Framework</span>
+    <h2>2. The Reasoning Chain</h2>
+    <div class="mermaid">
+graph LR
+  A["1 · Business Objectives"] --> B["2 · Constraints"]
+  B --> C["3 · Functional + Quality Requirements"]
+  C --> D["4 · ASRs"]
+  D --> E["5 · Decisions + Trade-offs"]
+  style A fill:#0b1f3a,color:#fff,stroke:#0b1f3a
+  style B fill:#1f5fa8,color:#fff,stroke:#1f5fa8
+  style C fill:#3a7bc8,color:#fff,stroke:#3a7bc8
+  style D fill:#e0762b,color:#fff,stroke:#e0762b
+  style E fill:#2f9e5b,color:#fff,stroke:#2f9e5b
+    </div>
+  </section>
+
+  <section id="objectives">
+    <span class="badge">Step 1 & 2</span>
+    <h2>3. Business Objectives & Constraints</h2>
+    <h3>Objectives</h3>
+    <table>
+      <tr><th>#</th><th>Objective</th></tr>
+      <tr><td>O1</td><td>Enable near-real-time monitoring of store and device conditions so operations teams can detect issues quickly.</td></tr>
+      <tr><td>O2</td><td>Support expansion of the platform to new regions without re-architecting the ingestion path as device count grows.</td></tr>
+      <tr><td>O3</td><td>Preserve trusted, accepted telemetry for downstream analytics and operational applications.</td></tr>
+    </table>
+    <h3>Constraints</h3>
+    <table>
+      <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
+      <tr><td>C1</td><td>Delivery team has strong batch-processing experience but limited streaming experience</td><td>Team skills / delivery risk</td></tr>
+      <tr><td>C2</td><td>New event schema versions must deploy without pipeline downtime, within 1 day</td><td>Operational / modifiability</td></tr>
+      <tr><td>C3</td><td>Must recover from a single availability-zone failure in &lt;30 sec</td><td>Availability</td></tr>
+      <tr><td>C4</td><td>Device/store/customer/loyalty identifiers require controlled access</td><td>Security / compliance</td></tr>
+    </table>
+  </section>
+
+  <section id="requirements">
+    <span class="badge">Step 3</span>
+    <h2>4. Functional & Quality Requirements</h2>
+    <div class="two-col">
+      <div>
+        <h3>Functional (what it must do)</h3>
+        <ul class="tick">
+          <li>Receive telemetry events from devices across all stores</li>
+          <li>Validate incoming events</li>
+          <li>Persist accepted events for downstream processing</li>
+          <li>Make data available to analytics and operational apps</li>
+          <li>Support new device event schema versions over time</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quality Attributes (how well)</h3>
+        <ul class="tick">
+          <li><strong>Throughput:</strong> sustain 50K events/sec peak bursts</li>
+          <li><strong>Latency:</strong> p95 ingestion &lt; 200ms at peak load</li>
+          <li><strong>Availability:</strong> recover from a single AZ failure in &lt;30 sec</li>
+          <li><strong>Modifiability:</strong> deploy new schema version, zero downtime, &lt;1 day</li>
+          <li><strong>Security:</strong> controlled access to device/store/customer/loyalty identifiers</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="scenarios">
+    <span class="badge">Step 3 → Measurable</span>
+    <h2>5. Quality-Attribute Scenarios</h2>
+
+    <h3>Scenario 1 — Peak Ingestion Load</h3>
+    <table>
+      <tr><th>Source</th><td>IoT devices across 500 stores</td></tr>
+      <tr><th>Stimulus</th><td>Burst of telemetry events during business hours</td></tr>
+      <tr><th>Environment</th><td>Peak load conditions</td></tr>
+      <tr><th>Artifact</th><td>Ingestion pipeline</td></tr>
+      <tr><th>Response</th><td>Events are validated and persisted without loss</td></tr>
+      <tr><th>Response Measure</th><td>Sustains <strong>50K events/sec</strong> with p95 latency <strong>&lt; 200ms</strong>, zero event loss</td></tr>
+    </table>
+
+    <h3>Scenario 2 — Availability-Zone Failure</h3>
+    <table>
+      <tr><th>Source</th><td>Infrastructure fault</td></tr>
+      <tr><th>Stimulus</th><td>A single availability zone becomes unavailable</td></tr>
+      <tr><th>Environment</th><td>Production, normal or peak load</td></tr>
+      <tr><th>Artifact</th><td>Ingestion and persistence layer</td></tr>
+      <tr><th>Response</th><td>System fails over to a healthy AZ and resumes processing</td></tr>
+      <tr><th>Response Measure</th><td>Recovery time <strong>&lt; 30 sec</strong>, zero data loss</td></tr>
+    </table>
+  </section>
+
+  <section id="asrs">
+    <span class="badge">Step 4</span>
+    <h2>6. Architecturally Significant Requirements (ASRs)</h2>
+    <div class="mermaid">
+graph TD
+  R["Retail IoT Monitoring Platform"] --> A1["ASR 1<br/>Scale Pressure"]
+  R --> A2["ASR 2<br/>Recovery Pressure"]
+  R --> A3["ASR 3<br/>Schema Evolution Pressure"]
+  A1 --> A1d["50K events/sec growing with regional<br/>expansion — batch architecture cannot meet this"]
+  A2 --> A2d["Recover in &lt;30s from AZ failure —<br/>requires redundancy/failover design, not an add-on"]
+  A3 --> A3d["New schema deployed &lt;1 day, zero downtime —<br/>needs governed schema versioning strategy"]
+  style R fill:#0b1f3a,color:#fff
+  style A1 fill:#e0762b,color:#fff
+  style A2 fill:#e0762b,color:#fff
+  style A3 fill:#e0762b,color:#fff
+    </div>
+  </section>
+
+  <section id="utility">
+    <span class="badge">Step 4 → Prioritization</span>
+    <h2>7. Utility Tree</h2>
+    <div class="mermaid">
+graph LR
+  U["Utility"] --> QA1["Performance / Scale"]
+  U --> QA2["Availability"]
+  U --> QA3["Modifiability"]
+  U --> QA4["Security"]
+
+  QA1 --> S1["Sustain 50K events/sec,<br/>p95 &lt;200ms<br/><b>(High, High)</b>"]
+  QA2 --> S2["Recover &lt;30s from<br/>single AZ failure<br/><b>(High, Medium)</b>"]
+  QA3 --> S3["Deploy new schema &lt;1 day,<br/>zero downtime<br/><b>(High, Medium)</b>"]
+  QA4 --> S4["Controlled access to device/<br/>customer/loyalty identifiers<br/><b>(Medium, Medium)</b>"]
+
+  style U fill:#0b1f3a,color:#fff
+  style QA1 fill:#1f5fa8,color:#fff
+  style QA2 fill:#1f5fa8,color:#fff
+  style QA3 fill:#1f5fa8,color:#fff
+  style QA4 fill:#1f5fa8,color:#fff
+  style S1 fill:#c0392b,color:#fff
+  style S2 fill:#e0c02b,color:#1a2233
+  style S3 fill:#e0c02b,color:#1a2233
+  style S4 fill:#2f9e5b,color:#fff
+    </div>
+    <p class="flow-legend">🔴 Red = highest priority &nbsp;|&nbsp; 🟡 Yellow = medium priority &nbsp;|&nbsp; 🟢 Green = lower priority</p>
+  </section>
+
+  <section id="decisions">
+    <span class="badge">Step 5</span>
+    <h2>8. Architecture Decisions & Trade-offs</h2>
+
+    <div class="decision">
+      <h4>Decision 1 — Managed Streaming Ingestion (not batch)</h4>
+      <p>Adopt a managed streaming platform (e.g., Apache Kafka / Amazon Kinesis / Azure Event Hubs) with multi-AZ replication instead of a batch-only ingestion path.</p>
+      <p class="tradeoff">Trade-off: Requires the team to build new streaming skills and operational practices vs. batch-only comfort — necessary because 50K events/sec at &lt;200ms p95 cannot be met with batch processing alone.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 2 — Schema Registry with Governed Evolution</h4>
+      <p>Use a schema registry (e.g., Confluent Schema Registry / AWS Glue Schema Registry) with backward/forward-compatible schema evolution (Avro/Protobuf), decoupled from consumer deployment cycles.</p>
+      <p class="tradeoff">Trade-off: Adds schema-governance overhead vs. the ability to roll out new firmware-driven event versions within a day without pipeline downtime.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 3 — Multi-AZ Redundancy with Automated Failover</h4>
+      <p>Design the ingestion and persistence tiers for multi-AZ redundancy with automated failover, rather than single-AZ deployment with manual recovery.</p>
+      <p class="tradeoff">Trade-off: Higher infrastructure cost (duplicated resources across AZs) vs. meeting the &lt;30 sec recovery requirement.</p>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <span class="badge">Visualized Solution</span>
+    <h2>9. Proposed Architecture (High Level)</h2>
+    <div class="mermaid">
+flowchart TB
+  subgraph DEV["500 Stores — IoT Devices"]
+    direction LR
+    D1["Store Devices<br/>(sensors, gateways)"]
+  end
+
+  subgraph ING["Managed Streaming Ingestion"]
+    direction TB
+    K["Kafka / Kinesis / Event Hubs<br/>Multi-AZ replication"]
+  end
+
+  subgraph VAL["Validation & Schema Layer"]
+    SR["Schema Registry<br/>Backward/forward-compatible versioning"]
+  end
+
+  subgraph PERS["Persistence Layer"]
+    P["Multi-AZ Durable Store<br/>Automated failover"]
+  end
+
+  subgraph SEC["Access Control"]
+    AC["Identifier-level access control<br/>(device/store/customer/loyalty)"]
+  end
+
+  subgraph CONS["Consumers"]
+    direction LR
+    C1["Near-real-time Ops Dashboards"]
+    C2["Analytics Platform"]
+    C3["Alerting / Incident Response"]
+  end
+
+  DEV --> ING
+  ING --> VAL
+  VAL --> PERS
+  PERS --> SEC
+  SEC --> CONS
+
+  style DEV fill:#eaf2fb,stroke:#1f5fa8
+  style ING fill:#e0762b,color:#fff
+  style VAL fill:#1f5fa8,color:#fff
+  style PERS fill:#0b1f3a,color:#fff
+  style SEC fill:#c0392b,color:#fff
+  style CONS fill:#eaf2fb,stroke:#1f5fa8
+    </div>
+  </section>
+
+  <section id="cost">
+    <span class="badge">Step 5 → Reflection</span>
+    <h2>10. Cost of Change — Where Do These Decisions Sit?</h2>
+    <div class="cost-spectrum">
+      <div class="cost-bar"></div>
+      <div class="cost-labels">
+        <span>Reversible</span>
+        <span>Partially Reversible</span>
+        <span>Near-Irreversible</span>
+      </div>
+      <div class="cost-points">
+        <div class="cost-point" style="left:10%;"><div class="dot"></div>Ops dashboard layout</div>
+        <div class="cost-point" style="left:40%;"><div class="dot"></div>Streaming vendor choice (Kafka vs Kinesis vs Event Hubs)</div>
+        <div class="cost-point" style="left:65%;"><div class="dot"></div>Multi-AZ failover topology (Decision 3)</div>
+        <div class="cost-point" style="left:88%;"><div class="dot"></div>Event schema & partitioning strategy (Decision 2)</div>
+      </div>
+    </div>
+    <p style="margin-top:44px;">The event schema and partitioning strategy is closest to <strong>near-irreversible</strong> — once hundreds of thousands of devices and downstream consumers depend on a partitioning key and schema contract, changing it requires coordinated migration across firmware, ingestion, and consumers. This justifies investing in schema governance (Decision 2) early, before scaling to more regions.</p>
+  </section>
+
+  <section id="gaps">
+    <span class="badge">Do Not Invent Requirements</span>
+    <h2>11. Open Questions for the Stakeholder</h2>
+    <div class="gap-box">
+      <ul>
+        <li>What is the required <strong>retention period</strong> for raw telemetry events?</li>
+        <li>What is the specific <strong>access control policy</strong> (roles, masking rules) for device/store/customer/loyalty identifiers?</li>
+        <li>Is there a <strong>budget ceiling</strong> for infrastructure as the platform expands to new regions?</li>
+        <li>What is the target <strong>onboarding time for a new region/store cluster</strong> (analogous to a new-source SLA)?</li>
+        <li>Are there <strong>regulatory requirements</strong> (e.g., data residency per region) affecting where telemetry can be stored/processed?</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Generated from TF1 course material (Slalom Data Architect Academy) — Scenario A: Retail IoT Monitoring Platform.
+</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>
