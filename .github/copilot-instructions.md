@@ -149,6 +149,37 @@ prompt) submits a new scenario:
 ## Style Rules
 - Be precise and structured — use tables and diagrams over long prose.
 - Every architecture decision must state its trade-off explicitly.
+
+### What makes a decision reviewable (enforced by `scripts/check_decisions.py`)
+
+"Higher cost vs better capability" is not a trade-off. It is a sentence shaped
+like one. Three independent reviews of this repo reached the same conclusion:
+the decisions were *"the same conclusions with fact IDs appended."*
+
+A decision is only reviewable if a reader can tell **what would have to be true
+for it to be wrong.** Each decision must therefore contain, as separately
+identifiable text:
+
+| Field | What it must answer |
+|---|---|
+| **Chosen approach** | What is being decided, in one sentence |
+| **Rejected alternative** | A specific named option, not "doing nothing" |
+| **Why it is genuinely viable** | The honest case *for* the rejected option. If you cannot write this, you have not understood it, and you are describing a straw man |
+| **What is sacrificed** | What the chosen option is actually worse at |
+| **What is gained** | Tied to a cited requirement, not a general virtue |
+| **Reversal condition** | The observation or measurement that would flip this decision |
+| **Unresolved fact** | The missing input that could change it, cited as a `-U##` unknown |
+
+Two rules that follow from this:
+
+1. **Do not bundle independent decisions.** If two choices have different
+   alternatives, different failure modes, or different reversibility, they are
+   two decisions. A connector framework can be swapped in weeks; an
+   authorisation model cannot.
+2. **A rejection must be justified by a measurable property, not by style.**
+   "Batch cannot meet this" is an assertion. "A micro-batch trigger interval
+   sets a latency floor roughly equal to the interval, so meeting a 200ms p95
+   would require a sub-200ms interval" is an argument.
 - Every quality attribute must be measurable (numbers, percentages, time bounds).
 - Never skip a step in the reasoning chain (Objectives → Constraints → Requirements → ASRs → Decisions).
 - Prefer Mermaid.js for flowcharts/trees, matching the existing HTML reports' diagram style.
@@ -168,7 +199,7 @@ do not submit a partial analysis silently.
 - [ ] At least 2 quality-attribute scenarios, each with all 6 fields (Source, Stimulus, Environment, Artifact, Response, Response Measure)
 - [ ] Exactly 3 ASRs, each with a one-sentence justification of *why* it's architecturally significant
 - [ ] A Utility Tree mapping quality attributes → scenarios → priority (importance, risk/difficulty)
-- [ ] 3 architecture decisions, each with a named trade-off (not just a benefit)
+- [ ] 3 architecture decisions, each reviewable: rejected alternative, why it is viable, sacrifice, gain, reversal condition, unresolved fact
 - [ ] **Every decision passes the "¿Para qué?" test** — the outcome it serves, the business objective it traces to, and the quality attribute/ASR making it necessary are all identifiable
 - [ ] Each decision names at least one concrete tool/pattern option, justified by the trade-off — not by popularity
 - [ ] **Tooling options span 2–3 ecosystems** (hyperscaler / platform vendor / open-source), or a stated constraint explains the narrowing

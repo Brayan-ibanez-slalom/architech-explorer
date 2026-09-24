@@ -208,6 +208,14 @@ for f in "${FILES[@]}"; do
     fail "uncited requirement values — see above"
   fi
   
+  head_ "5b. Decision quality (is the decision reviewable, not just sourced?)"
+  if python3 "$(dirname "$0")/check_decisions.py" "$f" >"$WORK/dec.out" 2>&1; then
+    pass "every decision exposes rejected alternative, sacrifice, gain and reversal condition"
+  else
+    fail "one or more decisions are not reviewable"
+    grep -E '^  FAIL|^         ' "$WORK/dec.out" || true
+  fi
+
   head_ "6. HTML well-formedness"
   python3 - "$f" <<'PY'
 import sys

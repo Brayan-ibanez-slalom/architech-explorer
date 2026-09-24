@@ -113,6 +113,8 @@ scenarios:
         topic: "applicable compliance regime (GDPR/CCPA/other) and data residency"
       - id: C360-U06
         topic: "whether failed quality checks block the pipeline or alert only"
+      - id: C360-U08
+        topic: "target match accuracy and tolerance for false merges in identity resolution"
       - id: C360-U07
         topic: "existing platform commitment, if any"
 
@@ -152,6 +154,9 @@ scenarios:
         value: "device count grows with expansion to new regions"
         quote: "Device count is expected to grow as the platform expands to new regions"
     teaching_examples:
+      - id: RIOT-F08
+        value: "team has strong batch experience but limited streaming experience"
+        quote: "The delivery team has strong batch-processing experience but limited streaming experience"
       - id: RIOT-X01
         value: "zero event loss"
         quote: "Example measure: p95 ingestion latency < 200ms with zero event loss."
@@ -168,5 +173,9 @@ scenarios:
         topic: "budget ceiling for regional expansion"
       - id: RIOT-U04
         topic: "specific access-control policy for identifiers"
+      - id: RIOT-U06
+        topic: "ordering scope, replay window and acknowledgement semantics for event ingestion"
+      - id: RIOT-U07
+        topic: "whether the firmware team can accept a blocking schema-compatibility check before release"
       - id: RIOT-U05
         topic: "data residency / regulatory constraints per region"

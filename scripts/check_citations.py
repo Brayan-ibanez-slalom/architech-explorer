@@ -124,7 +124,9 @@ VALUE_RE = re.compile(
         \b\d+\s+(?:engineers?|FTEs?|developers?|analysts?)\b |
         \b\d+\s+(?:source\s+systems?|sources?|systems?|regions?|zones?|replicas?|nodes?|clusters?)\b |
         # --- round-3 red team: these carry requirement weight and were invisible ---
-        \b\d+(?:\.\d+)?\s?[KMB]\b                        |  # 20M customers, 5M/day
+        \b\d+(?:\.\d+)?\s?(?-i:[KMB])\b                   |  # 20M customers, 5M/day
+                                                            # case-scoped: "3b." is a
+                                                            # section label, not 3 billion
         (?<![-\u2013\u2014/])\b\d+\s?[KMB]?\s*\w*\s*/\s*(?:day|week|month|year|yr) | # 5M interactions/day
         (?<![\d:.])\d{1,2}[:.]\d{2}\s*(?:AM|PM)?           |  # 07:00, 7:00 AM
         (?<![\d:.\s]\s)(?<![\d:.])\b\d{1,2}\s*(?:AM|PM)\b |  # 7 AM (not the "00" of 7:00 AM)

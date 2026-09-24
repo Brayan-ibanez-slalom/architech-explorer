@@ -263,12 +263,17 @@ graph LR
     <div class="decision">
       <h4>Decision 1 — Managed Streaming Ingestion (not batch)</h4>
       <p>Adopt a streaming ingestion platform with multi-AZ replication instead of a batch-only ingestion path.</p>
-      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is durable, ordered, replayable event ingestion sustaining 50K events/sec [RIOT-F02] at &lt;200ms p95 [RIOT-F03].<br/>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is event ingestion sustaining 50K events/sec [RIOT-F02] at &lt;200ms p95 [RIOT-F03]. <span class="warn-inline">Ordering scope, replay window and acknowledgement semantics are <em>not specified</em> in the scenario [RIOT-U06]; they are stated here as open questions, not as required properties. They are exactly the properties that would differentiate these platforms, so the choice between them cannot be finalised until the RPO is answered.</span><br/>
       • <em>Open-source / portable:</em> Apache Kafka, Apache Pulsar, or Redpanda, paired with Apache Flink for streaming processing.<br/>
       • <em>Platform / managed OSS:</em> Confluent Cloud, Redpanda Cloud, or Databricks Structured Streaming with Auto Loader.<br/>
       • <em>Hyperscaler-managed:</em> Azure Event Hubs, Google Cloud Pub/Sub, or Amazon MSK/Kinesis.<br/>
       <em>Selection driver:</em> given the team's limited streaming experience (constraint C1), a <strong>managed</strong> offering in whichever ecosystem the client already operates reduces delivery risk more than any feature difference between these products.</p>
-      <p class="tradeoff">Trade-off: Requires the team to build new streaming skills and operational practices vs. batch-only comfort — necessary because 50K events/sec [RIOT-F02] at &lt;200ms p95 [RIOT-F03] cannot be met with batch processing alone. Managed services trade higher per-GB cost for lower operational burden, which is the right trade given C1.</p>
+      <p><strong>Rejected alternative.</strong> Micro-batch ingestion on a short interval — the team's existing batch toolchain, run every few seconds rather than hourly.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is not a straw man. The team has strong batch-processing experience [RIOT-F08], and micro-batch reuses tooling, skills and operational practice they already have. The reason it is rejected is specific and measurable, not stylistic: the requirement is a <em>p95 [RIOT-F03] ingestion latency</em> of &lt;200ms [RIOT-F03]. A micro-batch trigger interval sets a latency floor roughly equal to the interval, so meeting a 200ms p95 [RIOT-F03] would require a sub-200ms [RIOT-F03] batch interval — at which point it is streaming with extra scheduling overhead.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> The team must build streaming skills and on-call practice it does not have [RIOT-F08], which is a delivery risk, not just a training cost. Managed offerings also cost more per GB and give up low-level control.</p>
+      <p><strong>What the chosen approach gains.</strong> It is the only option that can meet &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02] without the latency floor above, and a managed offering keeps the new operational burden as small as possible given the skills gap.</p>
+      <p><strong>Reversal condition.</strong> Revisit if the p95 [RIOT-F03] latency requirement is relaxed — if the true need is "near real time" rather than a hard 200ms [RIOT-F03], micro-batch becomes the better choice on skills and cost alone. Also revisit if measured managed-service cost at 50K events/sec [RIOT-F02] exceeds the budget, which is unstated [RIOT-U03].</p>
+      <p class="tradeoff">Trade-off: a real skills and delivery risk for a batch-experienced team [RIOT-F08], plus higher per-GB managed cost, in exchange for the only design that meets &lt;200ms p95 [RIOT-F03] at 50K events/sec [RIOT-F02]. Note the boundary: this justifies <em>streaming</em>; it does not by itself justify any particular durability or replication guarantee — see Decision 3.</p>
     </div>
 
     <div class="decision">
@@ -278,19 +283,37 @@ graph LR
       • <em>Open-source / portable:</em> Confluent Schema Registry (community edition), Apicurio Registry, or Buf Schema Registry for Protobuf.<br/>
       • <em>Platform / lakehouse:</em> Databricks Unity Catalog schema enforcement, or Delta Lake / Apache Iceberg schema evolution at the storage layer.<br/>
       • <em>Hyperscaler-managed:</em> Azure Schema Registry (in Event Hubs), Google Cloud Managed Service for Apache Kafka, or AWS Glue Schema Registry.<br/>
-      <em>Selection driver:</em> choose whichever registry integrates natively with the streaming platform selected in Decision 1 — cross-ecosystem pairing adds avoidable operational friction.</p>
-      <p class="tradeoff">Trade-off: Adds schema-governance overhead vs. the ability to roll out new firmware-driven event versions within a day without pipeline downtime. Using an open serialization format (Avro/Protobuf) keeps the contract portable even if the registry product changes.</p>
+      <em>Selection driver:</em> <strong>where compatibility is enforced</strong>, not which product is most convenient. An earlier revision said "choose whichever registry integrates natively with the streaming platform" — that is circular, and it also listed storage-layer schema evolution (Delta/Iceberg) as equivalent to a registry. It is not: storage-layer evolution protects the <em>table</em>, it does not stop an incompatible producer from breaking live streaming consumers. Enforcement must sit at the producer boundary.</p>
+      <p><strong>Rejected alternative.</strong> Consumer-side tolerant reading: no registry, no producer-side gate; each consumer defensively ignores unknown fields and defaults missing ones.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is the lowest-friction option, adds no infrastructure, and is a well-established pattern. With few consumers it works, and it never blocks a firmware rollout — which matters because firmware evolves independently [RIOT-F07] and is not centrally controlled.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> A central gate that <em>can block a firmware release</em>. If a device fleet ships a breaking schema, the registry rejects it — good for consumers, but the fleet may already be deployed in 500 stores [RIOT-F01] and not easily recalled. This decision accepts a coordination cost between firmware and platform teams that the tolerant-reader approach avoids entirely.</p>
+      <p><strong>What the chosen approach gains.</strong> Compatibility is checked once, centrally, rather than depending on every consumer being written defensively — which is what makes "deploy a new event schema without pipeline downtime" [RIOT-F05] a property of the system rather than a hope about each consumer's code quality.</p>
+      <p><strong>Reversal condition.</strong> Revisit if firmware release cycles cannot absorb a compatibility gate, or if the registry becomes an availability dependency on the ingest path. In either case, move enforcement to a validating consumer at the boundary and keep tolerant readers behind it.</p>
+      <p><strong>Unresolved fact.</strong> Whether the firmware team can accept a blocking compatibility check before release is not stated [RIOT-U07]. This decision is not safe to finalise without that answer.</p>
+      <p class="tradeoff">Trade-off: schema-governance overhead and a coordination dependency on the firmware team, in exchange for making no-downtime schema deployment [RIOT-F05] a structural guarantee rather than a per-consumer convention. An open serialisation format (Avro/Protobuf) keeps the contract portable if the registry product changes.</p>
     </div>
 
     <div class="decision">
-      <h4>Decision 3 — Multi-AZ Redundancy with Automated Failover</h4>
-      <p>Design the ingestion and persistence tiers for multi-AZ redundancy with automated failover, rather than single-AZ deployment with manual recovery.</p>
-      <p><strong>Technology options:</strong> the capability required is automated failover within 30 seconds [RIOT-F04]; the tolerable data loss during that failover is an open question.<br/>
-      • <em>Open-source / portable:</em> Kafka with <code>min.insync.replicas</code> and rack-aware replica placement across zones; Apache Iceberg or Delta Lake on zone-redundant object storage for the persistence tier.<br/>
-      • <em>Platform:</em> Databricks or Snowflake managed multi-AZ durability (failover handled by the platform).<br/>
-      • <em>Hyperscaler-managed:</em> zone-redundant configurations of Azure Event Hubs, Google Cloud Pub/Sub (regional by default), or Amazon MSK multi-AZ.<br/>
-      <em>Selection driver:</em> verify the <em>measured</em> failover time of the chosen option against the &lt;30 sec [RIOT-F04] requirement — vendor "high availability" claims are not equivalent to a tested RTO.</p>
-      <p class="tradeoff">Trade-off: Higher infrastructure cost (duplicated resources across AZs) vs. meeting the &lt;30 sec [RIOT-F04] recovery requirement. This is a direct, quantifiable cost-for-availability exchange that should be confirmed against the (currently unstated) infrastructure budget.</p>
+      <h4>Decision 3 — Automated cross-AZ failover now; defer persistence semantics until the RPO is known</h4>
+      <p><strong>Chosen approach.</strong> Design the ingestion and persistence tiers for automated cross-AZ failover, and verify by workload-level test that recovery completes within &lt;30 sec [RIOT-F04]. <strong>Do not yet fix</strong> acknowledgement mode, replica counts, or a lossless persistence guarantee: the scenario states a recovery <em>time</em> but no tolerable data loss [RIOT-U01].</p>
+      <p><strong>Rejected alternative.</strong> Self-managed Kafka spread across AZs with <code>min.insync.replicas</code>, rack-aware placement and operator-controlled failover.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It can meet the same 30-second target and gives explicit control over placement, acknowledgement policy, portability and failure testing. It is a credible architecture, not a straw man — and it is the stronger choice if the RPO turns out to be zero.</p>
+      <p><strong>What the chosen approach sacrifices.</strong> Lower-level control, some portability, and probably lower unit cost at sustained scale. Its real failover and durability behaviour depends on vendor implementation and must be measured, because a "highly available" label is not a tested RTO.</p>
+      <p><strong>What the chosen approach gains.</strong> Materially lower operational burden, which matters here because the scenario states the team has <em>strong batch experience but limited streaming experience</em> [RIOT-F08]. It reaches a testable 30-second recovery sooner and with less operational risk.</p>
+      <p><strong>Reversal condition.</strong> Revisit this decision if (a) measured failover misses &lt;30 sec [RIOT-F04], (b) the answer to the RPO requires acknowledgement or replication guarantees the managed service cannot demonstrate, or (c) measured cost exceeds the stakeholder-approved budget. Under any of these, move to the self-managed cross-AZ design.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The tolerable event loss (RPO) [RIOT-U01]. The three possible answers lead to <em>different</em> architectures, and this is the point at which they diverge:</p>
+      <table class="qa-table">
+        <tr><th>If the RPO answer is…</th><th>Then the persistence design becomes…</th><th>Cost direction</th></tr>
+        <tr><td>Zero loss <em>(hypothetical branch &mdash; not specified in the scenario)</em></td><td>Synchronous cross-AZ acknowledgement, min.insync.replicas &gt; 1, producer acks=all. Write latency rises and must be re-checked against the &lt;200ms p95 [RIOT-F03] budget.</td><td>Highest</td></tr>
+        <tr><td>Bounded loss (e.g. seconds)</td><td>Asynchronous replication with a measured replication lag SLO; failover may discard in-flight events within that bound.</td><td>Moderate</td></tr>
+        <tr><td>Best-effort</td><td>Single-zone write path with cross-AZ recovery only; cheapest, and adequate if telemetry is statistical rather than transactional.</td><td>Lowest</td></tr>
+      </table>
+      <p><strong>Technology options:</strong><br/>
+      • <em>Open-source / portable:</em> Kafka with <code>min.insync.replicas</code> and rack-aware placement; Apache Iceberg or Delta Lake on zone-redundant object storage.<br/>
+      • <em>Platform:</em> Databricks or Snowflake managed multi-AZ (failover handled by the platform).<br/>
+      • <em>Hyperscaler-managed:</em> zone-redundant Azure Event Hubs, Google Cloud Pub/Sub (regional by default), or Amazon MSK multi-AZ.<br/>
+      <em>Selection driver:</em> measured failover time, not vendor availability labels.</p>
+      <p class="tradeoff">Trade-off: duplicated cross-AZ resources and reduced low-level control, in exchange for a testable &lt;30 sec [RIOT-F04] recovery reached with an operationally realistic path for a team with limited streaming experience [RIOT-F08]. Note what this trade-off deliberately does <em>not</em> settle: the durability semantics above remain open, because the scenario never gave an RPO. An earlier revision of this report selected "durable, ordered, replayable" ingestion anyway — that was reasoning from an assumption, not from the scenario.</p>
     </div>
   </section>
 
@@ -314,7 +337,7 @@ flowchart TB
   end
 
   subgraph PERS["Persistence Layer"]
-    P["Multi-AZ Durable Store<br/>Automated failover"]
+    P["Multi-AZ Store<br/>Automated failover (RTO &lt;30s)<br/>replication mode: TBD pending RPO"]
   end
 
   subgraph SEC["Access Control"]
