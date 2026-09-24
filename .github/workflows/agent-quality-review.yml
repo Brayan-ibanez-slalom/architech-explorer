@@ -140,8 +140,18 @@ jobs:
             exit 0
           fi
 
+          # The marker must start a line and carry a real reason.
+          #
+          # The first version searched the body for the substring anywhere. The
+          # very PR that introduced this check then passed it - because the PR
+          # description EXPLAINED the escape hatch, and the explanation contained
+          # the magic words. The check matched its own documentation.
+          #
+          # Anchoring to line start excludes the inline-code and prose mentions
+          # that any honest description of this rule will contain, and requiring
+          # 15+ characters of reason excludes the "<why>" placeholder.
           BODY=$(gh pr view "$PR" --json body -q .body)
-          if echo "$BODY" | grep -q "NO INDEPENDENT REVIEW:"; then
+          if echo "$BODY" | grep -qE "^NO INDEPENDENT REVIEW: *[^<[:space:]].{14,}"; then
             echo "::warning::Merging without independent review, acknowledged in the PR body."
             echo "The structural gates passed. Nothing has checked whether the"
             echo "reasoning is correct. That is now a recorded, deliberate choice"
