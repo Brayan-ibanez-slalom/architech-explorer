@@ -14,7 +14,15 @@ name: "Agent Quality Review"
 on:
   pull_request:
     paths:
+      # The reports themselves.
       - "docs/*.html"
+      # AND the gate that judges them. These were missing, so a PR that changed
+      # only the checking scripts ran no checks at all - the gate could be
+      # weakened or broken without CI ever noticing. A fix for a flaky-gate bug
+      # was the change that exposed this.
+      - "scripts/**"
+      - "knowledge-base/scenario-facts.yml"
+      - ".github/workflows/agent-quality-review.yml"
 
 permissions:
   contents: read
