@@ -6,3 +6,11 @@ verdant-grocers:
   source_issue: 8
   file: "verdant-grocers.source.txt"
   sha256: "d51be9afc29aba0056a6b2c6efe065dc927e594ada6a88209aaf7aa50c1e6615"
+solstice-health:
+  source_issue: 12
+  file: "solstice-health.source.txt"
+  sha256: "6835d3b0da4077ce78d123a721001d5b4903f0aa12e8f8a8adb077202ef28616"
+northbridge-logistics:
+  source_issue: 14
+  file: "northbridge-logistics.source.txt"
+  sha256: "4fe65023dca1479bf13a2bc83949e69dc368f0b4f6a5bb9eae5aa56b3804c4bc"

@@ -1,0 +1,41 @@
+### SOURCE: issue #12 — [Scenario] Solstice Health - referral routing & specialist queueing
+
+## Business Context
+Solstice Health is a regional nonprofit health network with 12 primary-care clinics. Referrals from primary-care physicians to specialists are currently tracked in a shared Excel sheet, causing lost referrals and delayed specialist visits.
+
+## Business Objectives
+1. Cut the time from "referral submitted" to "referral visible in the specialist's queue" from multi-day to same-day.
+2. Ensure only authorized clinical staff (referring clinician, receiving specialist, care coordinator) can view any patient's referral/PHI data.
+3. Produce a complete, auditable access trail for every referral record to satisfy compliance audits.
+
+## What the System Must Do (Functional Requirements)
+- Ingest referral-relevant patient data from each clinic's EHR system (all 12 clinics emit HL7 v2 ADT feeds today).
+- Match/de-duplicate patient identities across clinics before creating a referral record.
+- Route each referral to the correct specialist's work queue.
+- Notify the assigned care coordinator when a new referral arrives.
+- Provide role-based views: referring clinician, receiving specialist, care coordinator each see only what their role permits.
+
+## Operating Conditions / Known Numbers
+- 12 clinics, combined volume of roughly 4,000 referrals per week.
+- A referral must reach the correct specialist's queue within 30 minutes of submission.
+- The system must be available 99.5% of the time during business hours (7am-7pm local, Monday-Saturday).
+- Referral volume is projected to grow 20% year-over-year for the next 3 years.
+- Referral and access-log data must be retained for 7 years (state health-record retention law).
+
+## Constraints
+- 6-month timeline to first production rollout.
+- Engineering team: 4 engineers, strong in SQL/Python, no prior streaming-systems experience.
+- First-year infrastructure budget is capped at $250,000.
+- The organization has a signed Business Associate Agreement (BAA) with Microsoft Azure and a data-residency requirement that patient data must not leave the contracted Azure region. Moving to a different cloud is not an option for this project.
+
+## Security / Compliance Notes
+- HIPAA applies; referral records contain PHI.
+- Every read/write access to a referral record must be logged and retained for 7 years.
+- Access must be restricted by role (referring clinician / specialist / care coordinator).
+
+## Anything Else Known
+- No data warehouse or integration layer exists today; the Excel sheet is the only current system of record for referrals.
+- Clinics already emit HL7 v2 ADT feeds from their EHR systems; no clinic is willing to change EHR vendors for this project.
+
+---
+**Requested output:** Full reasoning chain (objectives → constraints → requirements → quality-attribute scenarios → ASRs → utility tree → decisions & trade-offs → tools → open questions), delivered as an HTML report under `docs/`.

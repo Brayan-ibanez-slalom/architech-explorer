@@ -279,3 +279,372 @@ scenarios:
     unknowns:
       - id: VGI-U04
         topic: "what 'not locked into one vendor' means in practice"
+
+  # =========================================================================
+  - id: solstice-health
+    name: "Solstice Health - Referral Routing & Specialist Queueing"
+    source: "GitHub issue #12"
+    # Quotes for this scenario are verified ONLY against the file below, which is
+    # a verbatim capture of the GitHub issue. Its hash is pinned in
+    # knowledge-base/provenance.lock and re-checked against the live GitHub API.
+    source_files:
+      - "sources/solstice-health.source.txt"
+    source_issue: 12
+    facts:
+      - id: SOLH-F01
+        value: "12 primary-care clinics"
+        matches: '12\s*(primary-care\s*)?clinics?'
+        subject: "clinic|network|health"
+        quote: "Solstice Health is a regional nonprofit health network with 12 primary-care clinics."
+      - id: SOLH-F02
+        value: "referral time cut from multi-day to same-day"
+        quote: "Cut the time from \"referral submitted\" to \"referral visible in the specialist's queue\" from multi-day to same-day."
+      - id: SOLH-F03
+        value: "combined volume of roughly 4,000 referrals per week across the 12 clinics"
+        matches: '4,000'
+        subject: "referral|volume|week|throughput|clinics"
+        quote: "12 clinics, combined volume of roughly 4,000 referrals per week."
+      - id: SOLH-F04
+        value: "a referral must reach the correct specialist's queue within 30 minutes of submission"
+        matches: '30\s*(minutes?|min)'
+        subject: "referral|queue|routing|submission|reach"
+        quote: "A referral must reach the correct specialist's queue within 30 minutes of submission."
+      - id: SOLH-F05
+        value: "system must be available 99.5% of the time during business hours"
+        matches: '99\.5\s?%'
+        subject: "availab|uptime|business hours|system"
+        quote: "The system must be available 99.5% of the time during business hours (7am-7pm local, Monday-Saturday)."
+      - id: SOLH-F06
+        value: "business hours are defined as 7am-7pm local, Monday-Saturday"
+        subject: "business hours|availab|monday|saturday|local"
+        quote: "The system must be available 99.5% of the time during business hours (7am-7pm local, Monday-Saturday)."
+        note: "No 'matches:' pattern: the value is a compound span (7am AND 7pm), which the value-detection grammar always splits into two separate tokens. A compound pattern can never match either token alone, so this fact relies on presence + subject-proximity checks only."
+      - id: SOLH-F07
+        value: "referral volume is projected to grow 20% year-over-year for the next 3 years"
+        matches: '20\s?%|3\s*years?'
+        subject: "growth|grow|volume|year-over-year|project"
+        quote: "Referral volume is projected to grow 20% year-over-year for the next 3 years."
+      - id: SOLH-F08
+        value: "referral and access-log data must be retained for 7 years (state health-record retention law)"
+        matches: '7\s*years?'
+        subject: "retain|retention|referral|access-log|record|law"
+        quote: "Referral and access-log data must be retained for 7 years (state health-record retention law)."
+      - id: SOLH-F09
+        value: "6-month timeline to first production rollout"
+        matches: '6[-\s]month'
+        subject: "timeline|rollout|production|deadline"
+        quote: "6-month timeline to first production rollout."
+      - id: SOLH-F10
+        value: "engineering team of 4 engineers, strong in SQL/Python, no prior streaming-systems experience"
+        matches: '4\s*engineers?'
+        subject: "team|engineer|staff|skill|sql|python|streaming"
+        quote: "Engineering team: 4 engineers, strong in SQL/Python, no prior streaming-systems experience."
+      - id: SOLH-F11
+        value: "first-year infrastructure budget is capped at $250,000"
+        matches: '\$\s?250,000'
+        subject: "budget|infrastructure|cost|cap|first-year"
+        quote: "First-year infrastructure budget is capped at $250,000."
+      - id: SOLH-F12
+        value: "signed Business Associate Agreement (BAA) with Microsoft Azure and a data-residency requirement that patient data must not leave the contracted Azure region; moving to a different cloud is not an option for this project"
+        subject: "azure|cloud|baa|residency|region|data"
+        quote: "The organization has a signed Business Associate Agreement (BAA) with Microsoft Azure and a data-residency requirement that patient data must not leave the contracted Azure region. Moving to a different cloud is not an option for this project."
+      - id: SOLH-F13
+        value: "HIPAA applies; referral records contain PHI"
+        quote: "HIPAA applies; referral records contain PHI."
+      - id: SOLH-F14
+        value: "every read/write access to a referral record must be logged and retained for 7 years"
+        matches: '7\s*years?'
+        subject: "log|access|read|write|audit|retain|referral"
+        quote: "Every read/write access to a referral record must be logged and retained for 7 years."
+      - id: SOLH-F15
+        value: "access must be restricted by role (referring clinician / specialist / care coordinator)"
+        quote: "Access must be restricted by role (referring clinician / specialist / care coordinator)."
+      - id: SOLH-F16
+        value: "no data warehouse or integration layer exists today; the Excel sheet is the only current system of record for referrals"
+        quote: "No data warehouse or integration layer exists today; the Excel sheet is the only current system of record for referrals."
+      - id: SOLH-F17
+        value: "all 12 clinics emit HL7 v2 ADT feeds today"
+        matches: '12\s*clinics?'
+        subject: "hl7|adt|feed|clinic|ehr|ingest"
+        quote: "Ingest referral-relevant patient data from each clinic's EHR system (all 12 clinics emit HL7 v2 ADT feeds today)."
+      - id: SOLH-F18
+        value: "no clinic is willing to change EHR vendors for this project"
+        quote: "Clinics already emit HL7 v2 ADT feeds from their EHR systems; no clinic is willing to change EHR vendors for this project."
+    unknowns:
+      - id: SOLH-U01
+        topic: "target patient-identity-match accuracy / tolerance for false merges across the 12 clinics"
+      - id: SOLH-U02
+        topic: "acceptable latency for the care-coordinator notification step specifically (distinct from the 30-minute queue-routing SLA)"
+      - id: SOLH-U03
+        topic: "disaster-recovery / RTO-RPO expectations, including whether any availability target applies outside the stated 7am-7pm Mon-Sat business hours"
+      - id: SOLH-U04
+        topic: "attainment percentile (e.g., p95/p99) for the 30-minute routing SLA"
+      - id: SOLH-U05
+        topic: "whether an HL7 interoperability engine/middleware already exists at any clinic"
+      - id: SOLH-U06
+        topic: "expected unique-patient population size for identity-resolution scale planning"
+      - id: SOLH-U07
+        topic: "acceptable data loss / recovery point during an outage of the ingestion pipeline"
+      - id: SOLH-U08
+        topic: "whether any consumer beyond the three named roles (referring clinician, receiving specialist, care coordinator) will ever need access to referral records"
+
+  # =========================================================================
+  - id: northbridge-logistics
+    name: "Northbridge Logistics - Fleet Reefer Telemetry & Alerting"
+    source: "GitHub issue #14"
+    # Quotes for this scenario are verified ONLY against the file below, a verbatim
+    # capture of the GitHub issue. Its hash is pinned in knowledge-base/provenance.lock
+    # and re-checked against the live GitHub API by scripts/verify_provenance.py.
+    source_files:
+      - "sources/northbridge-logistics.source.txt"
+    source_issue: 14
+    facts:
+      - id: NBL-F01
+        value: "3,200 refrigerated (\"reefer\") trucks fleet-wide"
+        subject: "fleet|trucks|reefer|fleet-wide"
+        quote: 'Northbridge Logistics operates a fleet of 3,200 refrigerated ("reefer") trucks.'
+      - id: NBL-F02
+        value: "each truck sends telemetry approximately every 30 seconds"
+        subject: "telemetry|interval|sending|report|reports|reported|frequency|sends|sent|emit|emits|reading|readings|cadence|second|seconds"
+        quote: "3,200 trucks fleet-wide, each sending telemetry approximately every 30 seconds."
+      - id: NBL-F03
+        value: "alert must reach the fleet manager within 5 minutes of a threshold breach"
+        subject: "alert|breach|sla|threshold|minutes|reach"
+        matches: '5\s*(minutes?|min)'
+        quote: "Alert must reach the fleet manager within 5 minutes of a threshold breach."
+      - id: NBL-F04
+        value: "telemetry retention: minimum 2 years"
+        subject: "retention|historical|store|warranty|years"
+        matches: '2\s*years?'
+        quote: "Store historical telemetry for at least 2 years to support warranty disputes with the truck/reefer-unit manufacturers."
+      - id: NBL-F05
+        value: "pilot phase covers 400 trucks"
+        subject: "pilot|trucks"
+        matches: '400\s*trucks?'
+        quote: "Pilot phase: 400 trucks, targeted within 4 months."
+      - id: NBL-F06
+        value: "pilot targeted within 4 months"
+        subject: "pilot|months|targeted|timeline"
+        matches: '4\s*months?'
+        quote: "Pilot phase: 400 trucks, targeted within 4 months."
+      - id: NBL-F07
+        value: "team: 6 backend engineers + 1 data engineer, comfortable with Python and SQL; two have prior production Kafka experience"
+        quote: "Team: 6 backend engineers + 1 data engineer, comfortable with Python and SQL; two of them have prior production experience with Kafka."
+      - id: NBL-F08
+        value: "existing on-premises fault-code system cannot be decommissioned yet; warranty-claims team still depends on it; no committed migration date"
+        quote: "The existing on-premises fault-code system cannot be decommissioned yet — the warranty-claims team still depends on it and there is no committed migration date."
+      - id: NBL-F09
+        value: "ingest telemetry (engine temperature, GPS, reefer-unit temperature, fault codes) from each truck's onboard device"
+        quote: "Ingest telemetry (engine temperature, GPS, reefer-unit temperature, fault codes) from each truck's onboard device, sent roughly every 30 seconds per truck."
+      - id: NBL-F10
+        value: "detect when reefer-unit temperature breaches a configured safe-range threshold"
+        quote: "Detect when reefer-unit temperature breaches a configured safe-range threshold."
+      - id: NBL-F11
+        value: "provide a dashboard showing currently active alerts per truck/route"
+        quote: "Provide a dashboard showing currently active alerts per truck/route."
+      - id: NBL-F12
+        value: "reefer-unit temperature thresholds are configured per cargo type by an existing rules engine that will keep being used; this project only consumes its output"
+        quote: "The reefer-unit temperature threshold values themselves are configured per cargo type by an existing rules engine that will keep being used; this project only needs to consume its output, not replace it."
+      - id: NBL-F13
+        value: "fleet managers and warranty-claims staff need different views of the data"
+        subject: "fleet managers|warranty-claims|views|roles|access"
+        quote: "Fleet managers and warranty-claims staff need different views of the data, but exact role definitions haven't been finalized."
+    unknowns:
+      - id: NBL-U01
+        topic: "applicable regulatory/compliance regime for vehicle telemetry (legal review pending, no determination made)"
+      - id: NBL-U02
+        topic: "fleet-wide growth-rate projection beyond the current 3,200 trucks"
+      - id: NBL-U03
+        topic: "budget for this initiative (not disclosed)"
+      - id: NBL-U04
+        topic: "exact role/permission definitions distinguishing fleet-manager and warranty-claims views"
+      - id: NBL-U05
+        topic: "cloud vendor or hybrid platform commitment (none chosen; company open to any provider or hybrid)"
+      - id: NBL-U06
+        topic: "full-fleet rollout timeline after the 400-truck pilot"
+      - id: NBL-U07
+        topic: "quantified definition of 'near-real-time' for the fleet-manager reefer-health dashboard (Business Objective 2 uses only qualitative wording)"
+      - id: NBL-U08
+        topic: "whether onboard devices can publish to two independent downstream consumers (device-side fan-out) or whether fan-out to the legacy system must happen network-side"
+      - id: NBL-U09
+        topic: "acceptable telemetry data-loss tolerance during an ingestion-path or connectivity outage"
+
+  # =========================================================================
+  - id: space-airline-booking
+    name: "SPACE - The Airline Booking Platform"
+    source: "SPACE Event Case Brief (local PDF text extraction, not a GitHub issue)"
+    # This scenario is NOT sourced from a GitHub issue, so it follows the
+    # customer-360 pattern: source_files only, no source_issue / source_comments.
+    # scripts/verify_provenance.py only checks scenarios that declare a
+    # source_issue, so it correctly skips this one — there is no upstream API
+    # to re-fetch a locally supplied case brief against.
+    source_files:
+      - "sources/space-airline-booking.source.txt"
+    facts:
+      - id: SAB-F01
+        value: "2,500,000 flight searches a day"
+        matches: '2,500,000'
+        subject: "search|searches|traffic|volume|day"
+        quote: "2,500,000 flight searches a day, around 30 per second, 200 at peak hour"
+      - id: SAB-F02
+        value: "around 30 searches per second on average"
+        matches: '30\s*per\s*second|30\s*/\s*s(ec)?'
+        subject: "search|per second|average|traffic"
+        quote: "2,500,000 flight searches a day, around 30 per second, 200 at peak hour"
+      - id: SAB-F03
+        value: "200 searches per second at peak hour"
+        matches: '200\s*(per\s*second|/\s*s(ec)?|at\s*peak)'
+        subject: "search|peak|hour|traffic"
+        quote: "2,500,000 flight searches a day, around 30 per second, 200 at peak hour"
+      - id: SAB-F04
+        value: "8,000 bookings completed a day"
+        matches: '8,000'
+        subject: "booking|bookings|completed|day"
+        quote: "8,000 bookings completed a day, around 300 searches for each one"
+      - id: SAB-F05
+        value: "around 300 searches for each booking"
+        matches: '300\s*searches'
+        subject: "search|searches|booking|conversion|per booking"
+        quote: "8,000 bookings completed a day, around 300 searches for each one"
+      - id: SAB-F06
+        value: "25,000 actions a day on bookings already sold: seats, baggage, upgrades, consultations"
+        matches: '25,000'
+        subject: "actions|post-sale|already sold|seats|baggage|upgrades|consultations"
+        quote: "25,000 actions a day on bookings already sold: seats, baggage, upgrades, consultations"
+      - id: SAB-F07
+        value: "×10 search traffic spike within minutes of a promotion or a disruption"
+        matches: '10\s?x|x\s?10|×\s?10'
+        subject: "spike|promotion|disruption|search traffic|search volume|surge|burst|promo"
+        quote: "×10 search traffic within minutes of a promotion going out, or of a disruption"
+      - id: SAB-F08
+        value: "×3 total traffic during December and Holy Week, for two to three weeks"
+        matches: '3\s?x|x\s?3|×\s?3|two\s*to\s*three\s*weeks|2\s*[-–—]\s*3'
+        subject: "december|holy week|seasonal|total traffic|weeks|peak|season"
+        quote: "×3 total traffic during December and Holy Week, for two to three weeks"
+      - id: SAB-F09
+        value: "selling never stops, there is no maintenance window on the sales channel"
+        quote: "No pause selling never stops, there is no maintenance window on the sales channel"
+        verbatim: false
+        note: "The source layout has the callout label 'No pause' directly above the sentence; joined here as one line."
+      - id: SAB-F10
+        value: "flies inside Colombia and to five countries in the region, with US routes approved for month 18"
+        matches: '5\s*countries|five\s*countries|month\s*18'
+        subject: "colombia|routes|region|united states|month 18|country|countries"
+        quote: "The airline flies inside Colombia and to five countries in the region, with routes to the United States approved for month 18."
+      - id: SAB-F11
+        value: "around 65 percent of traffic on mobile"
+        matches: 'sixty[\s-]?five\s*percent|65\s*percent|65\s*%'
+        subject: "mobile|traffic|web|app|channel"
+        quote: "Web and mobile app, same capabilities on both, around 65 percent of traffic on mobile."
+      - id: SAB-F12
+        value: "PSS: 150 req/s before it rejects calls"
+        matches: '150\s*req'
+        subject: "pss|reservation system|reject|req/s|throughput|capacity"
+        quote: "150 req/s before it rejects calls"
+      - id: SAB-F13
+        value: "PSS: 800 ms p95, sometimes above five seconds"
+        matches: '800\s*ms|p9[0-9]|five\s*seconds|5\s*seconds?|5s\b'
+        subject: "pss|latency|p95|reservation system|response time"
+        quote: "800 ms p95, sometimes above five seconds"
+      - id: SAB-F14
+        value: "PSS holds expire at 15 min and the limit is theirs"
+        matches: '15\s*min'
+        subject: "hold|expire|pss|reservation system|seat hold"
+        quote: "holds expire at 15 min and the limit is theirs"
+      - id: SAB-F15
+        value: "twelve engineers in two squads"
+        matches: 'twelve\s*engineers|12\s*engineers|two\s*squads|2\s*squads'
+        subject: "team|engineers|squads|staffing"
+        quote: "The team and the clock Twelve engineers in two squads Live in four months, before December  ·  the same twelve operate it"
+        verbatim: false
+        note: "Table-row text from the source's 'ground you did not choose' table; columns joined as they read left to right."
+      - id: SAB-F16
+        value: "live in four months, before December; the same twelve operate it"
+        matches: 'four\s*months|4\s*months|before\s*december'
+        subject: "timeline|deadline|launch|live|deploy|december|operate"
+        quote: "The team and the clock Twelve engineers in two squads Live in four months, before December  ·  the same twelve operate it"
+        verbatim: false
+        note: "Same source row as SAB-F15; distinct fact (timeline vs. team size)."
+      - id: SAB-F17
+        value: "controlled overbooking margin is set by commercial per route and season, changed without a deployment"
+        subject: "overbooking|margin|route|season|deployment|commercial"
+        quote: "Sell above physical capacity inside a margin commercial sets per route and season, changed without a deployment."
+      - id: SAB-F18
+        value: "PSE payment confirmation comes back asynchronously, and the airline does not control when"
+        subject: "pse|payment|asynchronous|async|confirm|confirmation"
+        quote: "Confirms asynchronously, and you do not control when"
+      - id: SAB-F19
+        value: "out of scope: check-in and the airport, refunds and cancellations, miles and any payment method other than PSE, how fares are calculated, flight operations, agency and corporate channels"
+        subject: "out of scope|check in|airport|refunds|cancellations|miles|fares|flight operations|agency|corporate"
+        quote: "Check in and the airport. Refunds and cancellations. Miles and any payment method other than PSE. How fares are calculated. Flight operations. Agency and corporate channels."
+        verbatim: false
+        note: "Bullet-style scope-exclusion list joined into one line; wording and order unchanged from the source."
+      - id: SAB-F20
+        value: "what you hand in: (1) five architecture characteristics ranked, how you'd know each is met and what you give up for it; (2) components and boundaries at box/boundary level only, no schemas, no API signatures, no sequence diagrams; (3) your reasoning, out loud"
+        subject: "hand in|deliverable|characteristics|components|boundaries|reasoning|schemas|api signatures|sequence diagrams"
+        quote: "Five architecture characteristics, ranked, each with how you would know it is met and what you give up for it. Components and boundaries: what you own, what you delegate, where the truth lives, what can wait, and what keeps working when an external system fails. Your reasoning, out loud."
+        verbatim: false
+        note: "Numbered deliverable list (items 1-3) joined into one line; wording per item unchanged."
+      - id: SAB-F21
+        value: "a booking abandoned at the payment step is usually lost, the passenger goes to an aggregator instead"
+        subject: "abandon|payment step|lost|aggregator"
+        quote: "A booking abandoned at the payment step is usually lost, the passenger goes to an aggregator instead."
+      - id: SAB-F22
+        value: "direct sales carry a much better margin than agency sales, which is the entire reason this project exists"
+        subject: "margin|direct sales|agency sales|reason|project"
+        quote: "Direct sales carry a much better margin than agency sales, which is the entire reason this project exists."
+      - id: SAB-F23
+        value: "the airline pays for every call to the fare service"
+        subject: "fare service|pay|cost per call"
+        quote: "Fare service The price of an itinerary The airline pays for every call"
+        verbatim: false
+        note: "Table row (system / what it gives you / what it costs you) joined left to right."
+      - id: SAB-F24
+        value: "the seat map provider does not know what is free; that lives in the PSS"
+        subject: "seat map|cabin layout|availability|pss"
+        quote: "Seat map provider The cabin layout, the rows, the seat attributes It does not know what is free, that lives in the PSS"
+        verbatim: false
+        note: "Table row joined left to right."
+      - id: SAB-F25
+        value: "the platform is not the airline's operating system: flights, seats, fares and cabin maps live in systems that will not be replaced"
+        subject: "operating system|flights|seats|fares|cabin maps|systems that will not be replaced"
+        quote: "It is not the airline's operating system: flights, seats, fares and cabin maps live in systems that will not be replaced."
+      - id: SAB-F26
+        value: "the current platform is ten years old, the vendor no longer supports it, and every change takes months"
+        matches: 'ten\s*years?|10\s*years?|months'
+        subject: "current platform|vendor|legacy|change takes months"
+        quote: "The current one is ten years old, the vendor that built it no longer supports it, every change takes months, and sales keep leaking to online travel agencies."
+      - id: SAB-F27
+        value: "web and mobile app, same capabilities on both"
+        subject: "web|mobile|app|capabilities|channel parity"
+        quote: "Web and mobile app, same capabilities on both, around 65 percent of traffic on mobile."
+      - id: SAB-F28
+        value: "three blocks of 40 minutes"
+        matches: '(three|3)\s*blocks?\s*of\s*40\s*minutes|40\s*minutes?'
+        subject: "presentation|blocks|minutes|session|format"
+        quote: "Three blocks of 40 minutes  ·  Medellín and Bogotá  ·  September 2026"
+    unknowns:
+      - id: SAB-U01
+        topic: "attainment percentile / measurement window for any end-to-end response-time or availability target beyond the PSS's own 800ms p95 (no platform-level SLA/SLO was given)"
+      - id: SAB-U02
+        topic: "budget ceiling or cloud/infrastructure cost target"
+      - id: SAB-U03
+        topic: "applicable data-protection/compliance regime (e.g. Colombian Habeas Data law, PCI DSS scope for PSE flows) and data residency constraints"
+      - id: SAB-U04
+        topic: "existing cloud or platform commitment, if any"
+      - id: SAB-U05
+        topic: "current traffic pattern/architecture of the legacy platform being replaced (only its age and unsupported status are given)"
+      - id: SAB-U06
+        topic: "acceptable proportion of overbooking-driven denied boardings, or any compensation-cost ceiling for controlled overbooking"
+      - id: SAB-U07
+        topic: "whether the PSE payment failure/timeout rate or typical asynchronous-confirmation delay window is known"
+      - id: SAB-U08
+        topic: "target seat-hold reconciliation latency once PSE confirms, beyond the PSS's own 15-minute hold expiry"
+      - id: SAB-U09
+        topic: "specific team skill set (e.g., streaming vs. batch experience) for the twelve engineers"
+      - id: SAB-U10
+        topic: "whether a phased/canary rollout is acceptable given the 'no maintenance window' constraint, or whether that constraint also rules out blue/green cutover risk"
+      - id: SAB-U11
+        topic: "expected frequency of controlled-overbooking margin changes per route/season, and how quickly a margin change must take effect once commercial edits it"
+      - id: SAB-U12
+        topic: "how the PSS's 150 req/s ceiling should be apportioned between read-model refresh/poll traffic and write-path (hold/confirm) traffic, i.e. whether a rate-limiting or quota policy exists or is needed between the two"
