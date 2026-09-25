@@ -1,0 +1,90 @@
+pages: 1
+--- page 1 ---
+E V E N T    ·    C A S E  B R I E F
+SPACE
+Software Architecture & Systems Design
+A regional airline is rebuilding its direct sales channel. The current one is ten years old, the vendor that built it no longer supports it, every change takes months, and
+sales keep leaking to online travel agencies. The new platform is where a passenger searches for flights, books them, pays, adds seats and baggage, and later
+comes back to change what they bought. It is not the airline's operating system: flights, seats, fares and cabin maps live in systems that will not be replaced.
+The airline flies inside Colombia and to five countries in the region, with routes to the United States approved for month 18. Web and mobile app, same capabilities on
+both, around 65 percent of traffic on mobile.
+T H E  B U S I N E S S
+What the client told us
+2,500,000
+flight searches a day, around 30 per second, 200
+at peak hour
+8,000
+bookings completed a day, around 300 searches
+for each one
+25,000
+actions a day on bookings already sold: seats,
+baggage, upgrades, consultations
+×10
+search traffic within minutes of a promotion going
+out, or of a disruption
+×3
+total traffic during December and Holy Week, for
+two to three weeks
+No pause
+selling never stops, there is no maintenance
+window on the sales channel
+A booking abandoned at the payment step is usually lost, the passenger goes to an aggregator instead. Direct sales carry a much better margin than agency sales,
+which is the entire reason this project exists.
+S C O P E
+What the platform must do
+01 Search and book
+Find flights, create a booking, hold the seats until payment confirms or the
+hold expires.
+02 Seats and baggage
+Pick seats from the cabin map and add baggage, during the booking or at
+any moment after it.
+03 Upgrade to business
+Release the economy seat, take a business one, change the baggage
+included, invalidate the seat already chosen, charge the difference.
+04 Consult a reservation
+Retrieve a booking with code and last name. This is the door to 02 and 03
+after the sale.
+05 Controlled overbooking
+Sell above physical capacity inside a margin commercial sets per route
+and season, changed without a deployment.
+06 Payment with PSE
+The passenger pays at their bank, and the confirmation comes back
+asynchronously.
+T H E  G R O U N D  Y O U  D I D  N O T  C H O O S E
+What already exists and will not change
+S Y S T E M W H AT  I T  G I V E S  Y O U W H AT  I T  C O S T S  Y O U
+Reservation system
+(PSS)
+Schedules, availability, and the only source of
+truth for a seat
+150 req/s before it rejects calls  ·  800 ms p95, sometimes above five seconds  ·  holds
+expire at 15 min and the limit is theirs
+Fare service The price of an itinerary The airline pays for every call
+Seat map provider The cabin layout, the rows, the seat attributes It does not know what is free, that lives in the PSS
+PSE The payment Confirms asynchronously, and you do not control when
+The team and the clock Twelve engineers in two squads Live in four months, before December  ·  the same twelve operate it
+Out of scope
+Check in and the airport. Refunds and cancellations.
+Miles and any payment method other than PSE. How
+fares are calculated. Flight operations. Agency and
+corporate channels.
+What you hand in
+1. Five architecture characteristics, ranked, each with
+how you would know it is met and what you give up
+for it.
+2. Components and boundaries: what you own, what
+you delegate, where the truth lives, what can wait,
+and what keeps working when an external system
+fails.
+3. Your reasoning, out loud.
+Two rules. In block two, stay at the level of boxes
+and boundaries: no schemas, no API signatures, no
+sequence diagrams. Name concrete technologies if
+they help, what we will ask for is the trade off behind
+the choice.
+Anything unclear about the case, ask Juan, Pablo,
+Daniel or Goye. Not the jury.
+Space  ·  Event case brief  ·  Season 1  ·  2026 Better architectural decisions, together.
+The airline booking platform
+Three blocks of 40 minutes  ·  Medellín and Bogotá  ·  September 2026
+slalom

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPACE — The Airline Booking Platform — TF1 Solution</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a;
+    --blue:#1f5fa8;
+    --lightblue:#eaf2fb;
+    --accent:#e0762b;
+    --green:#2f9e5b;
+    --red:#c0392b;
+    --gray:#5b6470;
+    --bg:#f7f9fc;
+    --card:#ffffff;
+    --border:#dbe3ee;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:#1a2233;
+    line-height:1.55;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--blue));
+    color:#fff;
+    padding:48px 32px 36px;
+    text-align:center;
+  }
+  header h1{margin:0 0 8px;font-size:2.1rem;}
+  header p{margin:4px 0;opacity:.9;font-size:1rem;}
+  nav{
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:10;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px;
+    padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.05);
+  }
+  nav a{
+    color:var(--navy);text-decoration:none;font-size:.85rem;font-weight:600;
+    padding:8px 12px;border-radius:6px;
+  }
+  nav a:hover{background:var(--lightblue);}
+  main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+  section{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:28px 32px;
+    margin-bottom:28px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  h2{
+    color:var(--navy);
+    border-left:5px solid var(--accent);
+    padding-left:14px;
+    margin-top:0;
+    font-size:1.4rem;
+  }
+  h3{color:var(--blue);font-size:1.1rem;margin-top:28px;}
+  .badge{
+    display:inline-block;background:var(--lightblue);color:var(--blue);
+    font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;
+    margin-bottom:10px;letter-spacing:.03em;text-transform:uppercase;
+  }
+  table{width:100%;border-collapse:collapse;margin:14px 0 6px;font-size:.92rem;}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--navy);color:#fff;font-size:.85rem;}
+  tr:nth-child(even){background:#f9fbfd;}
+  .mermaid{
+    background:#fff;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+    margin:18px 0;
+    display:flex;justify-content:center;
+  }
+  ul.tick li{margin-bottom:6px;}
+  ul.tick li::marker{content:"✓  ";color:var(--green);font-weight:bold;}
+  .card-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:16px;margin:16px 0;
+  }
+  .mini-card{
+    background:var(--lightblue);border-radius:10px;padding:16px;border:1px solid #cfe0f5;
+  }
+  .mini-card h4{margin:0 0 6px;color:var(--navy);font-size:.95rem;}
+  .mini-card p{margin:0;font-size:.85rem;color:var(--gray);}
+  .decision{
+    border-left:4px solid var(--blue);background:#fff;padding:14px 18px;margin:14px 0;border-radius:6px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05);
+  }
+  .decision h4{margin:0 0 6px;color:var(--navy);}
+  .tradeoff{color:var(--accent);font-weight:600;}
+  .gap-box{
+    background:#fff6ec;border:1px solid #f0d3ad;border-radius:8px;padding:14px 18px;margin-top:10px;
+  }
+  .gap-box li{margin-bottom:6px;}
+  .cost-spectrum{width:100%;margin:24px 0;}
+  .cost-bar{
+    height:46px;border-radius:8px;
+    background:linear-gradient(90deg,#2f9e5b 0%, #e0c02b 50%, #c0392b 100%);
+    position:relative;
+  }
+  .cost-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--gray);}
+  .cost-points{position:relative;height:60px;margin-top:6px;}
+  .cost-point{
+    position:absolute;top:0;transform:translateX(-50%);
+    text-align:center;font-size:.78rem;width:150px;
+  }
+  .cost-point .dot{
+    width:12px;height:12px;border-radius:50%;background:var(--navy);margin:0 auto 4px;
+    border:2px solid #fff;box-shadow:0 0 0 2px var(--navy);
+  }
+  footer{
+    text-align:center;color:var(--gray);font-size:.8rem;padding:24px;
+  }
+  .flow-legend{font-size:.8rem;color:var(--gray);margin-top:6px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SPACE — The Airline Booking Platform</h1>
+  <p>Data Architect Academy · Slalom · TF1 reasoning-chain methodology applied to the SPACE event case brief</p>
+  <p><strong>Deliverable:</strong> TF1 Solution Report — Regional Airline Direct Sales Channel</p>
+</header>
+
+<nav>
+  <a href="index.html">All Reports</a>
+  <a href="space-airline-booking_EventBrief.md">Event Brief (what-you-hand-in)</a>
+  <a href="#context">Business Context</a>
+  <a href="#objectives">Objectives & Constraints</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#scenarios">QA Scenarios</a>
+  <a href="#asrs">ASRs</a>
+  <a href="#utility">Utility Tree</a>
+  <a href="#decisions">Decisions & Trade-offs</a>
+  <a href="#architecture">Architecture Diagram</a>
+  <a href="#governance">Governance & Security</a>
+  <a href="#cost">Cost of Change</a>
+  <a href="#gaps">Open Questions</a>
+  <a href="#dod">Definition of Done</a>
+</nav>
+
+<main>
+
+  <!-- CONTEXT -->
+  <section id="context">
+    <span class="badge">Case Brief</span>
+    <h2>1. Business Context</h2>
+    <p>A regional Colombian airline is rebuilding its direct sales channel. The current platform is 10 years old [SAB-F26],
+    the vendor no longer supports it, and every change takes months [SAB-F26]. Sales keep leaking to online travel
+    agencies (OTAs): a booking abandoned at the payment step is usually lost, sending the passenger to an
+    aggregator instead [SAB-F21], and direct sales carry a much better margin than agency sales, which is the
+    entire reason this project exists [SAB-F22]. The new platform is <em>not</em> the airline's operating system —
+    flights, seats, fares and cabin maps live in systems that will not be replaced [SAB-F25].</p>
+    <div class="two-col">
+      <div>
+        <h3>Reach</h3>
+        <ul class="tick">
+          <li>Flies inside Colombia and to five countries in the region, with US routes approved for month 18 [SAB-F10]</li>
+          <li>Web and mobile app, same capabilities on both [SAB-F27]</li>
+          <li>Around 65% of traffic on mobile [SAB-F11]</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Scale (what the client told us)</h3>
+        <ul class="tick">
+          <li>2,500,000 [SAB-F01] flight searches a day — ~30/sec average [SAB-F02], 200/sec [SAB-F03] at peak hour</li>
+          <li>8,000 [SAB-F04] bookings completed a day, ~300 searches [SAB-F05] per booking</li>
+          <li>25,000 [SAB-F06] post-sale actions/day (seats, baggage, upgrades, consultations)</li>
+          <li>10x [SAB-F07] search spike within minutes of a promotion or disruption</li>
+          <li>3x [SAB-F08] total traffic in December/Holy Week, for 2–3 weeks [SAB-F08]</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECTIVES & CONSTRAINTS -->
+  <section id="objectives">
+    <span class="badge">Step 1 & 2</span>
+    <h2>2. Business Objectives & Constraints</h2>
+    <h3>Objectives</h3>
+    <table>
+      <tr><th>#</th><th>Objective</th></tr>
+      <tr><td>O1</td><td>Recover margin-rich direct sales lost to OTAs by replacing an unsupported, slow-to-change legacy platform — a booking abandoned at payment is usually lost to an aggregator [SAB-F21], and direct sales carry a much better margin than agency sales [SAB-F22].</td></tr>
+      <tr><td>O2</td><td>Let passengers search, book, pay, and manage what they bought (seats, baggage, upgrades) continuously across the current Colombia + 5-country network [SAB-F10] and the US expansion approved for month 18 [SAB-F10], without being limited by the legacy system's months-long change cycle [SAB-F26].</td></tr>
+      <tr><td>O3</td><td>Let commercial teams tune controlled overbooking per route and season without needing an engineering deployment [SAB-F17], while operating inside the reservation system's (PSS) hard, unchangeable limits [SAB-F12], [SAB-F13], [SAB-F14].</td></tr>
+    </table>
+    <h3>Constraints</h3>
+    <table>
+      <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
+      <tr><td>C1</td><td>Live in 4 months [SAB-F16], before December, and the same 12 engineers [SAB-F15] who build it also operate it</td><td>Timeline / delivery capacity</td></tr>
+      <tr><td>C2</td><td>Team is 12 engineers in 2 squads [SAB-F15] — fixed headcount, no separate ops team implied</td><td>Delivery capacity</td></tr>
+      <tr><td>C3</td><td>Reservation system (PSS) rejects calls above 150 req/s [SAB-F12], has 800ms p95 [SAB-F13] latency (sometimes above five seconds [SAB-F13]), and controls a 15-minute [SAB-F14] seat-hold expiry — none of which the airline can change</td><td>External system / technical ceiling</td></tr>
+      <tr><td>C4</td><td>No maintenance window — selling never stops on the sales channel [SAB-F09]</td><td>Operational</td></tr>
+      <tr><td>C5</td><td>PSE payment confirms asynchronously, and the airline does not control when [SAB-F18]</td><td>External system / integration</td></tr>
+      <tr><td>C6</td><td>Out of scope: check-in and the airport, refunds and cancellations, miles and any payment method other than PSE, fare calculation, flight operations, agency and corporate channels [SAB-F19]</td><td>Scope boundary</td></tr>
+      <tr><td>C7</td><td>The platform is not the airline's operating system — flights, seats, fares and cabin maps live in systems that will not be replaced [SAB-F25]; the fare service is paid per call [SAB-F23] and the seat map provider does not know what is free [SAB-F24]</td><td>System-of-record boundary</td></tr>
+    </table>
+  </section>
+
+  <!-- REQUIREMENTS -->
+  <section id="requirements">
+    <span class="badge">Step 3</span>
+    <h2>3. Functional & Quality Requirements</h2>
+    <div class="two-col">
+      <div>
+        <h3>Functional (what it must do)</h3>
+        <ul class="tick">
+          <li>Search flights and create a booking, holding the seats until payment confirms or the hold expires</li>
+          <li>Let passengers pick seats from the cabin map and add baggage, during booking or at any point after it</li>
+          <li>Support upgrade to business: release the economy seat, take a business seat, change included baggage, invalidate the seat already chosen, and charge the difference</li>
+          <li>Retrieve a booking by code and last name, as the entry point to seats/baggage/upgrade actions after the sale</li>
+          <li>Sell above physical capacity inside a margin commercial sets per route and season, changed without a deployment [SAB-F17]</li>
+          <li>Accept payment via PSE, whose confirmation returns asynchronously [SAB-F18]</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quality Attributes (how well)</h3>
+        <ul class="tick">
+          <li><strong>Throughput ceiling awareness:</strong> absorb 200/sec [SAB-F03] peak search and 10x [SAB-F07] promo/disruption spikes while never exceeding the PSS's 150 req/s [SAB-F12] limit</li>
+          <li><strong>Latency envelope:</strong> design around the PSS's 800ms p95 [SAB-F13], sometimes above five seconds [SAB-F13] response time — no end-to-end platform SLA/percentile beyond this was given <em>(see Open Questions)</em></li>
+          <li><strong>Seasonal scalability:</strong> sustain 3x [SAB-F08] total traffic for 2–3 weeks [SAB-F08] during the December/Holy Week [SAB-F08] peak</li>
+          <li><strong>Continuity:</strong> no maintenance window on the sales channel [SAB-F09] — a scheduling constraint, not an uptime percentage; no reliability percentile was given, see Open Questions</li>
+          <li><strong>Hold/consistency bound:</strong> seat holds are governed by the PSS's own 15-minute [SAB-F14] expiry, which the platform does not control</li>
+          <li><strong>Modifiability:</strong> overbooking margin changed without a deployment [SAB-F17] — no propagation-time bound given <em>(see Open Questions)</em></li>
+          <li><strong>Delivery constraint:</strong> first release within 4 months [SAB-F16], built and run by 12 engineers [SAB-F15]</li>
+          <li><strong>Channel mix:</strong> ~65% [SAB-F11] of traffic on mobile, same capabilities web and mobile [SAB-F27]</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- QA SCENARIOS -->
+  <section id="scenarios">
+    <span class="badge">Step 3 → Measurable</span>
+    <h2>4. Quality-Attribute Scenarios</h2>
+
+    <h3>Scenario 1 — Search Traffic Spike During a Promotion</h3>
+    <table>
+      <tr><th>Source</th><td>Marketing team sends a promotion, or an operational disruption occurs</td></tr>
+      <tr><th>Stimulus</th><td>Search traffic rises 10x [SAB-F07] within minutes [SAB-F07]</td></tr>
+      <tr><th>Environment</th><td>Normal operating day; the PSS enforces a hard 150 req/s [SAB-F12] call ceiling</td></tr>
+      <tr><th>Artifact</th><td>Search / availability serving layer</td></tr>
+      <tr><th>Response</th><td>The platform serves the spike from a read-optimized layer instead of proportionally increasing calls to the PSS</td></tr>
+      <tr><th>Response Measure</th><td>Sustained PSS call rate stays at or below 150 req/s [SAB-F12] even while inbound search volume rises 10x [SAB-F07] within minutes; no attainment percentile beyond the PSS's own figures was given — <em>see Open Questions</em>.</td></tr>
+    </table>
+
+    <h3>Scenario 2 — Seasonal Peak With No Maintenance Window</h3>
+    <table>
+      <tr><th>Source</th><td>Passengers nationwide and in the five [SAB-F10] served countries</td></tr>
+      <tr><th>Stimulus</th><td>Total traffic reaches 3x [SAB-F08] baseline</td></tr>
+      <tr><th>Environment</th><td>December and Holy Week, for two to three weeks [SAB-F08]; selling never stops, no maintenance window on the sales channel [SAB-F09]</td></tr>
+      <tr><th>Artifact</th><td>Booking + post-sale platform as a whole (search, book, seats/baggage, upgrades, consultations)</td></tr>
+      <tr><th>Response</th><td>The platform keeps accepting searches, bookings, and post-sale actions through the entire peak window without a scheduled outage</td></tr>
+      <tr><th>Response Measure</th><td>No maintenance window occurs during the 2–3 week [SAB-F08] peak period [SAB-F09]; no numeric reliability/error-rate target beyond this was given — <em>see Open Questions</em>.</td></tr>
+    </table>
+
+    <h3>Scenario 3 — PSE Confirms After the Seat Hold Has Expired</h3>
+    <table>
+      <tr><th>Source</th><td>Passenger at the payment step</td></tr>
+      <tr><th>Stimulus</th><td>Passenger pays at their bank via PSE; confirmation comes back asynchronously [SAB-F18], and the airline does not control when [SAB-F18]</td></tr>
+      <tr><th>Environment</th><td>Normal operation; the seat hold is governed by the PSS's own 15-minute [SAB-F14] expiry</td></tr>
+      <tr><th>Artifact</th><td>Booking state machine / payment-reconciliation logic</td></tr>
+      <tr><th>Response</th><td>The system reconciles a late PSE confirmation against the current hold status instead of assuming the hold is still valid</td></tr>
+      <tr><th>Response Measure</th><td>Every PSE confirmation that arrives after its hold's 15-minute [SAB-F14] expiry resolves to an explicit outcome (re-held, refunded, or failed) rather than being silently dropped; no target reconciliation latency or attainment percentile was given — <em>see Open Questions</em>.</td></tr>
+    </table>
+
+    <h3>Scenario 4 — Overbooking Margin Changed Without a Deployment</h3>
+    <table>
+      <tr><th>Source</th><td>Commercial / revenue-management team</td></tr>
+      <tr><th>Stimulus</th><td>Requests a change to the controlled-overbooking margin for a specific route and season</td></tr>
+      <tr><th>Environment</th><td>Ongoing production sales, no maintenance window [SAB-F09]</td></tr>
+      <tr><th>Artifact</th><td>Overbooking policy configuration</td></tr>
+      <tr><th>Response</th><td>The new margin takes effect for that route/season</td></tr>
+      <tr><th>Response Measure</th><td>The margin changes without a deployment [SAB-F17]; no numeric propagation-time bound was given — <em>see Open Questions</em>.</td></tr>
+    </table>
+  </section>
+
+  <!-- ASRs -->
+  <section id="asrs">
+    <span class="badge">Step 4</span>
+    <h2>5. Architecturally Significant Requirements (ASRs)</h2>
+    <div class="mermaid">
+graph TD
+  R["SPACE Booking Platform"] --> A1["ASR 1<br/>PSS Capacity & Latency Ceiling"]
+  R --> A2["ASR 2<br/>Continuous Availability Under Variable Load"]
+  R --> A3["ASR 3<br/>Async Payment vs. PSS-Controlled Hold Expiry"]
+  A1 --> A1d["150 req/s [SAB-F12], 800ms p95 [SAB-F13] &gt;5s [SAB-F13] —<br/>PSS will not be replaced [SAB-F25]"]
+  A2 --> A2d["No maintenance window [SAB-F09],<br/>10x [SAB-F07] promo spikes, 3x [SAB-F08] seasonal peaks"]
+  A3 --> A3d["PSE confirms asynchronously [SAB-F18];<br/>PSS holds expire at 15 min [SAB-F14], PSS-controlled"]
+  style R fill:#0b1f3a,color:#fff
+  style A1 fill:#e0762b,color:#fff
+  style A2 fill:#e0762b,color:#fff
+  style A3 fill:#e0762b,color:#fff
+    </div>
+    <h3>Why Each ASR Is Architecturally Significant (explicit justification)</h3>
+    <table>
+      <tr><th>ASR</th><th>Justification</th></tr>
+      <tr><td><strong>ASR 1 — PSS Capacity & Latency Ceiling</strong></td><td>The PSS is the only source of truth for a seat [SAB-F24] and rejects calls above 150 req/s [SAB-F12], with p95 [SAB-F13] latency of 800ms [SAB-F13] sometimes exceeding five seconds [SAB-F13] — and it "will not be replaced" [SAB-F25]. Every functional path (search, book, seats/baggage, upgrade) ultimately depends on this one external ceiling, so it cannot be solved feature-by-feature: it forces a structural read/write separation across the whole platform (per ATAM: a quality-attribute constraint that forces a competing design response), which is the definition of an ASR.</td></tr>
+      <tr><td><strong>ASR 2 — Continuous Availability Under Variable Load</strong></td><td>Selling never stops and there is no maintenance window [SAB-F09], yet load is explicitly non-uniform: 10x [SAB-F07] within minutes of a promotion or disruption, and 3x [SAB-F08] for 2–3 weeks [SAB-F08] every December/Holy Week peak [SAB-F08]. Meeting both constraints together — never pausing, while absorbing order-of-magnitude swings — rules out any design that assumes a quiet window to deploy, migrate, or recover in, which reshapes the deployment and scaling architecture itself, not one feature of it.</td></tr>
+      <tr><td><strong>ASR 3 — Async Payment vs. PSS-Controlled Hold Expiry</strong></td><td>PSE "confirms asynchronously, and you do not control when" [SAB-F18], while the PSS's seat hold expires at 15 minutes [SAB-F14] on a timer the airline does not control either [SAB-F14]. Two systems the airline does not own can each independently invalidate the other's assumption about booking state at any moment — this is not a single feature's edge case, it dictates whether the booking flow can be modeled as one synchronous transaction at all, which is a structural, platform-wide decision.</td></tr>
+    </table>
+  </section>
+
+  <!-- UTILITY TREE -->
+  <section id="utility">
+    <span class="badge">Step 4 → Prioritization</span>
+    <h2>6. Utility Tree</h2>
+    <p>A Utility Tree doesn't say what to build — it says what cannot afford to be wrong. Priority = (Importance to business, Difficulty/Risk).</p>
+    <div class="mermaid">
+graph LR
+  U["Utility"] --> QA1["Elastic Read Scalability"]
+  U --> QA2["Continuity / Availability"]
+  U --> QA3["Consistency Across Async Boundaries"]
+  U --> QA4["Modifiability"]
+
+  QA1 --> S1["Absorb 10x [SAB-F07] promo spikes and<br/>200/sec [SAB-F03] peak search within<br/>the PSS's 150 req/s [SAB-F12] ceiling<br/><b>(High, High)</b>"]
+  QA2 --> S2["No maintenance window [SAB-F09]<br/>through 3x [SAB-F08] seasonal peaks<br/><b>(High, High)</b>"]
+  QA3 --> S3["Reconcile async PSE confirmation [SAB-F18]<br/>against the PSS's 15-min [SAB-F14] hold expiry<br/><b>(High, High)</b>"]
+  QA4 --> S4["Change overbooking margin per<br/>route/season without a deployment [SAB-F17]<br/><b>(Medium, Medium)</b>"]
+  QA2 --> S5["12-engineer/2-squad [SAB-F15] team ships<br/>in 4 months [SAB-F16]<br/><b>(Medium, Medium)</b>"]
+
+  style U fill:#0b1f3a,color:#fff
+  style QA1 fill:#1f5fa8,color:#fff
+  style QA2 fill:#1f5fa8,color:#fff
+  style QA3 fill:#1f5fa8,color:#fff
+  style QA4 fill:#1f5fa8,color:#fff
+  style S1 fill:#c0392b,color:#fff
+  style S2 fill:#c0392b,color:#fff
+  style S3 fill:#c0392b,color:#fff
+  style S4 fill:#e0c02b,color:#1a2233
+  style S5 fill:#e0c02b,color:#1a2233
+    </div>
+    <p class="flow-legend">🔴 Red = highest priority (high importance, high risk) &nbsp;|&nbsp; 🟡 Yellow = medium priority</p>
+  </section>
+
+  <!-- DECISIONS -->
+  <section id="decisions">
+    <span class="badge">Step 5</span>
+    <h2>7. Architecture Decisions & Trade-offs</h2>
+    <div style="background:#eaf2fb;border-left:4px solid #1f5fa8;padding:14px 18px;border-radius:6px;margin-bottom:18px;">
+      <strong>The "¿Para qué?" test applied to each decision below.</strong> Before naming any tool,
+      each decision must answer: <em>What outcome does this serve? Which business objective does it
+      trace back to? Which quality attribute or ASR makes it necessary rather than optional?</em>
+      A recommendation that cannot answer all three is a preference, not a justified decision.
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Read-model in front of the PSS</strong></td><td>Search stays fast and available under promo/seasonal spikes without ever exceeding the PSS's call limit</td><td>O1, O2 (recover direct sales; continuous selling)</td><td>ASR 1 — PSS capacity & latency ceiling</td></tr>
+      <tr><td><strong>2 — Circuit breaker + queue for PSS writes</strong></td><td>Booking/post-sale mutations degrade gracefully instead of failing outright under load spikes</td><td>O1, O2</td><td>ASR 1, ASR 2</td></tr>
+      <tr><td><strong>3 — Explicit booking-state machine + reconciliation</strong></td><td>A late PSE confirmation never silently loses or double-sells a seat</td><td>O1 (protect revenue from lost bookings), O2</td><td>ASR 3 — async payment vs. PSS-controlled hold</td></tr>
+      <tr><td><strong>4 — Overbooking margin as externalized config</strong></td><td>Commercial reacts per route/season without waiting on an engineering release</td><td>O3 (tune overbooking without deploying)</td><td>Functional requirement 05 (controlled overbooking)</td></tr>
+      <tr><td><strong>5 — Zero-maintenance-window deployment strategy</strong></td><td>Releases ship continuously without ever pausing the sales channel</td><td>O1, O2 (never lose a sale to an outage)</td><td>ASR 2 — continuous availability under variable load</td></tr>
+    </table>
+
+    <div class="decision">
+      <h4>Decision 1 — Read-Model / Cache Layer in Front of the PSS for Search &amp; Availability</h4>
+      <p><strong>Chosen approach.</strong> Serve the 2,500,000 [SAB-F01] daily searches (average 30/sec [SAB-F02], peak 200/sec [SAB-F03], up to 10x [SAB-F07] during a promotion or disruption) from a continuously refreshed read-optimized availability view, rather than forwarding every search directly to the PSS.</p>
+      <p><strong>Rejected alternative.</strong> A thin pass-through proxy that forwards every search request directly to the PSS in real time, with no intermediate read layer at all.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> At low request volume this is the simplest possible design: one code path, always perfectly consistent with the PSS's own answer, no cache-invalidation logic to build or operate, and no extra infrastructure component for a 12-engineer [SAB-F15] team to run under a 4-month [SAB-F16] deadline. Many smaller booking systems run exactly this way for years without trouble.</p>
+      <p><strong>What is sacrificed.</strong> Perfect real-time freshness — the read layer can be briefly stale relative to the PSS's true state — plus the ongoing cost of building and operating an additional caching/read-model component that the pass-through design would not need.</p>
+      <p><strong>What is gained.</strong> Sustained call volume against the PSS stays within its 150 req/s [SAB-F12] ceiling and inside its 800ms p95 [SAB-F13], sometimes above five seconds [SAB-F13] latency envelope, even during 200/sec [SAB-F03] peak-hour search and 10x [SAB-F07] promotional spikes — directly protecting the conversion path that funds the whole project, since an abandoned booking is usually lost to an aggregator [SAB-F21].</p>
+      <p><strong>Reversal condition.</strong> Revisit this if the PSS's contractual ceiling is demonstrably raised, or if measured p95 [SAB-F13] latency drops enough that direct pass-through can absorb 200/sec [SAB-F03] peak plus a 10x [SAB-F07] spike without ever breaching 150 req/s [SAB-F12].</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The current traffic pattern and architecture of the legacy platform being replaced is not known [SAB-U05] — without it, we cannot tell how close today's system already runs to the PSS ceiling, which affects how aggressively the read layer needs to be refreshed. This also interacts with Decision 2: the read-model's refresh/poll cadence against the PSS and the write path's holds/confirms share the same 150 req/s [SAB-F12] ceiling, so an aggressively tuned refresh rate during a 10x [SAB-F07] search spike could itself starve the headroom the write path needs; how that shared budget is apportioned between the two paths is not stated in the brief [SAB-U12] and is addressed further in Decision 2.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Redis or Apache Ignite as the read-model store, refreshed via a lightweight sync/poll worker. <em>Platform / lakehouse-adjacent:</em> Azure Cache for Redis or Google Cloud Memorystore as a managed operational cache. <em>Hyperscaler-native:</em> Amazon ElastiCache. All are read caches, not systems of record — the PSS remains the only source of truth for a seat [SAB-F24].</p>
+      <p class="tradeoff">Trade-off: a managed cache reduces 12-engineer [SAB-F15] operational burden but ties the read path to one provider's networking/region model; a self-hosted Redis/Ignite cluster is portable across clouds at the cost of the team operating it themselves.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 2 — Circuit Breaker &amp; Bounded Queue for PSS Write/Mutating Calls</h4>
+      <p><strong>Chosen approach.</strong> Place a circuit breaker and a bounded queue with backpressure in front of every PSS-mutating call (create hold, confirm, seat change, upgrade), separate from the read path in Decision 1, since holds and writes cannot be served from a cache and must always reach the PSS.</p>
+      <p><strong>Rejected alternative.</strong> Ask the PSS vendor to raise the 150 req/s [SAB-F12] ceiling, or negotiate a higher-throughput tier, instead of adding client-side protection.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> If the contract allowed it, this would remove the constraint at its source rather than working around it — no breaker, no queue, no added latency from client-side protection logic, and it is the most direct possible fix to a stated external ceiling.</p>
+      <p><strong>What is sacrificed.</strong> The PSS is explicitly a system that will not be replaced [SAB-F25] and is described only by what it gives and what it costs, not as something the airline can renegotiate; pursuing vendor renegotiation would consume time the 4-month [SAB-F16] delivery window does not have, and there is no evidence in the brief that this is even on the table.</p>
+      <p><strong>What is gained.</strong> Mutating calls degrade gracefully — queued or shed — during 10x [SAB-F07] promotional spikes and 3x [SAB-F08] seasonal peaks without ever exceeding 150 req/s [SAB-F12], which is what lets the platform keep selling with no maintenance window [SAB-F09] instead of failing outright when the PSS starts rejecting calls.</p>
+      <p><strong>Reversal condition.</strong> Revisit this if measured write volume, even at a 10x [SAB-F07] spike, never approaches the 150 req/s [SAB-F12] ceiling in practice — at that point the breaker/queue is unnecessary complexity for a risk that does not materialize.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The PSE failure/timeout rate and typical asynchronous confirmation delay are not known [SAB-U07] — this affects how deep the write queue can safely grow before queued holds risk missing the PSS's 15-minute [SAB-F14] expiry. Separately, the 150 req/s [SAB-F12] ceiling is shared with Decision 1's read-model refresh polling, and no split between the two paths is given [SAB-U12] — this is flagged as an unresolved fact requiring an explicit rate-limiting/quota policy between refresh polling and mutating calls, so a refresh cadence tuned for a 10x [SAB-F07] search spike cannot silently starve the write path's share of the same ceiling.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Envoy or resilience4j-style circuit breakers with a Kafka- or RabbitMQ-backed queue. <em>Platform-native:</em> Azure Service Bus with Azure API Management policies, or Google Cloud Pub/Sub with a rate-limited Apigee proxy. <em>Hyperscaler-native:</em> Amazon SQS with API Gateway usage plans / AWS App Mesh circuit breaking.</p>
+      <p class="tradeoff">Trade-off: a managed queue/gateway shortens the 4-month [SAB-F16] build for a 12-engineer [SAB-F15] team but ties throttling policy to one vendor's configuration model; a portable OSS mesh (Envoy) keeps the breaker logic reusable if the platform migrates clouds later.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 3 — Explicit Booking-State Machine With Reconciliation for Asynchronous PSE Confirmation</h4>
+      <p><strong>Chosen approach.</strong> Model a booking as explicit states (searching → held → awaiting-payment → confirmed / expired / failed) with a reconciliation worker that matches late, asynchronous PSE confirmations [SAB-F18] against the PSS's current hold status, instead of assuming the hold is still valid when payment resolves.</p>
+      <p><strong>Rejected alternative.</strong> Treat payment as a synchronous step inside the booking transaction — block the booking flow and wait for PSE to respond before marking the seat sold.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is a simpler mental model with one code path and no distributed reconciliation logic to build, test, or operate — and it works perfectly well for payment integrations that genuinely respond synchronously. It is the default most booking systems reach for first.</p>
+      <p><strong>What is sacrificed.</strong> The ability to hold the user-facing flow open for however long PSE takes, because it explicitly confirms asynchronously and the airline does not control when [SAB-F18] — a synchronous design would either time out incorrectly while payment is still pending, or hold server resources open indefinitely with no bound.</p>
+      <p><strong>What is gained.</strong> Correct handling of the case where a PSE confirmation arrives after the PSS's 15-minute [SAB-F14] hold has already expired: the reconciliation worker can explicitly re-hold, refund, or fail the booking instead of silently losing the sale or double-selling the seat — protecting the revenue objective, since a lost or mishandled booking sends the passenger to an aggregator [SAB-F21] just as an outright abandonment would.</p>
+      <p><strong>Reversal condition.</strong> Revisit this if PSE begins offering a synchronous confirmation mode or a guaranteed response-time SLA that reliably completes within the PSS's 15-minute [SAB-F14] hold window, removing the need for a separate reconciliation path.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No target reconciliation latency beyond the PSS's own 15-minute [SAB-F14] expiry is given [SAB-U08] — without it, the polling/retry cadence of the reconciliation worker cannot be sized precisely, only bounded conservatively.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Temporal or Apache Camel/Zeebe as a durable workflow/state-machine engine. <em>Platform-native:</em> Azure Durable Functions or Google Cloud Workflows. <em>Hyperscaler-native:</em> AWS Step Functions with an SQS-backed reconciliation consumer.</p>
+      <p class="tradeoff">Trade-off: a durable workflow engine (Temporal) is portable and keeps booking-state logic out of any single cloud's proprietary orchestration format, at the cost of the 12-engineer [SAB-F15] team learning and operating a new runtime; a managed step-function service is faster to stand up within the 4-month [SAB-F16] window but couples booking-state logic to that vendor's execution model.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 4 — Controlled-Overbooking Margin as Externalized, Versioned Configuration</h4>
+      <p><strong>Chosen approach.</strong> Implement the controlled-overbooking margin as data-driven configuration per route and season, editable by commercial through a config/rules service, rather than as a value encoded in application code.</p>
+      <p><strong>Rejected alternative.</strong> Encode the margin logic and per-route/season values directly in application code, changed through the normal engineering release pipeline.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> It is simpler to build — no separate config store, no versioning, no access-control model for who may edit a commercially sensitive number — and it is exactly how many smaller systems implement business rules successfully when those rules change rarely.</p>
+      <p><strong>What is sacrificed.</strong> An additional moving part: a config/rules store, a change-history/versioning mechanism, and an access-control layer restricting who may edit overbooking margins, all of which must themselves be reliable and auditable.</p>
+      <p><strong>What is gained.</strong> The margin can be changed without a deployment [SAB-F17], letting commercial react per route and season without competing for the same 12-engineer, 2-squad [SAB-F15] team that is simultaneously building the rest of the platform inside a 4-month [SAB-F16] window.</p>
+      <p><strong>Reversal condition.</strong> Revisit this if margin changes turn out to be rare in practice — a low observed change frequency may not justify a dedicated config service over a fast-tracked, well-tested deploy pipeline.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> The expected frequency of margin changes, and how quickly a change must take effect once commercial edits it, is not given [SAB-U11] — without it, the cost/benefit of a dedicated config service versus an accelerated deploy path cannot be finalized.</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Unleash or OpenFeature as a self-hosted feature/config-flag service with audit history. <em>Commercial:</em> LaunchDarkly. <em>Platform-native:</em> Azure App Configuration. <em>Hyperscaler-native:</em> AWS AppConfig.</p>
+      <p class="tradeoff">Trade-off: a self-hosted OSS flag service avoids per-seat vendor licensing and keeps configuration portable, at the cost of the team running one more piece of infrastructure; a managed commercial or cloud-native service ships faster inside the 4-month [SAB-F16] window but adds a recurring vendor dependency for a business-critical commercial lever.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 5 — Zero-Maintenance-Window Deployment Strategy</h4>
+      <p><strong>Chosen approach.</strong> Adopt a rolling or blue-green deployment approach with backward/forward-compatible schema and API changes, so releases ship while the sales channel keeps accepting traffic, because there is no maintenance window on the sales channel [SAB-F09].</p>
+      <p><strong>Rejected alternative.</strong> A traditional scheduled maintenance window for deployments — a brief, planned pause in sales during low-traffic hours.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> Maintenance windows are simpler to reason about: no need for two application versions to interoperate during rollout, no backward-compatible schema discipline, and a scheduled short pause is still standard practice at many airlines. Nothing about the technology itself forbids it.</p>
+      <p><strong>What is sacrificed.</strong> Simplicity of release engineering — every change must now be deployable without breaking in-flight bookings or holds, which means disciplined backward/forward-compatible migrations, feature flags for multi-version overlap, and more careful release sequencing than a stop-the-world deploy would require, adding process overhead for the same 12-engineer [SAB-F15] team.</p>
+      <p><strong>What is gained.</strong> Selling never stops [SAB-F09] through the entire 4-month [SAB-F16] build-out and beyond, including through the 3x [SAB-F08] December/Holy Week peaks — preserving the direct-sales margin advantage that is the entire reason this project exists [SAB-F22].</p>
+      <p><strong>Reversal condition.</strong> Revisit this if actual traffic data shows a verified low-traffic window where a short planned pause has negligible booking impact — but this would directly contradict the explicit "no pause" wording [SAB-F09] and would need explicit stakeholder sign-off before being adopted.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> Whether a phased/canary rollout is acceptable given the no-maintenance-window constraint, or whether that constraint also rules out any blue/green cutover risk window, is not stated [SAB-U10].</p>
+      <p><strong>Technology options:</strong> <em>Open-source / portable:</em> Kubernetes rolling updates with Argo Rollouts for canary/blue-green control. <em>Platform-native:</em> Google Cloud Deploy or Azure DevOps blue-green release pipelines. <em>Hyperscaler-native:</em> AWS CodeDeploy blue/green deployments.</p>
+      <p class="tradeoff">Trade-off: Kubernetes + Argo Rollouts is portable across clouds and avoids locking the release process to one vendor's pipeline, at the cost of the 12-engineer [SAB-F15] team operating the cluster itself; a managed deploy service reduces that operational load within the 4-month [SAB-F16] window but ties the rollout mechanism to that provider.</p>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE DIAGRAM -->
+  <section id="architecture">
+    <span class="badge">Visualized Solution</span>
+    <h2>8. Proposed Architecture (High Level)</h2>
+    <div class="mermaid">
+flowchart TB
+  subgraph CH["Channels"]
+    direction LR
+    W["Web"]
+    M["Mobile App<br/>~65% [SAB-F11] of traffic"]
+  end
+
+  subgraph EDGE["Edge / API Layer"]
+    GW["API Gateway<br/>+ Circuit Breaker (Decision 2)"]
+  end
+
+  subgraph READ["Search & Availability Read-Model (Decision 1)"]
+    RM["Cache / Read View<br/>refreshed from PSS"]
+  end
+
+  subgraph BOOK["Booking Domain"]
+    SM["Booking State Machine<br/>+ Reconciliation (Decision 3)"]
+    OB["Overbooking Policy Config<br/>(Decision 4)"]
+  end
+
+  subgraph EXT["External Systems We Do Not Own"]
+    direction LR
+    PSS["PSS<br/>150 req/s [SAB-F12]<br/>800ms p95 [SAB-F13], &gt;5s [SAB-F13]<br/>15-min hold [SAB-F14]"]
+    FARE["Fare Service<br/>paid per call [SAB-F23]"]
+    SEATMAP["Seat Map Provider<br/>no availability truth [SAB-F24]"]
+    PSE["PSE<br/>async confirmation [SAB-F18]"]
+  end
+
+  CH --> GW
+  GW --> RM
+  GW --> SM
+  RM -.refresh.-> PSS
+  SM --> PSS
+  SM --> OB
+  SM --> PSE
+  RM --> FARE
+  RM --> SEATMAP
+
+  style CH fill:#eaf2fb,stroke:#1f5fa8
+  style EDGE fill:#1f5fa8,color:#fff
+  style READ fill:#2f9e5b,color:#fff
+  style BOOK fill:#0b1f3a,color:#fff
+  style EXT fill:#c0392b,color:#fff
+    </div>
+    <p class="flow-legend">External systems (red) are the ground the platform did not choose — they are not replaced, only integrated with and protected against.</p>
+  </section>
+
+  <!-- GOVERNANCE & SECURITY -->
+  <section id="governance">
+    <span class="badge">Design Recommendations</span>
+    <h2>9. Governance &amp; Security Recommendations</h2>
+    <p>The brief does not state that the platform handles regulated data explicitly, but a booking system inherently
+    carries passenger name (used to retrieve a booking by code and last name), payment interactions through PSE,
+    and — for the US routes approved for month 18 [SAB-F10] — likely travel-document data. This makes governance
+    and security a candidate ASR-adjacent concern even though no compliance regime was named.</p>
+
+    <h3>Is Governance/Security an ASR Here?</h3>
+    <p><strong>Partially — treated as a design concern, not a fourth ASR.</strong> The brief never states a
+    regulatory driver, an access-control requirement, or an auditability requirement, unlike the PSS/availability/
+    async-payment constraints that are stated explicitly and repeatedly. Promoting governance to a fourth ASR would
+    not be traceable to anything given, so it is addressed here as a required design section per this repository's
+    rules, and the applicable compliance regime is listed under Open Questions rather than assumed.</p>
+
+    <h3>Governance Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Ownership &amp; stewardship</td><td>Assign a data owner for booking/passenger records, distinct from the PSS/fare-service/seat-map providers, since those systems of record will not be replaced [SAB-F25] and the platform's own domain (bookings, holds, post-sale actions) must have a clear owner among the 12 engineers [SAB-F15].</td></tr>
+      <tr><td>Catalog &amp; discoverability</td><td>Register the booking, hold, and payment-reconciliation datasets with owner, freshness, and sensitivity so the small team can reason about what is authoritative here versus in the PSS.</td></tr>
+      <tr><td>Lineage &amp; traceability</td><td>Trace every booking-state transition (held → awaiting-payment → confirmed/expired) back to its triggering PSS or PSE event, so a reconciliation dispute (Decision 3) can be explained after the fact.</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Define an explicit contract for what the fare service, seat map provider, and PSS return, since none of them are owned by this platform [SAB-F23], [SAB-F24], [SAB-F25] and any of them can change independently.</td></tr>
+      <tr><td>Data quality</td><td>Decide explicitly whether a reconciliation failure (Decision 3) blocks the booking (quarantine) or is queued for manual review — this is the same trust-vs-availability trade-off the course requires to be made explicit, and it directly affects whether "no maintenance window" [SAB-F09] holds under failure.</td></tr>
+      <tr><td>Quarantine path</td><td>Route bookings whose PSE confirmation cannot be reconciled to a valid hold into an explicit review queue rather than silently failing or silently confirming — required by Decision 3's own reasoning.</td></tr>
+      <tr><td>Cost governance (FinOps)</td><td>The fare service is paid per call [SAB-F23]; make per-call cost to the fare service and PSS observable, especially under 10x [SAB-F07] promo spikes, since spike-driven cost growth is otherwise invisible until the invoice arrives. No budget ceiling was given [SAB-U02] — flagged in Open Questions.</td></tr>
+    </table>
+
+    <h3>Security Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Data classification</td><td>Classify passenger name, booking code, and payment-reconciliation data as at least Confidential at ingestion, even though no explicit PII/compliance clause was stated in the brief — retrieval by code + last name is itself a low-friction lookup surface that deserves rate-limiting and classification.</td></tr>
+      <tr><td>Access control model</td><td>Prefer attribute/tag-based access for the small number of internal consumers (booking service, reconciliation worker, commercial config editors) over ad hoc per-table grants, so the overbooking-config editors from Decision 4 can be scoped precisely without a bespoke permission model per squad.</td></tr>
+      <tr><td>PII protection</td><td>Mask passenger name/booking details in logs and non-production environments; tokenize or avoid storing raw PSE payment identifiers beyond what reconciliation (Decision 3) requires; encrypt in transit and at rest as a non-negotiable baseline for all traffic to/from PSS, PSE, fare service, and seat map provider.</td></tr>
+      <tr><td>Auditability</td><td>Log every overbooking-margin change (Decision 4) with who changed it and when — this is a commercially sensitive lever that bypasses the normal deployment/review process by design, which is exactly the kind of change that most needs an audit trail.</td></tr>
+      <tr><td>Environment isolation</td><td>Never use real PSE payment identifiers or real passenger records in development/test, especially under the 4-month [SAB-F16] delivery pressure where this is the shortcut most likely to be taken.</td></tr>
+      <tr><td>Secrets &amp; keys</td><td>Store PSS, PSE, and fare-service credentials in a secrets manager, never in pipeline configs, given that all three are paid/rate-limited external integrations [SAB-F12], [SAB-F23].</td></tr>
+    </table>
+
+    <h3>Anti-Patterns to Avoid in This Design</h3>
+    <ul class="tick">
+      <li>Silently dropping a PSE confirmation that arrives after the PSS hold expired, instead of routing it to explicit reconciliation (Decision 3)</li>
+      <li>Hard-coding the overbooking margin "temporarily" under the 4-month [SAB-F16] deadline, defeating the entire point of Decision 4</li>
+      <li>Treating a scheduled deploy pause as acceptable "just this once", eroding the no-maintenance-window constraint [SAB-F09]</li>
+      <li>Calling the PSS directly from every UI surface without going through the read-model / circuit-breaker layers (Decisions 1–2), reintroducing the 150 req/s [SAB-F12] risk piecemeal</li>
+      <li>Logging or storing raw payment identifiers beyond what reconciliation needs</li>
+    </ul>
+  </section>
+
+  <!-- COST OF CHANGE -->
+  <section id="cost">
+    <span class="badge">Step 5 → Reflection</span>
+    <h2>10. Cost of Change — Where Do These Decisions Sit?</h2>
+    <p>The harder a decision is to reverse, the more intentional we should be about making it.</p>
+    <div class="cost-spectrum">
+      <div class="cost-bar"></div>
+      <div class="cost-labels">
+        <span>Reversible</span>
+        <span>Partially Reversible</span>
+        <span>Near-Irreversible</span>
+      </div>
+      <div class="cost-points">
+        <div class="cost-point" style="left:8%;"><div class="dot"></div>Mobile UI layout, search-result ranking</div>
+        <div class="cost-point" style="left:30%;"><div class="dot"></div>Cache technology for the read-model (Decision 1)</div>
+        <div class="cost-point" style="left:50%;"><div class="dot"></div>Circuit breaker / queue vendor (Decision 2)</div>
+        <div class="cost-point" style="left:68%;"><div class="dot"></div>Deployment tooling / rollout strategy (Decision 5)</div>
+        <div class="cost-point" style="left:88%;"><div class="dot"></div>Booking-state model &amp; reconciliation semantics (Decision 3)</div>
+        <div class="cost-point" style="left:97%;"><div class="dot"></div>Dependency on the PSS's own limits (150 req/s, 15-min hold) [SAB-F12], [SAB-F14]</div>
+      </div>
+    </div>
+    <p style="margin-top:44px;">Decision 3 (booking-state machine and reconciliation) sits closest to near-irreversible among things the platform actually controls — once financial reconciliation, refund logic, and downstream reporting depend on a given set of booking states and transition rules, changing that model requires re-validating every historical booking's meaning, not just a migration script.</p>
+    <p><strong>The PSS's own limits are effectively fixed and outside this platform's control entirely.</strong> The 150 req/s [SAB-F12] ceiling, 800ms p95/&gt;5s [SAB-F13] latency, and 15-minute [SAB-F14] hold expiry are plotted at the far right not because changing them is expensive to engineer, but because the airline has no lever over them at all — the PSS "will not be replaced" [SAB-F25]. Every decision above (1, 2, 3) exists specifically to build a resilient boundary around a constraint that cannot itself be moved.</p>
+    <p><strong>Lock-in note (preserve optionality).</strong> The overbooking-config store (Decision 4) and the booking-state workflow engine (Decision 3) are the two components most worth keeping portable, since they encode business rules and financial-state semantics that must outlive any single infrastructure choice. Favor open/portable engines (Temporal, Unleash/OpenFeature) over proprietary managed equivalents where the 4-month [SAB-F16] timeline allows, and treat a managed choice as a knowing, revisitable trade-off otherwise.</p>
+  </section>
+
+  <!-- GAPS -->
+  <section id="gaps">
+    <span class="badge">Do Not Invent Requirements</span>
+    <h2>11. Open Questions for the Stakeholder</h2>
+    <div class="gap-box">
+      <ul>
+        <li>What attainment percentile and measurement window apply to any end-to-end platform response time or availability target, beyond the PSS's own 800ms p95, sometimes &gt;5s [SAB-U01]? Only the PSS's own figures were given; no platform-wide SLA was stated.</li>
+        <li>Is there a budget ceiling or infrastructure cost target for the new platform [SAB-U02]? No number was given.</li>
+        <li>Does a data-protection/compliance regime apply (e.g., Colombia's Habeas Data law, or PCI-DSS scope for the PSE payment flow), and are there data-residency constraints [SAB-U03]? None was stated in the brief.</li>
+        <li>Is there an existing cloud or platform commitment (AWS / Azure / Google Cloud / on-prem) [SAB-U04]? Without one, this report deliberately keeps multi-ecosystem tooling options open in Section 7 rather than assuming a vendor.</li>
+        <li>What does the current legacy platform's architecture and traffic pattern actually look like [SAB-U05]? Only its age and unsupported status were given, which limits how confidently Decision 1 can be sized.</li>
+        <li>Is there an acceptable rate of denied boardings from controlled overbooking, or a compensation-cost ceiling [SAB-U06]? The brief states the margin is commercially set but not what it is bounded by.</li>
+        <li>What is the PSE failure/timeout rate or typical asynchronous confirmation delay [SAB-U07]? This affects how deep the write-side queue in Decision 2 can safely grow.</li>
+        <li>What target reconciliation latency should the booking-state machine (Decision 3) meet, beyond the PSS's own 15-minute hold expiry [SAB-U08]?</li>
+        <li>What is the specific skill mix of the twelve engineers — e.g., experience with distributed workflow engines, event-driven architectures, or mobile delivery [SAB-U09]? This materially affects the technology choices in Section 7.</li>
+        <li>Is a phased/canary rollout acceptable under the "no maintenance window" constraint, or does that constraint also forbid any blue/green cutover risk window at all [SAB-U10]?</li>
+        <li>How often is the controlled-overbooking margin actually expected to change, and how fast must a change take effect once commercial edits it [SAB-U11]? This is the deciding factor for Decision 4's cost/benefit.</li>
+        <li>How should the PSS's 150 req/s ceiling be apportioned between read-model refresh/poll traffic (Decision 1) and write-path hold/confirm traffic (Decision 2) [SAB-U12]? No split is given in the brief; without one, a rate-limiting/quota policy between the two paths cannot be sized.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- DEFINITION OF DONE -->
+  <section id="dod">
+    <span class="badge">Self-Audit</span>
+    <h2>12. Definition-of-Done Self-Audit</h2>
+    <table>
+      <tr><th>Checklist item</th><th>Status</th></tr>
+      <tr><td>2–3 objectives traceable to stated business context</td><td>✅ Pass — O1/O2/O3, each citing SAB-F## facts</td></tr>
+      <tr><td>All constraints listed are from user input or the knowledge base — none invented</td><td>✅ Pass — every constraint (C1–C7) cites a source fact; none introduces a number not present in the brief</td></tr>
+      <tr><td>Functional requirements are actions, not quality attributes</td><td>✅ Pass — Section 3 left column lists only "the system must..." actions taken from Scope items 01–06</td></tr>
+      <tr><td>Every quality requirement includes a number/percentage/time bound</td><td>⚠️ Partial, honest status — bounded: 200/sec [SAB-F03], 150 req/s [SAB-F12], 800ms/&gt;5s [SAB-F13], 15 min [SAB-F14], 3x/2–3 weeks [SAB-F08], 4 months [SAB-F16], 65% [SAB-F11]. <em>Not bounded because no value was given:</em> platform-wide reliability percentile, overbooking-margin propagation time, reconciliation-latency target. All three are in Open Questions, not invented.</td></tr>
+      <tr><td>At least 2 quality-attribute scenarios, all 6 fields each</td><td>✅ Pass — 4 scenarios provided (Section 4)</td></tr>
+      <tr><td>Exactly 3 ASRs, each with a justification of why it's architecturally significant</td><td>✅ Pass (Section 5)</td></tr>
+      <tr><td>A Utility Tree mapping quality attributes → scenarios → priority</td><td>✅ Pass (Section 6)</td></tr>
+      <tr><td>3 or more architecture decisions, each reviewable (7 fields)</td><td>✅ Pass — 5 decisions, each independently rejectable/supersedable per the no-bundling rule</td></tr>
+      <tr><td>Every decision passes the "¿Para qué?" test</td><td>✅ Pass — outcome / objective / ASR mapped for all 5 decisions (table in Section 7)</td></tr>
+      <tr><td>Each decision names a concrete tool option, justified by trade-off</td><td>✅ Pass</td></tr>
+      <tr><td>Tooling options span 2–3 ecosystems (no single-cloud default)</td><td>✅ Pass — open-source, platform-native, and hyperscaler options in every decision; no stated platform commitment exists, so no vendor is narrowed to</td></tr>
+      <tr><td>At least one open-source / portable option offered</td><td>✅ Pass — Redis/Ignite, Envoy, Temporal, Unleash/OpenFeature, Kubernetes/Argo Rollouts</td></tr>
+      <tr><td>Lock-in and reversibility implications flagged via Cost of Change</td><td>✅ Pass (Section 10)</td></tr>
+      <tr><td>Governance &amp; Security Recommendations section present</td><td>✅ Pass (Section 9)</td></tr>
+      <tr><td>No compliance regime assumed unless stated</td><td>✅ Pass — Habeas Data/PCI-DSS applicability explicitly listed as an Open Question [SAB-U03], not assumed</td></tr>
+      <tr><td>Cost-of-change placement for hard-to-reverse decisions</td><td>✅ Pass (Section 10)</td></tr>
+      <tr><td>Open Questions section listing every gap instead of a guessed value</td><td>✅ Pass — 12 open questions (Section 11)</td></tr>
+      <tr><td>No requirement/number/constraint not provided by the user or knowledge base, unless flagged</td><td>✅ Pass after re-read — every numeric value in this report was traced back to a SAB-F## fact quote in the manifest before being used; no invented uptime percentage or attainment percentile was added anywhere</td></tr>
+    </table>
+    <h3>Source Traceability — Given vs. Derived vs. Assumption vs. Unknown</h3>
+    <table>
+      <tr><th>Category</th><th>Examples in this report</th></tr>
+      <tr><td><strong>Given</strong></td><td>2,500,000 [SAB-F01] searches/day, 30/sec [SAB-F02] avg, 200/sec [SAB-F03] peak, 8,000 [SAB-F04] bookings/day, 300 [SAB-F05] searches/booking, 25,000 [SAB-F06] post-sale actions/day, 10x [SAB-F07] promo spike, 3x [SAB-F08] seasonal multiplier, no maintenance window [SAB-F09], month-18 [SAB-F10] US routes, 65% [SAB-F11] mobile, PSS 150 req/s [SAB-F12], 800ms p95 [SAB-F13] &gt;5s [SAB-F13], 15-min hold [SAB-F14], 12 engineers/2 squads [SAB-F15], 4-month timeline [SAB-F16], overbooking margin without a deployment [SAB-F17], PSE async confirmation [SAB-F18], out-of-scope list [SAB-F19], and the 3-part "what you hand in" deliverable [SAB-F20]</td></tr>
+      <tr><td><strong>Derived</strong></td><td>The ASRs and Utility Tree priorities (derived by combining multiple given facts — e.g., ASR 1 combines the 150 req/s ceiling [SAB-F12] with "will not be replaced" [SAB-F25]); the five decisions (derived from ASRs + objectives, not stated directly in the brief)</td></tr>
+      <tr><td><strong>Assumption</strong></td><td>None labeled as load-bearing in this report — every quality requirement and constraint traces to a given fact; where no fact existed (e.g., budget, compliance regime), the value was left as an Open Question rather than assumed</td></tr>
+      <tr><td><strong>Unknown</strong></td><td>SAB-U01 through SAB-U12, listed in full in Section 11 — attainment percentile, budget, compliance regime, platform commitment, legacy architecture, overbooking-cost ceiling, PSE failure rate, reconciliation-latency target, team skill mix, canary-rollout acceptability, margin-change frequency, PSS read/write budget apportionment</td></tr>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  Generated from the SPACE event case brief (local case-brief text extraction) — The Airline Booking Platform, TF1 methodology.
+  See <a href="space-airline-booking_EventBrief.md">space-airline-booking_EventBrief.md</a> for the case brief's literal "what you hand in" deliverable.
+</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>

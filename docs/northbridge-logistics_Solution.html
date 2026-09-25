@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Northbridge Logistics — Fleet Reefer Telemetry &amp; Alerting Solution</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --navy:#0b1f3a;
+    --blue:#1f5fa8;
+    --lightblue:#eaf2fb;
+    --accent:#e0762b;
+    --green:#2f9e5b;
+    --red:#c0392b;
+    --gray:#5b6470;
+    --bg:#f7f9fc;
+    --card:#ffffff;
+    --border:#dbe3ee;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:#1a2233;
+    line-height:1.55;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--blue));
+    color:#fff;
+    padding:48px 32px 36px;
+    text-align:center;
+  }
+  header h1{margin:0 0 8px;font-size:2.1rem;}
+  header p{margin:4px 0;opacity:.9;font-size:1rem;}
+  nav{
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:10;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px;
+    padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.05);
+  }
+  nav a{
+    color:var(--navy);text-decoration:none;font-size:.85rem;font-weight:600;
+    padding:8px 12px;border-radius:6px;
+  }
+  nav a:hover{background:var(--lightblue);}
+  main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+  section{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:28px 32px;
+    margin-bottom:28px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  h2{
+    color:var(--navy);
+    border-left:5px solid var(--accent);
+    padding-left:14px;
+    margin-top:0;
+    font-size:1.4rem;
+  }
+  h3{color:var(--blue);font-size:1.1rem;margin-top:28px;}
+  .badge{
+    display:inline-block;background:var(--lightblue);color:var(--blue);
+    font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;
+    margin-bottom:10px;letter-spacing:.03em;text-transform:uppercase;
+  }
+  table{width:100%;border-collapse:collapse;margin:14px 0 6px;font-size:.92rem;}
+  th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;}
+  th{background:var(--navy);color:#fff;font-size:.85rem;}
+  tr:nth-child(even){background:#f9fbfd;}
+  .mermaid{
+    background:#fff;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:16px;
+    margin:18px 0;
+    display:flex;justify-content:center;
+  }
+  ul.tick li{margin-bottom:6px;}
+  ul.tick li::marker{content:"✓  ";color:var(--green);font-weight:bold;}
+  .card-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:16px;margin:16px 0;
+  }
+  .mini-card{
+    background:var(--lightblue);border-radius:10px;padding:16px;border:1px solid #cfe0f5;
+  }
+  .mini-card h4{margin:0 0 6px;color:var(--navy);font-size:.95rem;}
+  .mini-card p{margin:0;font-size:.85rem;color:var(--gray);}
+  .decision{
+    border-left:4px solid var(--blue);background:#fff;padding:14px 18px;margin:14px 0;border-radius:6px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05);
+  }
+  .decision h4{margin:0 0 6px;color:var(--navy);}
+  .tradeoff{color:var(--accent);font-weight:600;}
+  .gap-box{
+    background:#fff6ec;border:1px solid #f0d3ad;border-radius:8px;padding:14px 18px;margin-top:10px;
+  }
+  .gap-box li{margin-bottom:6px;}
+  .cost-spectrum{width:100%;margin:24px 0;}
+  .cost-bar{
+    height:46px;border-radius:8px;
+    background:linear-gradient(90deg,#2f9e5b 0%, #e0c02b 50%, #c0392b 100%);
+    position:relative;
+  }
+  .cost-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--gray);}
+  .cost-points{position:relative;height:76px;margin-top:6px;}
+  .cost-point{
+    position:absolute;top:0;transform:translateX(-50%);
+    text-align:center;font-size:.78rem;width:150px;
+  }
+  .cost-point .dot{
+    width:12px;height:12px;border-radius:50%;background:var(--navy);margin:0 auto 4px;
+    border:2px solid #fff;box-shadow:0 0 0 2px var(--navy);
+  }
+  footer{
+    text-align:center;color:var(--gray);font-size:.8rem;padding:24px;
+  }
+  .flow-legend{font-size:.8rem;color:var(--gray);margin-top:6px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+  .note{color:var(--gray);font-size:.88rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Northbridge Logistics — Fleet Reefer Telemetry &amp; Alerting</h1>
+  <p>Architech Explorer · TF1 Reasoning Chain · Source: GitHub issue #14</p>
+  <p><strong>Deliverable:</strong> Full reasoning chain — objectives → constraints → requirements → quality-attribute scenarios → ASRs → utility tree → decisions &amp; trade-offs → tools → open questions</p>
+</header>
+
+<nav>
+  <a href="index.html">All Reports</a>
+  <a href="#intake">Intake Check</a>
+  <a href="#objectives">Objectives &amp; Constraints</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#scenarios">QA Scenarios</a>
+  <a href="#asrs">ASRs</a>
+  <a href="#utility">Utility Tree</a>
+  <a href="#decisions">Decisions &amp; Trade-offs</a>
+  <a href="#architecture">Architecture Diagram</a>
+  <a href="#governance">Governance &amp; Security</a>
+  <a href="#cost">Cost of Change</a>
+  <a href="#gaps">Open Questions</a>
+  <a href="#dod">Definition of Done</a>
+</nav>
+
+<main>
+
+  <!-- INTAKE CHECK -->
+  <section id="intake">
+    <span class="badge">Step 0 — Completeness Check</span>
+    <h2>1. Is There Enough to Proceed?</h2>
+    <p>Per the intake workflow, the inputs are compared against what a reasoning chain requires before any
+    analysis is produced. This scenario deliberately mixes solid operating numbers with named gaps.</p>
+    <div class="two-col">
+      <div>
+        <h3>Given (sufficient to proceed)</h3>
+        <ul class="tick">
+          <li>Business context, 3 objectives, and functional requirements</li>
+          <li>Fleet size, telemetry cadence, alert SLA, retention floor</li>
+          <li>Pilot scope and pilot timeline</li>
+          <li>Team size, skills, and prior tooling experience</li>
+          <li>An explicit, named legacy-system constraint</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Missing (named gaps — not invented, tracked below)</h3>
+        <ul class="tick">
+          <li>Compliance regime (legal review pending)</li>
+          <li>Fleet growth-rate projection</li>
+          <li>Budget / cost ceiling</li>
+          <li>Finalized role definitions for the two user audiences</li>
+          <li>Cloud vendor or hybrid commitment</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Verdict: proceed.</strong> Every ASR and every quality-attribute scenario below can be written
+    with a real number attached (fleet size, cadence, SLA, retention). The five gaps above do not block writing
+    the reasoning chain — they block finalizing five specific decisions, which is why each of those decisions
+    below is written with an explicit <em>reversal condition</em> and <em>unresolved fact</em>, and why the same
+    five items reappear, unresolved, in the Open Questions section rather than being guessed.</p>
+  </section>
+
+  <!-- OBJECTIVES & CONSTRAINTS -->
+  <section id="objectives">
+    <span class="badge">Step 1 &amp; 2</span>
+    <h2>2. Business Objectives &amp; Constraints</h2>
+    <h3>Objectives</h3>
+    <table>
+      <tr><th>#</th><th>Objective</th></tr>
+      <tr><td>O1</td><td>Reduce unplanned roadside breakdowns that cause refrigerated-load spoilage.</td></tr>
+      <tr><td>O2</td><td>Give fleet managers near-real-time visibility into reefer-unit health across the fleet.</td></tr>
+      <tr><td>O3</td><td>Establish a data foundation that a future predictive-maintenance ML initiative (explicitly out of scope for this phase) can build on.</td></tr>
+    </table>
+    <h3>Constraints</h3>
+    <table>
+      <tr><th>#</th><th>Constraint</th><th>Type</th></tr>
+      <tr><td>C1</td><td>Delivery team is 6 backend engineers + 1 data engineer, comfortable with Python and SQL; only 2 of the 7 have prior production Kafka experience [NBL-F07]</td><td>Team / delivery capacity</td></tr>
+      <tr><td>C2</td><td>The existing on-premises fault-code system cannot be decommissioned yet — the warranty-claims team still depends on it and there is no committed migration date [NBL-F08]</td><td>Legacy integration</td></tr>
+      <tr><td>C3</td><td>No cloud vendor has been chosen; the company is open to any provider or a hybrid approach <em>(unresolved — see Open Questions [NBL-U05])</em></td><td>Platform</td></tr>
+      <tr><td>C4</td><td>Reefer-unit temperature thresholds are set per cargo type by an existing rules engine that keeps running; this project consumes its output only, and must not replace it [NBL-F12]</td><td>Scope boundary</td></tr>
+      <tr><td>C5</td><td>Pilot must reach 400 trucks [NBL-F05] within 4 months [NBL-F06]; full-fleet rollout timeline afterward is not yet decided <em>(see Open Questions [NBL-U06])</em></td><td>Timeline</td></tr>
+    </table>
+  </section>
+
+  <!-- REQUIREMENTS -->
+  <section id="requirements">
+    <span class="badge">Step 3</span>
+    <h2>3. Functional &amp; Quality Requirements</h2>
+    <div class="two-col">
+      <div>
+        <h3>Functional (what the system must do)</h3>
+        <ul class="tick">
+          <li>Ingest engine temperature, GPS location, reefer-unit temperature, and engine fault codes from each truck's onboard device [NBL-F09]</li>
+          <li>Evaluate each reefer-unit temperature reading against the safe-range threshold supplied by the existing rules engine [NBL-F10][NBL-F12]</li>
+          <li>Route a breach alert to the responsible fleet manager</li>
+          <li>Continue delivering fault-code data to the existing on-premises system used by the warranty-claims team, unchanged, since it cannot be decommissioned [NBL-F08]</li>
+          <li>Persist historical telemetry so it can be retrieved for warranty disputes with truck/reefer-unit manufacturers [NBL-F04]</li>
+          <li>Present currently active alerts per truck/route on a dashboard [NBL-F11]</li>
+          <li>Present differentiated views of the data to fleet managers and to warranty-claims staff [NBL-F13]</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quality Attributes (how well)</h3>
+        <ul class="tick">
+          <li><strong>Alerting latency:</strong> breach-to-fleet-manager delivery within 5 minutes [NBL-F03]. <em>No attainment percentile given — see Open Questions.</em></li>
+          <li><strong>Ingestion throughput:</strong> sustain telemetry from up to 3,200 trucks [NBL-F01], each reporting roughly every 30 seconds [NBL-F02]. <em>Derived, not stated in the scenario as such:</em> a full fleet generates approximately <strong>9,216,000 [NBL-F01][NBL-F02]</strong> telemetry readings/day, calculated as fleet size multiplied by (seconds per day divided by the telemetry interval cited above). The 400-truck pilot [NBL-F05] therefore generates roughly one-eighth of that volume by the same calculation.</li>
+          <li><strong>Durability / retention:</strong> historical telemetry retained for at least 2 years [NBL-F04]</li>
+          <li><strong>Compatibility:</strong> the architecture (Decision 2, Section 7) is designed to require no modification to the existing on-premises fault-code system's inputs while it remains in service, since it cannot be decommissioned and has no committed migration date [NBL-F08]</li>
+          <li><strong>Delivery timeline:</strong> pilot of 400 trucks [NBL-F05] operating within 4 months [NBL-F06]; full-fleet timeline and growth rate beyond 3,200 [NBL-F01] trucks are unresolved <em>(see Open Questions [NBL-U02][NBL-U06])</em></li>
+          <li><strong>Operability:</strong> buildable and operable by a 7-person team using Python/SQL, with only 2 members having production Kafka experience [NBL-F07]</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- QA SCENARIOS -->
+  <section id="scenarios">
+    <span class="badge">Step 3 → Measurable</span>
+    <h2>4. Quality-Attribute Scenarios</h2>
+
+    <h3>Scenario 1 — Reefer-Unit Temperature Breach Alerting</h3>
+    <table>
+      <tr><th>Source</th><td>Onboard reefer-unit telemetry device, evaluated against the existing cargo-type rules engine's threshold [NBL-F12]</td></tr>
+      <tr><th>Stimulus</th><td>Reefer-unit temperature reading breaches the configured safe-range threshold [NBL-F10]</td></tr>
+      <tr><th>Environment</th><td>Normal fleet operations, any truck among up to 3,200 in service [NBL-F01]</td></tr>
+      <tr><th>Artifact</th><td>Telemetry ingestion → breach-detection → alerting pipeline feeding the fleet-manager dashboard</td></tr>
+      <tr><th>Response</th><td>Breach is detected from the incoming telemetry event and an alert is generated and routed to the responsible fleet manager</td></tr>
+      <tr><th>Response Measure</th><td>Alert reaches the fleet manager within <strong>5 minutes [NBL-F03]</strong> of the breach. An attainment percentile (e.g. p95/p99) was not specified, nor was a measurement window — see Open Questions.</td></tr>
+    </table>
+
+    <h3>Scenario 2 — Fleet-Wide Telemetry Ingestion at Pilot Scale</h3>
+    <table>
+      <tr><th>Source</th><td>Onboard telemetry device across the 400-truck pilot fleet [NBL-F05]</td></tr>
+      <tr><th>Stimulus</th><td>Each truck emits an engine-temperature / GPS / reefer-unit-temperature / fault-code reading approximately every 30 seconds [NBL-F02][NBL-F09]</td></tr>
+      <tr><th>Environment</th><td>Pilot operation, targeted within 4 months [NBL-F06]</td></tr>
+      <tr><th>Artifact</th><td>Ingestion pipeline and durable telemetry store</td></tr>
+      <tr><th>Response</th><td>Each reading is ingested, timestamped, and made durable without being silently dropped</td></tr>
+      <tr><th>Response Measure</th><td>Sustained ingest rate of <strong>derived: ≈13.3 messages/second (400 trucks ÷ 30-second interval; not stated in the scenario as such)</strong>. <em>Acceptable data-loss tolerance during an outage was not specified — see Open Questions [NBL-U09].</em></td></tr>
+    </table>
+
+    <h3>Scenario 3 — Historical Telemetry Retrieval for Warranty Disputes</h3>
+    <table>
+      <tr><th>Source</th><td>Warranty-claims analyst</td></tr>
+      <tr><th>Stimulus</th><td>Requests historical telemetry for a specific truck/reefer-unit to support a dispute with the manufacturer</td></tr>
+      <tr><th>Environment</th><td>Any point within the retention window, ongoing production operation</td></tr>
+      <tr><th>Artifact</th><td>Long-term telemetry store</td></tr>
+      <tr><th>Response</th><td>Historical readings for the requested truck are retrievable in a form usable as warranty evidence</td></tr>
+      <tr><th>Response Measure</th><td>Data remains available for at least <strong>2 years [NBL-F04]</strong> from ingestion. <em>No query-latency bound for this retrieval path was given — see Open Questions.</em></td></tr>
+    </table>
+  </section>
+
+  <!-- ASRs -->
+  <section id="asrs">
+    <span class="badge">Step 4</span>
+    <h2>5. Architecturally Significant Requirements (ASRs)</h2>
+    <div class="mermaid">
+graph TD
+  R["Reefer Telemetry &amp; Alerting Platform"] --> A1["ASR 1<br/>Scale-Elastic Ingestion &amp; 2-Year Durable Retention"]
+  R --> A2["ASR 2<br/>Sub-5-Minute Alerting Alongside an Un-migratable Legacy System"]
+  R --> A3["ASR 3<br/>Differentiated, Governed Access With No Confirmed Compliance Regime"]
+  A1 --> A1d["3,200 trucks NBL-F01, 30s cadence NBL-F02,<br/>2yr retention NBL-F04, growth rate unknown NBL-U02"]
+  A2 --> A2d["5min SLA NBL-F03 must hold while the<br/>legacy fault-code system NBL-F08 stays untouched"]
+  A3 --> A3d["Fleet-manager vs warranty-claims views NBL-F13,<br/>compliance regime pending legal review NBL-U01"]
+  style R fill:#0b1f3a,color:#fff
+  style A1 fill:#e0762b,color:#fff
+  style A2 fill:#e0762b,color:#fff
+  style A3 fill:#e0762b,color:#fff
+    </div>
+    <h3>Why Each ASR Is Architecturally Significant</h3>
+    <table>
+      <tr><th>ASR</th><th>Justification</th></tr>
+      <tr><td><strong>ASR 1 — Scale-Elastic Ingestion &amp; 2-Year Durable Retention</strong></td><td>The platform must absorb a known pilot load (400 trucks [NBL-F05] at a 30-second cadence [NBL-F02]) while remaining structurally able to absorb an unquantified future fleet-wide load (up to 3,200 trucks today [NBL-F01], growth rate unknown [NBL-U02]) and hold every reading for at least 2 years [NBL-F04]; a design sized only for the pilot forces a storage/ingestion re-architecture at full rollout, and a retention/table-format choice made wrong now is expensive to unwind once two years of warranty-evidence data depend on it (near-irreversible, Section 8).</td></tr>
+      <tr><td><strong>ASR 2 — Sub-5-Minute Alerting Alongside an Un-migratable Legacy System</strong></td><td>The 5-minute breach-to-alert SLA [NBL-F03] cannot be met by simply inserting a new system in front of the existing on-premises fault-code system, because that system cannot be decommissioned and has no committed migration date [NBL-F08]; the requirement forces a structural decision (an additive path, not a replacement) that touches how every future telemetry consumer is wired in, which is the definition of an ASR rather than a feature-level choice.</td></tr>
+      <tr><td><strong>ASR 3 — Differentiated, Governed Access With No Confirmed Compliance Regime</strong></td><td>Fleet managers and warranty-claims staff explicitly need different views of the data [NBL-F13], and vehicle-telemetry regulation is still under legal review with no determination made [NBL-U01]; if access is implemented ad hoc per audience now, any future compliance finding forces a redesign of the access layer instead of a policy update, so the access-control model must be extensible by design from day one.</td></tr>
+    </table>
+  </section>
+
+  <!-- UTILITY TREE -->
+  <section id="utility">
+    <span class="badge">Step 4 → Prioritization</span>
+    <h2>6. Utility Tree</h2>
+    <p>A Utility Tree does not say what to build — it says what cannot afford to be wrong. Priority = (Importance to business, Difficulty/Risk).</p>
+    <div class="mermaid">
+graph LR
+  U["Utility"] --> QA1["Availability / Latency"]
+  U --> QA2["Scalability"]
+  U --> QA3["Durability"]
+  U --> QA4["Compatibility"]
+  U --> QA5["Security / Access"]
+
+  QA1 --> S1["Breach alert reaches fleet manager<br/>within 5 min NBL-F03<br/><b>(High, High)</b>"]
+  QA2 --> S2["Ingestion absorbs pilot load (400 trucks NBL-F05)<br/>and unresolved future growth NBL-U02<br/><b>(High, High)</b>"]
+  QA3 --> S3["Telemetry retained &ge;2 years NBL-F04 <br/>for warranty evidence<br/><b>(High, Medium)</b>"]
+  QA4 --> S4["Legacy fault-code system NBL-F08<br/>keeps working, unmodified<br/><b>(High, Medium)</b>"]
+  QA5 --> S5["Fleet-manager vs warranty-claims views NBL-F13<br/>differentiated and auditable<br/><b>(Medium, Medium)</b>"]
+
+  style U fill:#0b1f3a,color:#fff
+  style QA1 fill:#1f5fa8,color:#fff
+  style QA2 fill:#1f5fa8,color:#fff
+  style QA3 fill:#1f5fa8,color:#fff
+  style QA4 fill:#1f5fa8,color:#fff
+  style QA5 fill:#1f5fa8,color:#fff
+  style S1 fill:#c0392b,color:#fff
+  style S2 fill:#c0392b,color:#fff
+  style S3 fill:#e0c02b,color:#1a2233
+  style S4 fill:#e0c02b,color:#1a2233
+  style S5 fill:#2f9e5b,color:#fff
+    </div>
+    <p class="flow-legend">🔴 Red = highest priority (high importance, high risk) &nbsp;|&nbsp; 🟡 Yellow = medium priority &nbsp;|&nbsp; 🟢 Green = lower priority</p>
+  </section>
+
+  <!-- DECISIONS -->
+  <section id="decisions">
+    <span class="badge">Step 5</span>
+    <h2>7. Architecture Decisions &amp; Trade-offs</h2>
+    <div style="background:#eaf2fb;border-left:4px solid #1f5fa8;padding:14px 18px;border-radius:6px;margin-bottom:18px;">
+      <strong>The "¿Para qué?" test applied to each decision below.</strong> Before naming any tool,
+      each decision must answer: <em>What outcome does this serve? Which business objective does it
+      trace back to? Which quality attribute or ASR makes it necessary rather than optional?</em>
+      A recommendation that cannot answer all three is a preference, not a justified decision.
+    </div>
+    <table>
+      <tr><th>Decision</th><th>¿Para qué? (outcome served)</th><th>Traces to objective</th><th>Made necessary by</th></tr>
+      <tr><td><strong>1 — Event-streaming ingestion path</strong></td><td>Telemetry reaches breach detection with enough margin to hold the 5-minute SLA, and the same feed can drive a genuinely near-real-time dashboard</td><td>O1 (faster response to conditions that cause breakdowns) and O2 (near-real-time visibility)</td><td>ASR 2 — sub-5-minute alerting</td></tr>
+      <tr><td><strong>2 — Additive fan-out, not a replace/proxy topology</strong></td><td>The warranty-claims team's dependency on the current fault-code system is never put at risk while the new platform is built and proven</td><td>O1 (do not regress current breakdown-response capability while adding new capability)</td><td>ASR 2 — alerting alongside an un-migratable legacy system</td></tr>
+      <tr><td><strong>3 — Split hot operational store / cold retention store</strong></td><td>Live alerting and dashboard queries stay fast regardless of how much 2-year history accumulates, and the 2-year warranty archive is never resource-starved by live traffic</td><td>O1 &amp; O3 (a durable foundation a future ML initiative can build on)</td><td>ASR 1 — scale-elastic ingestion &amp; 2-year durable retention</td></tr>
+      <tr><td><strong>4 — ABAC / tag-based access-control model</strong></td><td>The two named audiences get correctly differentiated views today, and the model absorbs whatever the pending compliance determination and role definitions eventually require without a redesign of the access layer</td><td>O1 (do not regress warranty-claims staff's current access while adding fleet-manager access)</td><td>ASR 3 — differentiated, governed access with no confirmed compliance regime</td></tr>
+    </table>
+
+    <div class="decision">
+      <h4>Decision 1 — Event-Streaming Ingestion Path</h4>
+      <p><strong>Chosen approach.</strong> Adopt an event-streaming (publish/subscribe) ingestion layer that carries every telemetry reading as a discrete event, evaluated against the breach threshold continuously as it arrives, rather than collecting readings and processing them on a fixed schedule.</p>
+      <p><strong>Rejected alternative.</strong> Scheduled micro-batch polling — devices (or an intermediate buffer) are pulled on a fixed schedule (assumption: illustratively, a schedule on the order of a couple of minutes), and breach detection runs once per batch.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> Micro-batch polling is simpler to build with the team's existing Python/SQL skills [NBL-F07], avoids operating new streaming infrastructure during a 4-month pilot [NBL-F06], and at pilot scale (400 trucks [NBL-F05], 30-second cadence [NBL-F02]) the data volume is modest enough that a tightly scheduled batch job could plausibly still land inside the 5-minute alert SLA [NBL-F03] with margin to spare. Many fleets run exactly this pattern successfully.</p>
+      <p><strong>What is sacrificed.</strong> A new streaming platform to operate and secure, and a genuine skills gap: only 2 of the 7 team members have prior production Kafka experience [NBL-F07], so ramping the other 5 within the 4-month pilot window [NBL-F06] is real delivery risk, not a formality.</p>
+      <p><strong>What is gained.</strong> A batch interval sets a latency floor roughly equal to the interval plus processing time, so as that interval is tightened toward the 5-minute SLA [NBL-F03] the safety margin shrinks; streaming removes that floor entirely and also produces the continuously-updating feed that Objective O2's "near-real-time visibility" and Objective O3's future predictive-maintenance ML foundation both need, without a later re-architecture.</p>
+      <p><strong>Reversal condition.</strong> Revisit and collapse to scheduled micro-batch if pilot measurements show a 1-minute batch interval reliably holds the 5-minute SLA [NBL-F03] with comfortable margin, fleet managers confirm that a 1-minute-refresh dashboard satisfies Objective O2 once "near-real-time" is quantified [NBL-U07], and the team assesses that safely operating streaming infrastructure is not achievable with its current Kafka experience [NBL-F07] inside the remaining pilot window.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> Objective O2 ("near-real-time visibility") was never given a number [NBL-U07] — if fleet managers would in practice accept a coarser refresh cadence (assumption), the case for streaming over batch weakens considerably, since the alerting SLA alone could plausibly be met by batch.</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is an ingestion path that carries ~13.3 events/sec at pilot scale (400 trucks ÷ 30-second interval, derived — not stated in the scenario as such) and scales toward full-fleet volume without a redesign.<br/>
+      • <em>Open-source / portable:</em> Apache Kafka or Redpanda for ingestion, paired with Kafka Streams or Apache Flink for continuous threshold evaluation — directly matches the 2 team members' existing production Kafka experience [NBL-F07].<br/>
+      • <em>Platform / managed OSS:</em> Confluent Cloud (managed Kafka API) to reduce the operational burden the 7-person team [NBL-F07] would otherwise carry.<br/>
+      • <em>Hyperscaler-managed:</em> AWS IoT Core + Kinesis, Azure IoT Hub + Event Hubs + Stream Analytics, or Google Cloud Pub/Sub + Dataflow.<br/>
+      <em>Selection driver:</em> the team's existing Kafka production experience [NBL-F07] favors a Kafka-API-compatible option to reduce onboarding risk inside the 4-month pilot [NBL-F06]; the final platform still depends on the unresolved cloud-vendor decision [NBL-U05], so all three ecosystems are kept open rather than narrowed.</p>
+      <p class="tradeoff">Trade-off: a new streaming platform and a real skills-ramp risk for 5 of 7 team members, in exchange for removing the latency floor that a batch interval would otherwise impose on the 5-minute alert SLA [NBL-F03] and the (unquantified) near-real-time dashboard goal.</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 2 — Additive Fan-Out Alongside the Legacy Fault-Code System</h4>
+      <p><strong>Chosen approach.</strong> Build the new platform as an additional, independent consumer of onboard telemetry — the legacy on-premises fault-code system keeps receiving exactly what it receives today, unchanged, while the new alerting/dashboard/warranty pipeline is fed from the same source in parallel.</p>
+      <p><strong>Rejected alternative.</strong> A proxy/strangler topology — route all telemetry through the new platform first, then have the new platform forward a transformed feed onward into the legacy fault-code system, making the new platform the single ingestion point.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> A single ingestion point is architecturally cleaner in the long run: one lineage path, no risk of the two systems' views disagreeing, and it is the standard "strangler fig" pattern for retiring a legacy system over time. If the goal were ultimately to decommission the legacy system, this is the right direction to move in eventually.</p>
+      <p><strong>What is sacrificed.</strong> Two independent ingestion paths into two systems creates a reconciliation risk — a fault code visible in the legacy system that is not reflected in the new dashboard, or vice versa — and it is not an end-state; someone will eventually still need to migrate the legacy system's ingestion, which this decision explicitly defers.</p>
+      <p><strong>What is gained.</strong> Zero risk to the warranty-claims team's current dependency on the fault-code system, which is required because that system cannot be decommissioned and has no committed migration date [NBL-F08] — a proxy topology would require modifying or re-pointing the legacy system's input during this project, which the constraint rules out.</p>
+      <p><strong>Reversal condition.</strong> Revisit and move to a single-ingestion (strangler) topology once a migration date is committed for the legacy fault-code system (none exists today [NBL-F08]) and the warranty-claims team has validated that the new platform's output already satisfies their existing consumption pattern.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No committed migration date exists for the legacy system [NBL-F08], and whether onboard devices can publish to two independent consumers directly (device-side fan-out) or whether fan-out must be implemented network-side within the new platform was never stated [NBL-U08] — this determines how much new integration work sits on the critical path.</p>
+      <p><strong>Technology options:</strong> the capability required is reliable fan-out of the same event stream to two independently-failing downstream systems.<br/>
+      • <em>Open-source / portable:</em> a Kafka topic read by two independent consumer groups — one feeding a thin adapter into the legacy system's existing input, one feeding the new platform.<br/>
+      • <em>Platform:</em> Confluent Cloud with Kafka Connect sink connectors for the legacy adapter.<br/>
+      • <em>Hyperscaler-managed:</em> Azure Event Hubs consumer groups, AWS Kinesis with multiple consumer applications, or Google Cloud Pub/Sub with multiple subscriptions — the same fan-out semantics, vendor choice still pending [NBL-U05].<br/>
+      <em>Selection driver:</em> whichever ingestion technology is chosen in Decision 1 should natively support independent consumer groups, so the legacy adapter and the new platform can fail independently without one blocking the other.</p>
+      <p class="tradeoff">Trade-off: an ongoing reconciliation risk between two parallel paths and a deferred (not avoided) legacy migration, in exchange for not touching a system the warranty-claims team depends on and that has no committed migration date [NBL-F08].</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 3 — Split Hot Operational Store / Cold Retention Store</h4>
+      <p><strong>Chosen approach.</strong> Separate a "hot" operational store — recent data, tuned for the active-alerts dashboard and the 5-minute breach-detection path — from a "cold" long-term analytical store — append-only, tuned for the 2-year-plus retention requirement and warranty/ML queries — rather than serving both needs from one general-purpose database.</p>
+      <p><strong>Rejected alternative.</strong> A single time-series/operational database sized to hold the full 2-year history and also serve live dashboard/alert queries directly, with no second system.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> One system is simpler to operate, secure, and govern — a real advantage for a 7-person team [NBL-F07] — and at pilot scale (400 trucks [NBL-F05] over 4 months [NBL-F06]) the data volume is plausibly small enough that a single well-indexed database serves both needs without contention. Many teams run this successfully for years before it becomes a problem.</p>
+      <p><strong>What is sacrificed.</strong> Two storage systems to operate, secure, and keep consistent, plus an archival/movement pipeline between them — real, ongoing engineering load for a small team [NBL-F07].</p>
+      <p><strong>What is gained.</strong> The hot store can be tuned purely for low-latency recent-window queries that feed the 5-minute alert path [NBL-F03] and the active-alerts dashboard [NBL-F11], while the 2-year-plus retention data [NBL-F04] never competes with live alerting for the same compute or index budget — and an open, columnar cold-store format keeps the 2-year warranty archive itself portable regardless of which future platform is chosen [NBL-U05].</p>
+      <p><strong>Reversal condition.</strong> Collapse to a single store if pilot-measured data volume and query patterns show one database comfortably serves both the live-alert path and 2-year retention without contention — a measurement, not an assumption — which would remove the archival-pipeline overhead entirely.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> No fleet-wide growth-rate projection beyond the current 3,200 trucks was given [NBL-U02], so the point at which a single store would start contending for resources cannot be sized; this decision's split point (how large the "hot" window is) is <strong>PENDING VALIDATION</strong> against real pilot volumes, and no budget or unit-cost ceiling was given [NBL-U03] to weigh the archival pipeline's added cost against.</p>
+      <p><strong>Technology options:</strong> the capability required is a low-latency hot path for "currently active alerts" plus a durable, open-format cold path for 2-year-plus history, with the whole 2-year retention window remaining queryable if regulation is later confirmed to require it.<br/>
+      • <em>Open-source / portable:</em> hot = TimescaleDB, Apache Cassandra, or Redis for active-alert state; cold = Apache Iceberg or Delta Lake tables on object storage (including self-hosted MinIO, for portability), queried via Spark, Trino, or DuckDB.<br/>
+      • <em>Platform / lakehouse:</em> Databricks (Delta Lake + Delta Live Tables for hot/cold tiering in one lakehouse, Unity Catalog for governance) or Snowflake (hybrid tables for the hot path, standard/Iceberg tables for cold retention).<br/>
+      • <em>Hyperscaler-managed:</em> AWS Timestream or DynamoDB (hot) + S3/Athena/Glue (cold); Azure Cosmos DB (hot) + ADLS Gen2/Synapse (cold); Google Cloud Bigtable (hot) + BigQuery/GCS (cold).<br/>
+      <em>Selection driver:</em> favor an open table format (Iceberg/Delta) for the 2-year retention store now, specifically because no cloud vendor is committed [NBL-U05] — the archive itself should not be locked to whichever compute engine is chosen later.</p>
+      <p class="tradeoff">Trade-off: two systems to operate and an archival pipeline to build, in exchange for live alerting that never degrades as 2-year history accumulates, and a 2-year warranty archive kept in a portable format ahead of an unresolved platform decision [NBL-U05].</p>
+    </div>
+
+    <div class="decision">
+      <h4>Decision 4 — ABAC / Tag-Based Access-Control Model</h4>
+      <p><strong>Chosen approach.</strong> Adopt attribute-based access control (ABAC), where access to telemetry, alerts, and historical records is granted by evaluating tags/attributes on the data (e.g., truck, region, data-sensitivity class) against attributes of the requester, rather than granting access through a fixed, hard-coded set of per-audience application roles.</p>
+      <p><strong>Rejected alternative.</strong> Hard-coded, per-audience RBAC — build two fixed application roles today, "fleet manager" and "warranty-claims staff" [NBL-F13], each wired directly to a specific set of screens, fields, and queries in application code.</p>
+      <p><strong>Why the rejected alternative is genuinely viable.</strong> With only two named audiences given today [NBL-F13] and a 7-person team [NBL-F07] building inside a 4-month pilot [NBL-F06], two hard-coded roles is dramatically less engineering effort than standing up a full attribute-based policy engine, and it would ship the pilot's access needs correctly on day one with no additional infrastructure to operate.</p>
+      <p><strong>What is sacrificed.</strong> The extra engineering effort and operational overhead of running a policy engine (attribute definitions, policy authoring, decision-point integration) that a two-role RBAC model would not need at all during the pilot.</p>
+      <p><strong>What is gained.</strong> The two named audiences, fleet managers and warranty-claims staff [NBL-F13], are correctly separated on day one, and the model absorbs whatever comes next without a redesign: the exact role boundaries for those two audiences were never finalized [NBL-U04], and the compliance regime governing this data is still under legal review with no determination made [NBL-U01] — either one could add a new audience beyond the two named in [NBL-F13], narrow an existing one, or impose a new access constraint (e.g., a data-residency or masking rule) after the pilot ships. An attribute-based model absorbs that change as a policy update; a hard-coded RBAC model would require re-touching application code and redeploying for every such change.</p>
+      <p><strong>Reversal condition.</strong> Collapse to simple hard-coded RBAC if, once the compliance review concludes [NBL-U01] and the two roles are formally finalized [NBL-U04], no further audience or policy change is anticipated — at that point the policy-engine's flexibility would be paying for a change surface that no longer exists.</p>
+      <p><strong>Unresolved fact that could change this choice.</strong> Neither the compliance regime [NBL-U01] nor the exact role/permission boundaries [NBL-U04] were given; if both were to land as simple, stable, and limited to exactly the two named audiences [NBL-F13], the case for a general attribute-based engine over two hard-coded roles would weaken considerably.</p>
+      <p><strong>Technology options (capability first, then ecosystem):</strong> the capability required is centralized, policy-as-code attribute evaluation that can be updated without an application redeploy.<br/>
+      • <em>Open-source / portable:</em> Open Policy Agent (OPA) with Rego policies, evaluated as an external policy decision point callable from any service; or Casbin for embedded policy evaluation.<br/>
+      • <em>Platform:</em> Auth0 or Okta fine-grained authorization / attribute-based policies layered on top of their identity platforms.<br/>
+      • <em>Hyperscaler-managed:</em> AWS IAM/Verified Permissions (Cedar policy language), Azure ABAC conditions on Azure RBAC role assignments, or Google Cloud IAM Conditions — vendor choice still pending [NBL-U05].<br/>
+      <em>Selection driver:</em> favor a policy engine that is portable and callable independent of the eventual cloud-vendor decision [NBL-U05], since the compliance outcome [NBL-U01] and role definitions [NBL-U04] that will shape the actual policies are both still pending.</p>
+      <p class="tradeoff">Trade-off: standing up and operating a policy engine that a two-role pilot does not strictly need yet, in exchange for absorbing an unresolved compliance determination [NBL-U01] and unfinalized role boundaries [NBL-U04] as policy updates instead of application redesigns.</p>
+    </div>
+
+  </section>
+
+  <!-- ARCHITECTURE DIAGRAM -->
+  <section id="architecture">
+    <span class="badge">Visualized Solution</span>
+    <h2>8. Proposed Architecture (High Level, Pilot Scope)</h2>
+    <div class="mermaid">
+flowchart TB
+  subgraph TRUCKS["Onboard Devices (pilot: 400 trucks)"]
+    direction LR
+    T1["Engine temperature"]
+    T2["GPS location"]
+    T3["Reefer-unit temperature"]
+    T4["Engine fault codes"]
+  end
+
+  subgraph ING["Event-Streaming Ingestion (Decision 1)"]
+    direction TB
+    K["Telemetry event stream<br/>~30s cadence per truck"]
+  end
+
+  subgraph FANOUT["Fan-Out (Decision 2)"]
+    direction LR
+    LEG["Legacy adapter<br/>-&gt; existing on-prem<br/>fault-code system (unchanged)"]
+    NEW["New platform consumer"]
+  end
+
+  subgraph RULES["Existing Cargo-Type Rules Engine"]
+    RE["Safe-range thresholds<br/>(consumed, not replaced)"]
+  end
+
+  subgraph DETECT["Breach Detection &amp; Alerting"]
+    BD["Continuous threshold evaluation<br/>-&gt; alert within 5 min SLA NBL-F03"]
+  end
+
+  subgraph STORE["Split Storage (Decision 3)"]
+    direction LR
+    HOT["Hot store<br/>active alerts / recent window"]
+    COLD["Cold store<br/>&ge;2yr open-format retention"]
+  end
+
+  subgraph CONS["Consumers"]
+    direction LR
+    D1["Fleet-manager dashboard<br/>(active alerts per truck/route)"]
+    D2["Warranty-claims view<br/>(historical evidence)"]
+    D3["Future ML initiative<br/>(out of scope this phase)"]
+  end
+
+  TRUCKS --> ING
+  ING --> FANOUT
+  FANOUT --> LEG
+  FANOUT --> NEW
+  RULES --> BD
+  NEW --> BD
+  BD --> HOT
+  NEW --> COLD
+  HOT --> D1
+  COLD --> D2
+  COLD --> D3
+
+  style TRUCKS fill:#eaf2fb,stroke:#1f5fa8
+  style ING fill:#1f5fa8,color:#fff
+  style FANOUT fill:#e0762b,color:#fff
+  style RULES fill:#5b6470,color:#fff
+  style DETECT fill:#c0392b,color:#fff
+  style STORE fill:#0b1f3a,color:#fff
+  style CONS fill:#eaf2fb,stroke:#1f5fa8
+    </div>
+  </section>
+
+  <!-- GOVERNANCE & SECURITY -->
+  <section id="governance">
+    <span class="badge">Design Recommendations</span>
+    <h2>9. Governance &amp; Security Recommendations</h2>
+    <p>The course lists <em>security boundaries</em> and <em>data isolation</em> among the capabilities that are
+    <strong>expensive to introduce later</strong>. This scenario names two distinct audiences and an unresolved
+    compliance question, so governance and security are treated as <strong>design concerns</strong> here, not
+    something to bolt on after the pipeline works.</p>
+
+    <h3>Is Governance/Security an ASR Here?</h3>
+    <p><strong>Yes — ASR 3 already captures it, and it is given a full architecture decision, not left as
+    a recommendation alone.</strong> "Differentiated, governed access with no confirmed
+    compliance regime" qualifies because the requirement shapes the access-control architecture itself: fleet
+    managers and warranty-claims staff need different views of the data [NBL-F13], and vehicle-telemetry
+    regulation is still under legal review with no determination made [NBL-U01]. If access is hard-coded per
+    audience now, a later compliance finding forces a redesign rather than a policy change — that is a
+    structural consequence, which is the test for architectural significance. <strong>No specific regime
+    (GDPR/CCPA/HIPAA or otherwise) is assumed here</strong>, consistent with the source stating none has been
+    determined [NBL-U01]. The resulting access-control architecture is Decision 4 (Section 7); the
+    recommendations below are its supporting governance/security detail, not a substitute for the decision.</p>
+
+    <h3>Governance Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Ownership &amp; stewardship</td><td>Assign an owner for the telemetry domain and a separate owner for the legacy fault-code integration [NBL-F08], since the two systems will be operated in parallel under Decision 2.</td></tr>
+      <tr><td>Catalog &amp; discoverability</td><td>Register the telemetry event schema, the hot store, and the cold store with business definitions, owner, freshness, and sensitivity tags — GPS location and truck identity should be tagged as sensitive by default even before a compliance regime is confirmed [NBL-U01].</td></tr>
+      <tr><td>Lineage &amp; traceability</td><td>Capture lineage from onboard device → event stream → fan-out consumer → hot/cold store, so a warranty dispute can show exactly where a historical reading came from [NBL-F04]; prefer the open OpenLineage standard to preserve optionality ahead of the unresolved platform decision [NBL-U05].</td></tr>
+      <tr><td>Data contracts &amp; schema governance</td><td>Define an explicit schema contract for the telemetry event (engine temperature, GPS, reefer-unit temperature, fault codes [NBL-F09]) so the legacy adapter and the new platform can evolve independently without breaking the untouched legacy system [NBL-F08].</td></tr>
+      <tr><td>Data quality</td><td>Decide explicitly whether a malformed or late telemetry reading blocks breach detection or is quarantined and alerted separately — a real trade-off against the 5-minute alert SLA [NBL-F03]. This was not specified in the source and should be an explicit design choice, not a default.</td></tr>
+      <tr><td>Quarantine path</td><td>Route unparseable or out-of-range readings to a dead-letter store rather than dropping them silently, so a missed breach cannot be traced back to a discarded event.</td></tr>
+      <tr><td>Cost governance (FinOps)</td><td>Tag resources by domain (ingestion / hot store / cold store / legacy adapter) so cost is observable per component — no budget ceiling was given [NBL-U03], so observability is the only cost control available until one is set.</td></tr>
+    </table>
+
+    <h3>Security Recommendations</h3>
+    <table>
+      <tr><th>Area</th><th>Recommendation for this scenario</th></tr>
+      <tr><td>Data classification</td><td>Classify GPS location and truck identifiers as sensitive at ingestion, propagated as metadata through the hot and cold stores — even though no compliance regime has been named [NBL-U01], vehicle location data is sensitive by nature and should not wait for a legal determination to be protected. The source [NBL-F09] names only truck-level engine temperature, GPS, reefer-unit temperature, and fault codes — it does not mention driver identity data. <strong>(assumption: GPS location paired with a timestamp series is plausibly re-identifiable to a specific driver on a given route, even without an explicit driver-identity field, so location data should be treated as sensitive as if it were driver-linkable until the compliance review [NBL-U01] confirms otherwise.)</strong> No driver-identifier field should be introduced into the design that the source does not describe.</td></tr>
+      <tr><td>Access control model</td><td>See Decision 4 (Section 7) — <strong>ABAC / tag-based</strong> policy over hard-coded per-audience views, because the two named audiences (fleet managers, warranty-claims staff [NBL-F13]) are already known to need different views and exact role boundaries are still unresolved [NBL-U04] — a tag-based model can absorb that clarification without a redesign.</td></tr>
+      <tr><td>PII / sensitive-data protection</td><td>Apply <em>masking</em> to GPS/location fields for any view that doesn't need precise location; <em>tokenization</em> of truck identifiers where cross-system correlation is needed without exposing the raw ID; encryption at rest and in transit as a non-negotiable baseline regardless of the pending regime determination [NBL-U01]. <strong>(assumption: if a future data source adds driver identity or driver-linkable fields, the same tokenization approach should extend to them — but no such field exists in the current source [NBL-F09] and none should be fabricated.)</strong></td></tr>
+      <tr><td>Auditability</td><td>Log who accessed which truck's telemetry, when, and for what purpose, stored separately from the data plane — this directly supports the eventual compliance determination [NBL-U01], whatever it turns out to require.</td></tr>
+      <tr><td>Environment isolation</td><td>Never use raw production telemetry (with real GPS/location data) in development or test environments during the 4-month pilot build [NBL-F06]; mask or synthesize instead.</td></tr>
+      <tr><td>Secrets &amp; keys</td><td>No secrets in pipeline configs; use a secrets manager. Whether customer-managed keys are required is a regulatory question that cannot be answered until the compliance regime is determined [NBL-U01] — track it, do not assume it.</td></tr>
+    </table>
+
+    <h3>Anti-Patterns to Avoid in This Design</h3>
+    <ul class="tick">
+      <li>Hard-coding today's guess at "fleet manager" vs. "warranty-claims" permissions directly into application logic instead of a tag-based policy, given the roles are explicitly not finalized [NBL-U04]</li>
+      <li>Assuming no compliance regime applies simply because none has been named yet [NBL-U01]</li>
+      <li>Silently dropping malformed telemetry readings instead of quarantining them</li>
+      <li>Building the legacy adapter (Decision 2) as a one-off script with no lineage or ownership, since it will run indefinitely with no committed migration date [NBL-F08]</li>
+      <li>Treating the cold retention store's format as an implementation detail rather than the near-irreversible decision it is (Section 10)</li>
+    </ul>
+  </section>
+
+  <!-- COST OF CHANGE -->
+  <section id="cost">
+    <span class="badge">Step 5 → Reflection</span>
+    <h2>10. Cost of Change — Where Do These Decisions Sit?</h2>
+    <p>The harder a decision is to reverse, the more intentional we should be about making it.</p>
+    <div class="cost-spectrum">
+      <div class="cost-bar"></div>
+      <div class="cost-labels">
+        <span>Reversible</span>
+        <span>Partially Reversible</span>
+        <span>Near-Irreversible</span>
+      </div>
+      <div class="cost-points">
+        <div class="cost-point" style="left:8%;"><div class="dot"></div>Dashboard layout / alert-list presentation</div>
+        <div class="cost-point" style="left:30%;"><div class="dot"></div>Streaming engine choice (Decision 1)</div>
+        <div class="cost-point" style="left:52%;"><div class="dot"></div>Legacy fan-out integration contract (Decision 2)</div>
+        <div class="cost-point" style="left:74%;"><div class="dot"></div>Access-control / classification model (Decision 4)</div>
+        <div class="cost-point" style="left:93%;"><div class="dot"></div>Cold-store table format / 2-year retention schema (Decision 3)</div>
+      </div>
+    </div>
+    <p style="margin-top:56px;">The <strong>cold-store table format</strong> (Decision 3) sits closest to near-irreversible: once two years of telemetry are accumulated in a given format for warranty evidence [NBL-F04], re-formatting that history is expensive and risks the very evidentiary trail the retention requirement exists to protect. This is why Decision 3 recommends an open table format now, before volume accumulates.</p>
+    <p><strong>The access-control / classification model (Decision 4) is also near-irreversible</strong> once fleet managers and warranty-claims staff, and any policy the eventual compliance determination requires [NBL-U01], depend on it — retrofitting a different model means re-classifying every asset and re-validating every grant. Choosing an attribute-based (ABAC) model now, rather than hard-coded per-audience roles, is specifically what keeps this from being a full redesign the moment the compliance determination [NBL-U01] or the final role boundaries [NBL-U04] land.</p>
+    <p><strong>The legacy fan-out contract (Decision 2) is partially reversible</strong> only while the legacy system remains un-migrated: today it can be changed because nothing but the legacy system's existing input depends on the new platform's shape. It becomes progressively harder to reverse as more new-platform consumers (dashboard, future ML [O3]) come to depend on the fan-out's specific event shape.</p>
+    <p><strong>Lock-in note (preserve optionality).</strong> Because no cloud vendor has been chosen [NBL-U05], the storage format for the cold/retention store is the single highest-leverage place to preserve optionality — an open table format (Apache Iceberg or Delta Lake) keeps the 2-year warranty archive readable regardless of which compute platform the eventual vendor decision selects. The streaming engine and orchestration choices are comparatively replaceable.</p>
+  </section>
+
+  <!-- GAPS -->
+  <section id="gaps">
+    <span class="badge">Do Not Invent Requirements</span>
+    <h2>11. Open Questions for the Stakeholder</h2>
+    <div class="gap-box">
+      <ul>
+        <li>What <strong>regulatory or compliance regime</strong>, if any, applies to vehicle telemetry in the jurisdictions Northbridge operates in? Legal review is pending and no determination has been made [NBL-U01]. Nothing in this report assumes GDPR, CCPA, or any other named regime.</li>
+        <li>What is the expected <strong>fleet growth-rate</strong> beyond the current 3,200 trucks [NBL-U02]? This directly sizes how much headroom Decision 3's hot/cold split and Decision 1's ingestion path must reserve beyond pilot scale.</li>
+        <li>What <strong>budget or cost ceiling</strong> is available for this initiative [NBL-U03]? No cost ceiling or unit-cost target was given, so none of the three decisions above can be judged on cost — only on capability trade-offs.</li>
+        <li>What are the exact <strong>role/permission definitions</strong> distinguishing the fleet-manager view from the warranty-claims view [NBL-U04]? "Different views" was stated, but the boundary between them was not.</li>
+        <li>Has Northbridge committed to a <strong>cloud vendor</strong>, or is a specific hybrid split preferred [NBL-U05]? The company said it is open to any provider or a hybrid approach — this is the single biggest factor narrowing the tooling options in Section 7; until it is resolved, multi-ecosystem options are kept open rather than assuming one.</li>
+        <li>What is the <strong>full-fleet rollout timeline</strong> after the 400-truck pilot [NBL-U06]? The pilot timeline (4 months [NBL-F06]) was given; what happens after it was not.</li>
+        <li>What does <strong>"near-real-time visibility"</strong> (Business Objective 2) mean quantitatively for the fleet-manager dashboard [NBL-U07]? Only qualitative wording was given, and this materially affects whether Decision 1's case for streaming over batch holds.</li>
+        <li>Can onboard devices <strong>publish to two independent consumers</strong> directly, or must fan-out to the legacy system happen network-side within the new platform [NBL-U08]? This determines how much new integration work Decision 2 requires.</li>
+        <li>What <strong>telemetry data-loss tolerance</strong> is acceptable during an ingestion-path or connectivity outage [NBL-U09]? Not stated at all in the source; this is required before committing to any specific delivery-guarantee (at-least-once vs. exactly-once) semantics for the streaming layer.</li>
+        <li>What <strong>attainment percentile and measurement window</strong> apply to the 5-minute alert SLA [NBL-F03]? Only the bound was given; a percentile such as p95 was not specified, nor was a measurement window.</li>
+        <li>Is there a required <strong>query-latency bound</strong> for warranty-claims staff retrieving historical telemetry (Scenario 3), or is any latency acceptable within the 2-year retention window [NBL-F04]?</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- DEFINITION OF DONE -->
+  <section id="dod">
+    <span class="badge">Self-Audit</span>
+    <h2>12. Definition-of-Done Self-Audit</h2>
+    <table>
+      <tr><th>Checklist item</th><th>Status</th></tr>
+      <tr><td>2–3 objectives stated, each traceable to something the user actually said</td><td>✅ Pass — O1, O2, O3 quoted directly from the issue's Business Objectives list</td></tr>
+      <tr><td>All constraints listed are from user input or the knowledge base — none invented</td><td>✅ Pass — C1–C5 each cite a fact ID or are marked unresolved [NBL-U05]; no constraint (e.g. a budget figure or growth rate) was fabricated to fill a gap</td></tr>
+      <tr><td>Functional requirements are actions ("the system must..."), not quality attributes</td><td>✅ Pass — Section 3 left column lists only actions (ingest, evaluate, route, persist, present)</td></tr>
+      <tr><td>Every quality requirement includes a number, percentage, or time bound</td><td>✅ Pass — 5 min [NBL-F03], 2 years [NBL-F04], 3,200/400 trucks [NBL-F01][NBL-F05], 30s [NBL-F02], 4 months [NBL-F06]; where no bound exists (near-real-time, data-loss tolerance) it is explicitly flagged Unknown, not invented</td></tr>
+      <tr><td>At least 2 quality-attribute scenarios, each with all 6 fields</td><td>✅ Pass — 3 full scenarios in Section 4 (Source/Stimulus/Environment/Artifact/Response/Response Measure)</td></tr>
+      <tr><td>Exactly 3 ASRs, each with a one-sentence justification of why it's architecturally significant</td><td>✅ Pass — Section 5</td></tr>
+      <tr><td>A Utility Tree mapping quality attributes → scenarios → priority</td><td>✅ Pass — Section 6</td></tr>
+      <tr><td>3 architecture decisions, each reviewable (rejected alternative, why viable, sacrifice, gain, reversal condition, unresolved fact)</td><td>✅ Pass (exceeded) — Section 7, all 4 decisions carry all 7 fields; a 4th decision (access-control model) was added specifically so ASR 3 has a reviewable decision record, not only a governance recommendation</td></tr>
+      <tr><td>Every decision passes the "¿Para qué?" test</td><td>✅ Pass — outcome / objective / ASR mapped explicitly in the table at the top of Section 7</td></tr>
+      <tr><td>Each decision names at least one concrete tool/pattern option, justified by trade-off</td><td>✅ Pass</td></tr>
+      <tr><td>Tooling options span 2–3 ecosystems (hyperscaler / platform / open-source)</td><td>✅ Pass — every decision offers open-source, platform/lakehouse, and hyperscaler options, because no cloud vendor constraint was stated [NBL-U05]</td></tr>
+      <tr><td>No single-cloud default — a constraint justifies narrowing, or alternatives are shown</td><td>✅ Pass — no vendor constraint exists [NBL-U05], so all three decisions present multi-ecosystem options rather than narrowing</td></tr>
+      <tr><td>At least one open-source / portable option offered where one genuinely exists</td><td>✅ Pass — Kafka/Redpanda/Flink, Iceberg/Delta, TimescaleDB/Cassandra all offered</td></tr>
+      <tr><td>Lock-in and reversibility implications flagged via Cost of Change</td><td>✅ Pass — Section 10, with an explicit open-table-format recommendation</td></tr>
+      <tr><td>A Governance &amp; Security Recommendations section is present</td><td>✅ Pass — Section 9</td></tr>
+      <tr><td>No compliance regime assumed unless stated — otherwise listed in Open Questions</td><td>✅ Pass — [NBL-U01] explicitly carried through Sections 2, 9, and 11; no named regime appears anywhere else in this report</td></tr>
+      <tr><td>A cost-of-change placement for decisions most likely to be hard to undo</td><td>✅ Pass — Section 10</td></tr>
+      <tr><td>An "Open Questions for the Stakeholder" section listing every gap instead of a guessed value</td><td>✅ Pass — Section 11 lists all 9 unresolved items [NBL-U01]–[NBL-U09]</td></tr>
+      <tr><td>Output delivered as docs/&lt;slug&gt;_Solution.html with Mermaid diagrams + tables, matching the reference report in depth/structure</td><td>✅ Pass — this file, following the structure of <code>Customer360_Capstone_Solution_v2.html</code></td></tr>
+      <tr><td>No requirement, number, or constraint appears that wasn't provided, in the knowledge base, or explicitly flagged</td><td>✅ Pass after re-read — every numeric value in this report is either cited to an NBL-F## fact, cited to an NBL-U## unknown inside Open Questions, or explicitly labeled "(derived — not stated in the scenario as such)" with its calculation shown (Section 3, Scenario 2)</td></tr>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  Generated from GitHub issue #14 (Brayan-ibanez-slalom/architech-explorer) — Northbridge Logistics Fleet Reefer Telemetry &amp; Alerting Solution.
+</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose', flowchart: { curve: 'basis' } });
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+### SOURCE: issue #14 — [Scenario] Northbridge Logistics - fleet reefer telemetry & alerting
+
+## Business Context
+Northbridge Logistics operates a fleet of 3,200 refrigerated ("reefer") trucks. Onboard IoT devices already report engine temperature, GPS location, reefer-unit temperature, and engine fault codes. Today this data only feeds an on-premises fault-code system used by the warranty-claims team, and nobody monitors reefer temperature in near-real-time.
+
+## Business Objectives
+1. Reduce unplanned roadside breakdowns that cause refrigerated-load spoilage.
+2. Give fleet managers near-real-time visibility into reefer-unit health across the fleet.
+3. Establish a data foundation that a future predictive-maintenance ML initiative (out of scope for this phase) can build on.
+
+## What the System Must Do (Functional Requirements)
+- Ingest telemetry (engine temperature, GPS, reefer-unit temperature, fault codes) from each truck's onboard device, sent roughly every 30 seconds per truck.
+- Detect when reefer-unit temperature breaches a configured safe-range threshold.
+- Alert the responsible fleet manager within 5 minutes of a threshold breach.
+- Store historical telemetry for at least 2 years to support warranty disputes with the truck/reefer-unit manufacturers.
+- Provide a dashboard showing currently active alerts per truck/route.
+
+## Operating Conditions / Known Numbers
+- 3,200 trucks fleet-wide, each sending telemetry approximately every 30 seconds.
+- Alert must reach the fleet manager within 5 minutes of a threshold breach.
+- Telemetry retention: minimum 2 years.
+- Pilot phase: 400 trucks, targeted within 4 months. Full fleet rollout timeline after the pilot is not yet decided.
+- No fleet-wide growth-rate projection has been provided yet (fleet size may grow but no number is available).
+
+## Constraints
+- Team: 6 backend engineers + 1 data engineer, comfortable with Python and SQL; two of them have prior production experience with Kafka.
+- The existing on-premises fault-code system cannot be decommissioned yet — the warranty-claims team still depends on it and there is no committed migration date.
+- No cloud vendor has been chosen yet; the company is open to any provider or a hybrid approach.
+- Budget for this initiative has not been disclosed yet.
+
+## Security / Compliance Notes
+- Legal is still reviewing whether any regulatory regime applies to vehicle telemetry in the jurisdictions Northbridge operates in; no determination has been made yet.
+- Fleet managers and warranty-claims staff need different views of the data, but exact role definitions haven't been finalized.
+
+## Anything Else Known
+- The reefer-unit temperature threshold values themselves are configured per cargo type by an existing rules engine that will keep being used; this project only needs to consume its output, not replace it.
+
+---
+**Requested output:** Full reasoning chain (objectives → constraints → requirements → quality-attribute scenarios → ASRs → utility tree → decisions & trade-offs → tools → open questions), delivered as an HTML report under `docs/`.
