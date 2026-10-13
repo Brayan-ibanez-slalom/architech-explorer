@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{DOC_TITLE}}</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+{{REPORT_STYLE_CSS}}
+</style>
+</head>
+<body>
+<header>
+  <h1>{{CASE_TITLE}}</h1>
+  <p>{{CASE_SUBTITLE}}</p>
+</header>
+<nav>
+  <!-- one <a href="#sectionId"> per <section id="sectionId"> below -->
+</nav>
+<main>
+
+  <section id="problem">
+    <span class="badge">Problem Framing (SS1)</span>
+    <h2>1. Problem Statement &amp; Stakeholders</h2>
+    <!-- 3-5 sentence problem statement; stakeholder table with decision / evidence / access-level columns -->
+  </section>
+
+  <section id="objectives">
+    <h2>2. Business Objectives, Constraints &amp; Assumptions</h2>
+    <!-- clearly separate facts vs assumptions; cite every claim back to a source fact ID -->
+  </section>
+
+  <section id="discovery">
+    <h2>3. Discovery Questions</h2>
+    <!-- 5-7 questions, each: who to ask / what the answer could change -->
+  </section>
+
+  <section id="requirements">
+    <span class="badge">Architecture Reasoning (TF1)</span>
+    <h2>4. Functional Requirements &amp; Quality Attributes</h2>
+  </section>
+
+  <section id="scenarios">
+    <h2>5. Quality Attribute Scenarios</h2>
+    <!-- >=2 full 6-part scenarios: source/stimulus/environment/artifact/response/response measure -->
+  </section>
+
+  <section id="asrs">
+    <h2>6. Architecturally Significant Requirements (ASRs)</h2>
+    <!-- >=3 ASRs as a table: ASR / evidence / utility-tree branch / impact / risk / decision shaped -->
+  </section>
+
+  <section id="utility-tree">
+    <h2>7. Utility Tree</h2>
+    <div class="mermaid">
+graph TD
+  R["{{ROOT_LABEL}}"] --> QA1["Quality Attribute 1"]
+  R --> QA2["Quality Attribute 2"]
+  QA1 --> A1["ASR1 label (impact/risk)"]
+  QA2 --> A2["ASR2 label (impact/risk)"]
+    </div>
+  </section>
+
+  <section id="recommendation">
+    <h2>8. First-Release Recommendation</h2>
+    <!-- scope: included vs. deferred (+ reason + review trigger) per workflow -->
+  </section>
+
+  <section id="sources">
+    <h2>9. Sources &amp; Access</h2>
+    <!-- per decision area: info needed / possible source / who confirms / initial approach -->
+  </section>
+
+  <section id="architecture">
+    <h2>10. Architecture Overview</h2>
+    <div class="mermaid">
+flowchart LR
+  subgraph SOURCES["Sources"]
+    S1["Source 1"]
+  end
+  S1 --> ING["Ingestion"]
+  ING --> SRV["Serving layer"]
+    </div>
+  </section>
+
+  <section id="tradeoffs">
+    <h2>11. Trade-offs</h2>
+    <!-- >=3 trade-offs: decision area+evidence / Option A (benefit,cost,risk) / Option B / recommendation+consequences / reversibility / review trigger -->
+  </section>
+
+  <section id="ai-evidence">
+    <span class="badge">Responsible AI Use (AI1)</span>
+    <h2>12. AI-Assisted Planning, Validation &amp; Human Accountability</h2>
+    <!-- objective/prompt summary, result summary, accepted/corrected/rejected + why, verification evidence,
+         validation checklist, human accountability statement (owner, what AI must never decide, escalation path) -->
+  </section>
+
+  <section id="rubric">
+    <h2>13. Rubric Self-Check</h2>
+    <!-- table mapping each rubric area to where its evidence lives in this document -->
+  </section>
+
+</main>
+<footer>
+  {{FOOTER_NOTE}}
+</footer>
+</body>
+</html>
