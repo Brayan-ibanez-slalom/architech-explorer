@@ -125,6 +125,12 @@ questions/assumptions rather than inventing facts.
   trigger), and never claim "no invented facts" if the recommendation states
   engineering choices the brief didn't.
 
+> **Run the text-based half of the step-8 content self-review now**, before
+> rendering diagrams or building PDFs — a citation/count/scope fix here costs
+> one text edit; the same fix found after step 6 costs a full diagram +
+> 3-PDF rebuild. Only the render-dependent checks (diagram-under-right-
+> heading, caption/image match) have to wait until after step 6.
+
 ### 5. Render the two (or more) Mermaid diagrams to PNG
 Mermaid-CLI via `npx`/npm is often broken in these environments (corporate
 npm registries with expired tokens are common). Use the bundled
@@ -238,6 +244,109 @@ python3 scripts/build_branded_pdf.py \
 - `open <file>.pdf` / `open <file>.html` at the end so the user can review
   immediately.
 
+### 8. Adversarial content self-review (catch the silent credibility-killers)
+Steps 1-7 prove the documents *build and render*; this step proves they are
+*correct and defensible*. A deliverable that stakes its credibility on "every
+claim traces to the brief" is destroyed by one dangling citation or one
+invented number.
+
+**Run order matters.** The *text-based* checks below need no PDF — run them on
+the HTML/Markdown sources right after step 4 (see the note there) so fixes
+cost one text edit, not a diagram + 3-PDF rebuild. Only the *render-dependent*
+checks (diagram under the right heading, caption matches image — already in
+step 7) wait until after step 6. For a thorough pass, also dispatch a
+**fresh, independent review agent** (it catches what the author rationalizes
+away) with the brief + deliverables and ask it to find breaking points.
+
+**Mechanize what you can; reserve judgment for the rest.** Run the bundled
+checker first — it automates the purely structural checks so your attention
+(and the review agent's) goes to the judgment calls:
+
+```
+python3 scripts/review_report.py --manifest validation-checklist.md \
+    --report Solution.html --also Workbook_Filled.md
+```
+
+It exits non-zero (gate-style, like `selftest.py`) on: a citation not defined
+in the facts manifest, a second/dangling citation namespace, a discovery
+question referenced but never defined, and (heuristically) a spelled count
+that disagrees with the parenthesised list it introduces. Unused manifest
+facts and cross-file id gaps are WARNings, not failures (a fact can be
+legitimately cited in only one deliverable). What the script **cannot** judge —
+and you/the agent still must — is everything below marked *(judgment)*.
+
+- **[mechanized] Citation integrity — every id resolves both ways.** Every
+  `[XX-Fxx]` in the report must be defined in the facts manifest; never
+  introduce a second citation namespace you then never define (carry open
+  items as the numbered discovery questions `Q1..Qn`). The checker's id
+  regex is namespace-agnostic (`[A-Z0-9]+-[A-Za-z0-9]+`), so it works for any
+  case's tag scheme, not just `-F`.
+- **[judgment] Cited fact actually says it.** Spot-check that each citation's
+  manifest quote genuinely supports the sentence it is attached to. A
+  plausible-but-wrong id (right topic, wrong fact) is a common self-inflicted
+  error the script cannot catch. If the supporting fact is not yet in the
+  manifest, *add it* — don't borrow a near-neighbour id.
+- **[mechanized + judgment] No numeric self-contradiction.** The checker flags
+  obvious "the two X (a, b, c)" count/list mismatches; you still re-read every
+  other count/number in prose against the source table and against other
+  sentences in the same document. Internal arithmetic must agree with the
+  brief's own figures.
+- **[judgment] Trade-offs are genuine, in-bounds tensions.** Each trade-off's
+  Option B must be something the brief actually *permits*. Comparing the
+  recommendation against an option the brief explicitly *prohibits* is a
+  strawman. If the only alternative is prohibited, **replace** that trade-off
+  with a real tension (e.g. how far an allowed capability may reach) rather
+  than deleting it — you must still meet the stated minimum (usually >=3).
+- **[judgment] Every trade-off carries reversibility + a review trigger.** For
+  each decision, state whether it is easily reversible or a one-way door, and
+  the signal/date that should trigger revisiting it. A trade-off with no
+  "when would we change our mind?" reads as an opinion, not an architecture
+  decision.
+- **[judgment] Every six-part scenario is fully populated and measurable.**
+  For each quality-attribute scenario, confirm all six parts are present
+  (source, stimulus, environment, artifact, response, **response measure**)
+  and that the response measure is *measurable* — a number, threshold, or an
+  explicitly-labelled design acceptance criterion with a verification method,
+  never a vague "system performs well."
+- **[judgment] Every named pain point maps to a requirement — or is
+  explicitly deferred.** List the problems the brief explicitly names; confirm
+  each is either carried into a functional requirement/ASR/scenario, or
+  *explicitly listed as out of scope/deferred with a reason*. A pain point
+  that is silently absent (neither modelled nor deferred) is the completeness
+  gap a rubric catches; one that is deliberately deferred is fine.
+- **[judgment] Impact ratings reflect capability importance, not
+  deferability.** Don't rate a foundational precondition (e.g. "can we ingest
+  anything at all from the sources") as low/medium business impact just
+  because a *specific technique* for it is being deferred. Separate "we can
+  defer technique X" (a scope choice) from "this capability's business impact"
+  (often high).
+- **[judgment] Design decisions verified as labelled, not asserted.** Anything
+  the brief didn't state (nightly batch, deterministic matching, an SLA, an
+  acceptance criterion) must be labelled an assumption or acceptance criterion
+  tied to a source fact + review trigger — never phrased as an established
+  client fact. This is the verification half of the step-4 rule: step 4
+  *writes* the source-vs-design distinction into the checklist; here you
+  *confirm* nothing slipped through into the report as a fake client fact.
+- **[judgment] Rubric self-check is honest.** If you assert coverage of a
+  rubric/assessment area, confirm the deliverable genuinely addresses it at
+  the stated weight — don't claim a dimension you only gestured at. An
+  inflated self-assessment is worse than an honest gap note.
+- **[mechanized + judgment] Cross-file consistency.** If you produced HTML +
+  workbook + checklist, the same fact must carry the same citation id, the
+  same ASR/trade-off numbers, and the same included-vs-deferred scope in all
+  three. The checker WARNs on citation ids that appear in some deliverables
+  but not others; you still eyeball shared numbers and renumbered trade-offs.
+- **[judgment] Self-containment (nice-to-have).** Ideally the canonical
+  HTML/PDF lets a reader resolve citations without opening a second file —
+  include at least the cited subset of the facts manifest as an appendix, or
+  a visible pointer to it.
+
+When the independent agent returns findings, verify each against the brief
+yourself before acting (reviewers over-flag too), fix the real ones, then —
+if the fix touched rendered content — **rebuild and re-verify** (steps 5-7);
+a content edit can change page counts, diagram labels, and cross-references.
+Text-only fixes made before step 6 need no rebuild.
+
 ## Known environment gotchas (save yourself a retry loop)
 - `npm`/`npx` may be pinned to a private/corporate registry with a stale
   auth token (`npm config get registry` to check) — don't fight it; use the
@@ -255,6 +364,11 @@ python3 scripts/build_branded_pdf.py \
 ## Files in this skill
 - `scripts/render_mermaid.py` — Mermaid source -> cropped PNG via headless
   Chrome (no npm/mermaid-cli dependency).
+- `scripts/review_report.py` — mechanized slice of the step-8 content
+  self-review: citation two-way resolution against the facts manifest,
+  dangling-namespace and undefined discovery-question detection, a numeric
+  count/list heuristic, and cross-file citation consistency. Namespace-
+  agnostic; gate-style non-zero exit on real defects.
 - `scripts/build_branded_pdf.py` — generic HTML-or-Markdown -> branded,
   paginated PDF CLI (repeating header/footer, tables, embedded diagram
   images, author byline). Fully parameterized; nothing case-specific is
