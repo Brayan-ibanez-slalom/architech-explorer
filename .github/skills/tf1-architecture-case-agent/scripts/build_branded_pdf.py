@@ -40,6 +40,56 @@ import glob
 DIAGRAM_FILES = {}
 
 
+def find_diagram_by_keyword(keyword):
+    """Return a diagrams_dir PNG path whose filename contains `keyword`
+    (case-insensitive), or None. Used to embed a rendered diagram image in
+    place of a raw ASCII code block in Markdown input (e.g. a "Utility Tree"
+    section), instead of dumping unwrapped monospace text that overflows the
+    page width.
+    """
+    keyword = keyword.lower()
+    for path in DIAGRAM_FILES.values():
+        if keyword in os.path.basename(path).lower():
+            return path
+    return None
+
+
+def code_block_image_flowables(img_path, title, styles):
+    flow = [Paragraph(f"<i>Diagram: {esc(title)}</i>", styles['Caption'])]
+    with PILImage.open(img_path) as im:
+        w_px, h_px = im.size
+    max_w = 6.6 * inch
+    max_h = 8.5 * inch
+    w = max_w
+    h = h_px * (w / w_px)
+    if h > max_h:
+        h = max_h
+        w = w_px * (h / h_px)
+    flow.append(RLImage(img_path, width=w, height=h))
+    return flow
+
+
+def wrap_mono_lines(code_lines, max_chars=92):
+    """Wrap long monospace lines so they fit within the page width instead of
+    overflowing/being clipped. Preserves leading indentation on continuation
+    lines; never breaks mid-word unless a single token itself exceeds
+    max_chars (e.g. a long unbroken ASCII rule)."""
+    import textwrap
+    wrapped = []
+    for cl in code_lines:
+        if len(cl) <= max_chars:
+            wrapped.append(cl)
+            continue
+        indent = cl[:len(cl) - len(cl.lstrip(' '))]
+        pieces = textwrap.wrap(
+            cl, width=max_chars, initial_indent='', subsequent_indent=indent,
+            break_long_words=True, break_on_hyphens=False,
+            replace_whitespace=False, drop_whitespace=False,
+        ) or ['']
+        wrapped.extend(pieces)
+    return wrapped
+
+
 def configure_diagrams(diagrams_dir):
     """Auto-map every *.png in diagrams_dir, sorted by filename, to mermaid
     block index 0, 1, 2, ... in encounter order. Rename files so sort order
@@ -560,6 +610,7 @@ def markdown_to_story(md_text, styles, h1_style='H1', total_width=6.6 * inch):
     i = 0
     n = len(lines)
     list_buffer = []
+    last_heading = ''
 
     def flush_list():
         nonlocal list_buffer
@@ -597,11 +648,23 @@ def markdown_to_story(md_text, styles, h1_style='H1', total_width=6.6 * inch):
                 code_lines.append(lines[i])
                 i += 1
             i += 1  # skip closing fence
-            for cl in code_lines:
-                cl = ascii_safe_mono(cl)
-                safe = esc(cl) if cl.strip() else '&nbsp;'
-                safe = safe.replace(' ', '&nbsp;')
-                story.append(Paragraph(safe, styles['Mono']))
+            # If this code block sits under a heading that names a known
+            # diagram (e.g. "Utility Tree"), embed the matching rendered PNG
+            # instead of dumping raw ASCII — avoids unreadable/clipped text
+            # when the tree is wider than the page, and matches the HTML
+            # report's rendered-diagram presentation.
+            img_path = None
+            for keyword in ('utility tree', 'architecture'):
+                if keyword in last_heading.lower():
+                    img_path = find_diagram_by_keyword(keyword.split()[0])
+                    break
+            if img_path and os.path.exists(img_path):
+                story.extend(code_block_image_flowables(img_path, last_heading, styles))
+            else:
+                for cl in wrap_mono_lines([ascii_safe_mono(c) for c in code_lines]):
+                    safe = esc(cl) if cl.strip() else '&nbsp;'
+                    safe = safe.replace(' ', '&nbsp;')
+                    story.append(Paragraph(safe, styles['Mono']))
             story.append(Spacer(1, 6))
             continue
 
@@ -610,6 +673,7 @@ def markdown_to_story(md_text, styles, h1_style='H1', total_width=6.6 * inch):
             flush_list()
             level = len(m.group(1))
             text = m.group(2).strip()
+            last_heading = text
             style = styles[h1_style] if level <= 2 else styles['H3']
             story.append(Paragraph(inline_md_to_rl(text), style))
             i += 1
