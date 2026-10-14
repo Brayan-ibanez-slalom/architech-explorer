@@ -164,7 +164,50 @@ GROUP BY customer_id;</code></pre>
             # literal asterisks survive into the PDF text
             check("literal '5 * 3 * 2' in PDF", "5 * 3 * 2" in full)
 
+    _check_review_report()
+
     _report()
+
+
+def _check_review_report():
+    """Smoke-test review_report.py's mechanized content checks."""
+    import review_report as rr
+
+    manifest = (
+        "| ID | Fact | Source |\n"
+        "| PA-F01 | sixteen weeks | p1 |\n"
+        "| PA-F02 | fifty million | p2 |\n"
+    )
+    clean = (
+        "<p>Deliver in time [PA-F01]; scale is large [PA-F02].</p>"
+        "<tr><td>Q1</td><td>what cutoff? [PA-F01]</td></tr>"
+        "<p>open item — see Q1</p>"
+        "<p>the three non-FHIR sources (HL7v2, X12, CSV)</p>"
+    )
+    f = rr.Findings()
+    rr.check_citations(clean, manifest, f)
+    rr.check_questions(clean, manifest, f)
+    rr.check_counts(clean, f)
+    check("review_report: clean report has no errors", not f.errors)
+
+    bad = (
+        "<p>Dangling [PA-F99] and [PA-U03]; see Q9.</p>"
+        "<p>the two non-FHIR sources (HL7v2, X12, CSV)</p>"
+    )
+    f2 = rr.Findings()
+    rr.check_citations(bad, manifest, f2)
+    rr.check_questions(bad, manifest, f2)
+    rr.check_counts(bad, f2)
+    errs = " | ".join(f2.errors)
+    check("review_report: flags undefined citation [PA-F99]", "PA-F99" in errs)
+    check("review_report: flags undefined question Q9", "Q9" in errs)
+    check("review_report: flags count mismatch (two vs 3)",
+          any("count mismatch" in w for w in f2.warns))
+    # explanatory placeholder [PA-Fxx] must NOT be treated as a real citation
+    f3 = rr.Findings()
+    rr.check_citations("<p>key: [PA-Fxx] means a fact [PA-F01]</p>", manifest, f3)
+    check("review_report: ignores [PA-Fxx] placeholder",
+          not any("Fxx" in e for e in f3.errors))
 
 
 def _report():

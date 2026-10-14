@@ -284,9 +284,6 @@ def make_title_block(styles, title, subtitle, doc_label, author_name=None, autho
 # Small text helpers
 # ---------------------------------------------------------------------------
 
-TAG_RE = re.compile(r'\[PA-[A-Za-z0-9]+\]')
-
-
 def esc(text):
     return cp1252_safe(html_lib.escape(text, quote=False))
 
