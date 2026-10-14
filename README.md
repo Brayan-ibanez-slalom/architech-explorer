@@ -54,7 +54,15 @@ agent can apply it consistently to new scenarios, instead of guessing at framewo
 │   ├── copilot-instructions.md                                # Agent workflow rules (how to analyze a new scenario)
 │   ├── ISSUE_TEMPLATE/new-scenario.md                          # Template to submit a new scenario for analysis
 │   ├── CODEOWNERS
-│   └── workflows/                                              # Setup steps, issue labelling, report structure validation
+│   ├── workflows/                                              # Setup steps, issue labelling, report structure validation
+│   └── skills/
+│       └── tf1-architecture-case-agent/                        # Reusable Copilot CLI skill — turns a new case/brief/issue
+│           ├── SKILL.md                                         #   into the full HTML report + workbook + validation-checklist +
+│           ├── scripts/render_mermaid.py                        #   branded PDFs pipeline, given just the case context (see below)
+│           ├── scripts/build_branded_pdf.py
+│           ├── templates/report_style.css
+│           ├── templates/report_skeleton.html
+│           └── requirements.txt
 └── README.md
 ```
 
@@ -126,6 +134,34 @@ document that made the claim. Now:
    - Run `./scripts/preflight.sh` and obtain an independent review verdict before
      proposing a PR.
 3. Review the generated report, iterate via PR comments if trade-offs need revisiting.
+
+## Reusable Copilot CLI skill: `tf1-architecture-case-agent`
+
+`.github/skills/tf1-architecture-case-agent/` packages the above workflow (plus the
+rendering/formatting steps proven out on the worked scenarios) into a loadable
+[Copilot CLI skill](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/skills),
+so a new case can be solved by supplying only the context — no need to re-describe the
+process each time. Given a scenario (pasted text, a GitHub issue, or a case-brief PDF,
+optionally with a companion workbook/template PDF) plus an output folder, it:
+
+1. Extracts and reads all source material (`pypdf` for PDFs).
+2. Produces a full HTML architecture report (same navy/blue visual style as the reports
+   above, Mermaid diagrams for the Utility Tree and architecture overview, every
+   quantitative/qualitative claim cited to a source fact ID, unresolved items left as
+   explicit open questions rather than invented).
+3. Fills the official workbook/template, if one was supplied, organized by the
+   workbook's own page/section numbers.
+4. Writes a validation/citation checklist mapping every claim back to its source.
+5. Renders the Mermaid diagrams to PNG via headless Chrome (`scripts/render_mermaid.py`
+   — no npm/mermaid-cli dependency, which is useful when `npm` is pinned to a broken
+   or private registry).
+6. Builds branded, paginated PDF versions of all of the above
+   (`scripts/build_branded_pdf.py`), matching the visual style of the source case
+   documents when one was provided (repeating header, page numbers, "Prepared by"
+   byline), using only `reportlab`/`pypdf`/`Pillow` (`requirements.txt`).
+
+See `.github/skills/tf1-architecture-case-agent/SKILL.md` for the full pipeline,
+trigger conditions, and known environment gotchas.
 
 ## Worked Scenarios
 Beyond the two capstone reference examples, the following scenarios have been run
