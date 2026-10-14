@@ -62,10 +62,11 @@ questions/assumptions rather than inventing facts.
 ## Pipeline
 
 ### 1. Extract and read all source material
-- PDFs: use `pypdf` (`PdfReader(path).pages[i].extract_text()`), not shell
-  tools (`pdftotext`/`PyPDF2`/`fitz` are typically unavailable; `pypdf` is
-  reliable here). Read the *entire* brief and workbook before writing
-  anything — do not skim.
+- PDFs: for text extraction use `pypdf` (`PdfReader(path).pages[i].extract_text()`)
+  — it needs no extra system libraries and is reliable here. (`pdftotext`
+  and `PyPDF2` are typically unavailable. PyMuPDF also works but is mainly
+  used later for QA image renders — see Step 7.) Read the *entire* brief and
+  workbook before writing anything — do not skim.
 - GitHub issues: fetch via `gh issue view` or the GitHub MCP tools.
 - If a workbook/template PDF was supplied, extract its exact page/section
   structure — this tells you precisely which sections the final report must
@@ -115,8 +116,14 @@ questions/assumptions rather than inventing facts.
 ### 4. Produce the validation/citation checklist
 - A short markdown file: which rubric/requirement areas are covered and
   where; every quantitative/qualitative fact used, cited back to its exact
-  source line; the full list of items deliberately left open rather than
-  assumed.
+  source line (treat this as the case's **facts manifest**: each `[XX-Fxx]`
+  id maps to a verbatim source quote + page/line, so citations in the report
+  can be mechanically checked); the full list of items deliberately left
+  open rather than assumed. Also distinguish *source facts* from *design
+  decisions/acceptance criteria you introduced* — label the latter as such
+  (assumption or acceptance criterion tied to a source fact + review
+  trigger), and never claim "no invented facts" if the recommendation states
+  engineering choices the brief didn't.
 
 ### 5. Render the two (or more) Mermaid diagrams to PNG
 Mermaid-CLI via `npx`/npm is often broken in these environments (corporate
@@ -124,19 +131,32 @@ npm registries with expired tokens are common). Use the bundled
 headless-Chrome renderer instead — it has no npm dependency:
 
 ```
-python3 scripts/render_mermaid.py utility_tree.mmd diagrams/00_utility_tree.png
-python3 scripts/render_mermaid.py architecture.mmd diagrams/01_architecture.png
+python3 scripts/render_mermaid.py utility_tree.mmd diagrams/utility_tree.png
+python3 scripts/render_mermaid.py architecture.mmd diagrams/architecture.png
 ```
 
 - Put the raw Mermaid source (just the diagram body, no `<div>`/backticks)
   into each `.mmd` file first.
-- Name output files with a numeric prefix (`00_`, `01_`, ...) matching the
-  **order the `<div class="mermaid">` blocks appear in the HTML**, top to
-  bottom — `build_branded_pdf.py --diagrams-dir` matches images to diagram
-  blocks by sorted filename order.
-- Requires Google Chrome/Chromium installed locally (checks the usual macOS
-  app path and common Linux binary names) and the `Pillow` package
-  (`pip3 install pillow` if missing) for whitespace auto-cropping.
+- **Name each PNG with a keyword that appears in the heading of the section
+  it belongs to** (e.g. `utility_tree.png` for a "Utility Tree" section,
+  `architecture.png` for an "Architecture overview" section). The PDF
+  builder matches each `<div class="mermaid">` block (or ASCII-diagram code
+  block) to a PNG **by the surrounding heading text first**, then by the
+  mermaid block kind (`graph TD`/`TB` -> tree/utility; `flowchart` ->
+  architecture), and only falls back to sorted-filename/encounter order if
+  no keyword matches. Keyword naming is strongly preferred because it is
+  immune to the order in which diagrams happen to appear. Recognized heading
+  keywords include: utility/tree, architecture/component/data-flow,
+  deployment/infrastructure, sequence, erd/entity/schema/model. For other
+  diagram types, prefix filenames `00_`, `01_`, ... in document order as a
+  fallback.
+- This works for **any number of diagrams**, not just two — add one `.mmd`
+  per diagram and one `<div class="mermaid">` per diagram in the HTML.
+- Requires Google Chrome/Chromium/Edge installed locally (the renderer
+  checks the usual macOS, Linux, and Windows paths) and the `Pillow` package
+  (`pip3 install pillow` if missing) for whitespace auto-cropping. The
+  renderer pins a specific mermaid version, times out instead of hanging,
+  and **errors loudly on a blank render** rather than writing an empty PNG.
 - Verify each PNG visually with the `view` tool before moving on — if a
   diagram is cut off or empty, the Mermaid syntax likely has an error; fix
   the `.mmd` source and re-render rather than shipping a bad image.
@@ -190,14 +210,31 @@ python3 scripts/build_branded_pdf.py \
   passed in exactly like this.
 
 ### 7. Verify before declaring done
+- Run the skill's own regression self-test first — it exercises the diagram
+  matching, code-preservation, italic, table and unicode paths against tiny
+  fixtures and must exit 0:
+  ```
+  python3 scripts/selftest.py
+  ```
 - Re-open each PDF's page count and first/last page text with `pypdf` to
   confirm non-empty, correctly ordered content.
 - Render at least the diagram pages to PNG with PyMuPDF
-  (`pip3 install pymupdf`; `import fitz; fitz.open(pdf)[i].get_pixmap(dpi=120).save(...)`)
-  and view them — confirm diagrams are present, legible, and not cut off.
+  (`pip3 install pymupdf`; `import pymupdf; pymupdf.open(pdf)[i].get_pixmap(dpi=120).save(...)`
+  — the old `import fitz` alias still works but is deprecated) and view them —
+  confirm diagrams are present, legible, and not cut off.
   (Headless Chrome's own `--print-to-pdf`/`--screenshot` do not reliably
   render local PDFs in this environment — use PyMuPDF for QA screenshots,
   not Chrome.)
+- **Check each diagram is under the right heading** — don't just confirm "a
+  diagram is present." Extract the caption line (`Diagram: <heading>`) above
+  each embedded image and confirm it matches the intended diagram (e.g. the
+  Utility Tree image sits under the Utility Tree section, not the
+  architecture one). This catches the image-to-section mismatch that a
+  bare "diagrams present" check would miss.
+- Confirm no fenced code content silently vanished: the PDF builder only
+  swaps a code block for a diagram image when the block is genuine ASCII-art
+  (or a `mermaid`/`diagram` fence) under a diagram heading — real code (SQL,
+  YAML, etc.) is kept verbatim. Spot-check any case that embeds code.
 - `open <file>.pdf` / `open <file>.html` at the end so the user can review
   immediately.
 

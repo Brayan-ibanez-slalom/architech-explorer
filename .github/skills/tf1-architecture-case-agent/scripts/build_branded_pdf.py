@@ -54,6 +54,80 @@ def find_diagram_by_keyword(keyword):
     return None
 
 
+# Keywords that a heading (or mermaid block "kind") may contain, mapped to the
+# filename keywords we look for among the rendered diagram PNGs. This is how we
+# match a diagram to the *right* heading instead of relying on the fragile
+# "alphabetical filename order == document encounter order" assumption.
+_DIAGRAM_KEYWORD_MAP = [
+    (("utility", "tree", "quality attribute"), ("utility", "tree")),
+    (("architect", "component", "data flow", "context diagram"), ("architect", "arch", "flow", "component")),
+    (("deployment", "infrastructure"), ("deploy", "infra")),
+    (("sequence",), ("sequence", "seq")),
+    (("erd", "entity", "schema", "data model"), ("erd", "entity", "schema", "model")),
+]
+
+
+def match_diagram_image(index, kind=None, context_text=None):
+    """Resolve the PNG for a mermaid/ASCII diagram robustly.
+
+    Preference order:
+      1. Keyword match from the diagram's surrounding heading text.
+      2. Keyword match inferred from the mermaid block "kind" (tree vs flowchart).
+      3. Positional fallback (Nth diagram -> Nth sorted PNG) only when a single
+         diagram is involved or no keyword matched — kept for backward compat.
+
+    Matching by heading/kind prevents the silent image-swap bug that occurs
+    when filenames sort into a different order than the document's diagrams.
+    """
+    ctx = (context_text or "").lower()
+    tried = set()
+
+    def _try(file_keywords):
+        for kw in file_keywords:
+            if kw in tried:
+                continue
+            tried.add(kw)
+            p = find_diagram_by_keyword(kw)
+            if p:
+                return p
+        return None
+
+    # 1. Heading-text keywords.
+    for heading_words, file_keywords in _DIAGRAM_KEYWORD_MAP:
+        if any(w in ctx for w in heading_words):
+            hit = _try(file_keywords)
+            if hit:
+                return hit
+
+    # 2. Mermaid "kind" inference.
+    if kind == "tree":
+        hit = _try(("utility", "tree"))
+    else:
+        hit = _try(("architect", "arch", "flow", "component"))
+    if hit:
+        return hit
+
+    # 3. Positional fallback.
+    return DIAGRAM_FILES.get(index) if index is not None else None
+
+
+# Characters that signal a block of text is an ASCII-art diagram (box-drawing,
+# tree connectors, arrows) rather than source code we must preserve verbatim.
+_ASCII_DIAGRAM_CHARS = set("│├└┌┐┘┬┴┼─╔╗╚╝║═╠╣╦╩╬▲▼◄►→←↑↓↔⇒⇐")
+
+
+def looks_like_ascii_diagram(code_lines):
+    """Heuristic: does this fenced block look like an ASCII-art diagram (safe to
+    replace with a rendered PNG) rather than real source code we must keep?"""
+    text = "\n".join(code_lines)
+    if any(ch in _ASCII_DIAGRAM_CHARS for ch in text):
+        return True
+    # ASCII fallbacks for tree connectors ("|--", "`--", "+--").
+    if re.search(r'(^|\n)\s*[|`+\\]-{1,}\s', text):
+        return True
+    return False
+
+
 def code_block_image_flowables(img_path, title, styles):
     flow = [Paragraph(f"<i>Diagram: {esc(title)}</i>", styles['Caption'])]
     with PILImage.open(img_path) as im:
@@ -214,7 +288,39 @@ TAG_RE = re.compile(r'\[PA-[A-Za-z0-9]+\]')
 
 
 def esc(text):
-    return html_lib.escape(text, quote=False)
+    return cp1252_safe(html_lib.escape(text, quote=False))
+
+
+# The base-14 PDF fonts (Helvetica/Courier/Times) render with WinAnsi/cp1252
+# encoding; any character outside cp1252 (emoji, CJK, most arrows, box-drawing)
+# shows up as a "tofu" missing-glyph box. Map the common offenders to readable
+# ASCII and replace anything else still outside cp1252 so text never silently
+# turns into boxes.
+_UNICODE_SUBST = {
+    '\u2192': '->', '\u2190': '<-', '\u2191': '^', '\u2193': 'v',
+    '\u2194': '<->', '\u21d2': '=>', '\u21d0': '<=', '\u2212': '-',
+    '\u2713': '[ok]', '\u2714': '[ok]', '\u2717': '[x]', '\u2718': '[x]',
+    '\u2705': '[ok]', '\u274c': '[x]', '\u26a0': '[!]', '\ufe0f': '',
+    '\u2022': '\u2022',  # bullet is in cp1252 — keep
+}
+
+
+def cp1252_safe(text):
+    out = []
+    for ch in text:
+        if ch in _UNICODE_SUBST:
+            out.append(_UNICODE_SUBST[ch])
+            continue
+        try:
+            ch.encode('cp1252')
+            out.append(ch)
+        except UnicodeEncodeError:
+            # Unsupported glyph (emoji/CJK/etc.): drop zero-width/combining,
+            # otherwise substitute a placeholder so it never renders as tofu.
+            if ord(ch) in (0x200b, 0x200c, 0x200d, 0xfeff):
+                continue
+            out.append('?')
+    return ''.join(out)
 
 
 _BOX_DRAW_MAP = {
@@ -239,7 +345,10 @@ def inline_md_to_rl(text):
     text = esc(text)
     # restore citation bracket tags readability (escape wouldn't change [ ])
     text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
-    text = re.sub(r'(?<!\*)\*([^*\n]+?)\*(?!\*)', r'<i>\1</i>', text)
+    # Italic: a single * must hug non-space text on both sides and not sit
+    # between word characters, so literal asterisks (e.g. "5 * 3 * 2",
+    # wildcards, footnote markers) are left untouched.
+    text = re.sub(r'(?<!\w)\*(?=\S)([^*\n]+?)(?<=\S)\*(?!\w)', r'<i>\1</i>', text)
     text = re.sub(r'`([^`]+?)`', r'<font face="Courier">\1</font>', text)
     return text
 
@@ -414,13 +523,12 @@ def render_flowchart_text(subgraphs, edges, node_labels):
     return "\n".join(lines)
 
 
-def mermaid_block_to_flowables(raw_source, title, styles, kind, diagram_index=None):
+def mermaid_block_to_flowables(raw_source, title, styles, kind, img_path=None):
     # decode_contents() from bs4 re-serializes with HTML entity escaping
     # (e.g. literal "&" becomes "&amp;"); unescape once here so the later
     # esc() call below is the single, correct escaping pass.
     raw_source = html_lib.unescape(raw_source)
     flow = []
-    img_path = DIAGRAM_FILES.get(diagram_index) if diagram_index is not None else None
     if img_path and os.path.exists(img_path):
         flow.append(Paragraph(f"<i>Diagram: {esc(title)}</i>", styles['Caption']))
         with PILImage.open(img_path) as im:
@@ -480,14 +588,30 @@ def render_inline(tag):
 
 
 def html_table_to_flowable(table_tag, styles, total_width=6.6 * inch):
+    # Scope row/cell extraction to this table only. find_all('tr') recurses
+    # into nested tables, which flattens their rows into the parent and
+    # duplicates cells; gather only rows that belong to THIS table.
+    def _own_rows(tag):
+        own = []
+        for tr in tag.find_all('tr'):
+            # Skip rows whose nearest enclosing <table> is a different (nested) one.
+            if tr.find_parent('table') is tag:
+                own.append(tr)
+        return own
+
     rows = []
-    for tr in table_tag.find_all('tr'):
-        cells = tr.find_all(['th', 'td'])
+    for tr in _own_rows(table_tag):
+        # Only direct th/td children of this row (not cells of a nested table).
+        cells = [c for c in tr.find_all(['th', 'td']) if c.find_parent('tr') is tr]
         rows.append([render_inline(c) for c in cells])
     if not rows:
         return None
-    n = len(rows[0])
-    return table_from_markup_rows(rows, styles, col_widths=auto_col_widths(n, total_width), head=True)
+    ncols = max(len(r) for r in rows)
+    # Pad ragged rows so every row has the same column count.
+    for r in rows:
+        if len(r) < ncols:
+            r.extend([''] * (ncols - len(r)))
+    return table_from_markup_rows(rows, styles, col_widths=auto_col_widths(ncols, total_width), head=True)
 
 
 def html_list_to_flowable(ul_tag, styles):
@@ -506,7 +630,7 @@ MERMAID_TITLES_DEFAULT = {
 }
 
 
-def html_node_to_flowables(node, styles, mermaid_counter, mermaid_titles=None):
+def html_node_to_flowables(node, styles, mermaid_counter, mermaid_titles=None, section_title=None):
     """Dispatch a single top-level bs4 child of a <section> to flowables."""
     from bs4 import Tag
     mermaid_titles = mermaid_titles or MERMAID_TITLES_DEFAULT
@@ -537,17 +661,44 @@ def html_node_to_flowables(node, styles, mermaid_counter, mermaid_titles=None):
     elif name == 'ul':
         flow.append(html_list_to_flowable(node, styles))
         flow.append(Spacer(1, 4))
+    elif name == 'pre':
+        # Verbatim code block. Mirror the Markdown code-fence rule: only swap for
+        # a rendered diagram PNG when it is genuinely ASCII-art under a heading
+        # that names a known diagram AND a matching PNG exists — otherwise keep
+        # the code verbatim (wrapped). Never silently drop real source code.
+        code_node = node.find('code')
+        raw = (code_node.get_text() if code_node else node.get_text())
+        code_lines = raw.split('\n')
+        if code_lines and code_lines[-1] == '':
+            code_lines = code_lines[:-1]
+        code_cls = (code_node.get('class') if code_node else None) or []
+        is_mermaid_fence = any('language-mermaid' in c or 'language-diagram' in c
+                               for c in code_cls)
+        img_path = None
+        if is_mermaid_fence or looks_like_ascii_diagram(code_lines):
+            img_path = match_diagram_image(None, context_text=section_title)
+        if img_path and os.path.exists(img_path):
+            flow.extend(code_block_image_flowables(img_path, section_title or 'Diagram', styles))
+        else:
+            for cl in wrap_mono_lines([ascii_safe_mono(c) for c in code_lines]):
+                safe = esc(cl) if cl.strip() else '&nbsp;'
+                safe = safe.replace(' ', '&nbsp;')
+                flow.append(Paragraph(safe, styles['Mono']))
+        flow.append(Spacer(1, 6))
     elif name == 'div' and 'mermaid' in classes:
         raw = node.decode_contents()
-        kind = 'tree' if 'graph TD' in raw else 'flowchart'
-        title = mermaid_titles.get(mermaid_counter, f'Diagram {mermaid_counter + 1}')
-        flow.extend(mermaid_block_to_flowables(raw, title, styles, kind, diagram_index=mermaid_counter))
+        kind = 'tree' if ('graph TD' in raw or 'graph TB' in raw) else 'flowchart'
+        # Prefer the section heading for a stable, human-meaningful caption;
+        # fall back to the configured per-index title.
+        title = section_title or mermaid_titles.get(mermaid_counter, f'Diagram {mermaid_counter + 1}')
+        img_path = match_diagram_image(mermaid_counter, kind=kind, context_text=section_title)
+        flow.extend(mermaid_block_to_flowables(raw, title, styles, kind, img_path=img_path))
         flow.append(Spacer(1, 8))
         mermaid_counter += 1
     elif name == 'div':
         # decision / assume-box / gap-box / change-note: walk children recursively
         for child in node.children:
-            sub_flow, mermaid_counter = html_node_to_flowables(child, styles, mermaid_counter, mermaid_titles)
+            sub_flow, mermaid_counter = html_node_to_flowables(child, styles, mermaid_counter, mermaid_titles, section_title)
             flow.extend(sub_flow)
         flow.append(Spacer(1, 4))
     return flow, mermaid_counter
@@ -566,9 +717,15 @@ def build_solution_pdf(src_path, out_path, title, subtitle, doc_label, level_lin
     mermaid_counter = 0
     sections = main.find_all('section', recursive=False) or [main]
     for section in sections:
+        heading_tag = section.find(['h2', 'h3'])
+        current_heading = heading_tag.get_text(strip=True) if heading_tag else None
         section_flow = []
         for child in section.children:
-            flo, mermaid_counter = html_node_to_flowables(child, styles, mermaid_counter, mermaid_titles)
+            from bs4 import Tag
+            if isinstance(child, Tag) and child.name in ('h2', 'h3', 'h4'):
+                current_heading = child.get_text(strip=True)
+            flo, mermaid_counter = html_node_to_flowables(
+                child, styles, mermaid_counter, mermaid_titles, section_title=current_heading)
             section_flow.extend(flo)
         story.extend(section_flow)
         story.append(Spacer(1, 6))
@@ -642,22 +799,22 @@ def markdown_to_story(md_text, styles, h1_style='H1', total_width=6.6 * inch):
 
         if stripped.startswith('```'):
             flush_list()
+            fence_lang = stripped[3:].strip().lower()
             i += 1
             code_lines = []
             while i < n and not lines[i].strip().startswith('```'):
                 code_lines.append(lines[i])
                 i += 1
             i += 1  # skip closing fence
-            # If this code block sits under a heading that names a known
-            # diagram (e.g. "Utility Tree"), embed the matching rendered PNG
-            # instead of dumping raw ASCII — avoids unreadable/clipped text
-            # when the tree is wider than the page, and matches the HTML
-            # report's rendered-diagram presentation.
+            # Only replace a fenced block with a rendered diagram PNG when it is
+            # genuinely an ASCII-art diagram (or explicitly a mermaid/diagram
+            # fence) AND it sits under a heading that names a known diagram AND
+            # a matching PNG exists. Otherwise keep the code verbatim (wrapped)
+            # — never silently drop real source code (SQL, YAML, etc.).
+            is_diagram = fence_lang in ('mermaid', 'diagram') or looks_like_ascii_diagram(code_lines)
             img_path = None
-            for keyword in ('utility tree', 'architecture'):
-                if keyword in last_heading.lower():
-                    img_path = find_diagram_by_keyword(keyword.split()[0])
-                    break
+            if is_diagram:
+                img_path = match_diagram_image(None, context_text=last_heading)
             if img_path and os.path.exists(img_path):
                 story.extend(code_block_image_flowables(img_path, last_heading, styles))
             else:
@@ -689,6 +846,13 @@ def markdown_to_story(md_text, styles, h1_style='H1', total_width=6.6 * inch):
                 rows.append(split_md_table_row(lines[i].strip()))
                 i += 1
             ncols = len(header)
+            # Pad/truncate every row to the header column count so ragged rows
+            # (fewer or extra pipes) don't misalign or raise in reportlab.
+            for r in rows:
+                if len(r) < ncols:
+                    r.extend([''] * (ncols - len(r)))
+                elif len(r) > ncols:
+                    del r[ncols:]
             tbl = table_from_rows(rows, styles, col_widths=auto_col_widths(ncols, total_width), head=True)
             story.append(Spacer(1, 2))
             story.append(tbl)
@@ -779,9 +943,11 @@ if __name__ == '__main__':
     ap.add_argument('--author-role', default=None)
     ap.add_argument('--diagrams-dir', default=None,
                      help='Directory of pre-rendered diagram PNGs (see render_mermaid.py). '
-                          'Files are matched to <div class="mermaid"> blocks in --input-html '
-                          'in alphabetical-filename order = document order. '
-                          'Prefix filenames like 00_, 01_, 02_ to control order. '
+                          'Each PNG is matched to a <div class="mermaid"> block (or an '
+                          'ASCII-diagram code block) by the surrounding heading keyword '
+                          'first (name files e.g. utility_tree.png / architecture.png), '
+                          'then by mermaid block kind, then by sorted-filename order as a '
+                          'fallback (prefix 00_, 01_ to force order). '
                           'If omitted/empty, falls back to an indented text/tree rendering.')
     args = ap.parse_args()
 

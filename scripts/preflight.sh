@@ -34,6 +34,29 @@ warn() { echo "${YEL}⚠ WARN${RST}  $*"; WARN=$((WARN+1)); }
 head_() { echo; echo "${BLU}── $* ${RST}"; }
 
 # ---------------------------------------------------------------------------
+# Locale-/style-configurable checks
+#
+# The original scenarios in this repo are authored in a specific house style
+# (Spanish-flavoured "¿Para qué?" purpose mapping, "Cost of Change" heading,
+# etc.). The reusable architecture-case *skill* can emit English reports whose
+# headings differ word-for-word while covering the same reasoning chain. To
+# avoid rejecting a structurally-complete English report, the required section
+# terms and the purpose-mapping term are overridable via env vars. The
+# DEFAULTS BELOW ARE EXACTLY THE PREVIOUS HARD-CODED VALUES, so existing
+# scenarios behave identically unless a caller opts in.
+#
+#   PREFLIGHT_REQUIRED_TERMS  newline-separated list of required section terms
+#   PREFLIGHT_PURPOSE_TERM    grep pattern for the "name every decision's purpose" check
+#
+# Example (English skill output):
+#   PREFLIGHT_REQUIRED_TERMS=$'Objectives\nConstraints\n...\nCost of Change' \
+#   PREFLIGHT_PURPOSE_TERM='Why|Purpose|Para qu' ./scripts/preflight.sh report.html
+# ---------------------------------------------------------------------------
+DEFAULT_REQUIRED_TERMS=$'Objectives\nConstraints\nFunctional\nQuality\nASR\nUtility Tree\nDecision\nTrade-off\nCost of Change\nOpen Questions\nGovernance'
+REQUIRED_TERMS="${PREFLIGHT_REQUIRED_TERMS:-$DEFAULT_REQUIRED_TERMS}"
+PURPOSE_TERM="${PREFLIGHT_PURPOSE_TERM:-Para qu}"
+
+# ---------------------------------------------------------------------------
 # Resolve target files
 #
 # NOTE: deliberately avoids `mapfile`/`readarray`. macOS ships bash 3.2, where
@@ -164,12 +187,11 @@ for f in "${FILES[@]}"; do
 
   # -------------------------------------------------------------------------
   head_ "1. Required reasoning-chain sections"
-  for term in "Objectives" "Constraints" "Functional" "Quality" "ASR" \
-              "Utility Tree" "Decision" "Trade-off" "Cost of Change" \
-              "Open Questions" "Governance"; do
+  while IFS= read -r term; do
+    [ -z "$term" ] && continue
     if grep -qi "$term" "$PROSE_FILE"; then pass "section present: $term"
     else fail "missing required section: $term"; fi
-  done
+  done <<< "$REQUIRED_TERMS"
 
   # -------------------------------------------------------------------------
   head_ "2. Fabricated-precision scan (every hit must be traceable to the source)"
@@ -245,8 +267,8 @@ for f in "${FILES[@]}"; do
   [ "${SCEN:-0}" -ge 2 ] && pass "$SCEN quality-attribute scenarios (min 2)" \
                          || fail "only ${SCEN:-0} quality-attribute scenario(s); minimum is 2"
 
-  grep -qi "Para qu" "$PROSE_FILE" && pass "'¿Para qué?' purpose mapping present" \
-                          || fail "no '¿Para qué?' mapping — every decision must name its purpose"
+  grep -qi "$PURPOSE_TERM" "$PROSE_FILE" && pass "purpose mapping present (/$PURPOSE_TERM/)" \
+                          || fail "no purpose mapping (/$PURPOSE_TERM/) — every decision must name its purpose"
 
   grep -qi "mermaid" "$f" && pass "diagrams present" || warn "no Mermaid diagrams found"
 
